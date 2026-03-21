@@ -1,54 +1,78 @@
 /**
  * OKC App — Main application controller.
  *
- * New flow: Open app → auto-create room → immediately show keyboard.
- * The writer can share a QR code so readers can join.
- * No home screen. Minimal steps.
+ * Flow:  Open /app/ → auto-create room → keyboard is immediately active.
+ *
+ * The entire app is controllable with ONE key:
+ *   - Keyboard has ⏸ PAUSE and ☰ MENU at the end of every layout
+ *   - MENU switches the runner to scan over toolbar actions
+ *   - Toolbar has a ⬅ BACK to return to keyboard
+ *   - PAUSE dims the screen; one key press resumes
+ *
+ * Keyboard modes:
+ *   "abc"   — classic alphabetical
+ *   "smart" — frequency-reordered after each keystroke
+ *   "wild"  — letters + word suggestions mixed
  */
 (function () {
     'use strict';
 
-    // --- State ---
+    // =========================================================================
+    // STATE
+    // =========================================================================
     let currentView = null;
     let currentText = '';
     let roomId = null;
-    let mode = 'runner'; // 'runner' or 'phrases'
+    let inputMode = 'keyboard';  // 'keyboard' | 'phrases' | 'toolbar'
+    let paused = false;
     let keys = [];
     let phraseButtons = [];
 
-    // --- DOM refs ---
+    // =========================================================================
+    // DOM REFS
+    // =========================================================================
     const $ = (id) => document.getElementById(id);
     const views = {
-        write: $('write-view'),
-        read: $('read-view'),
+        write:   $('write-view'),
+        read:    $('read-view'),
         loading: $('loading-view'),
     };
 
-    const textDisplay   = $('textDisplay');
-    const connStatus    = $('connStatus');
-    const statusDot     = $('statusDot');
-    const statusText    = $('statusText');
+    const textDisplay       = $('textDisplay');
+    const connStatus        = $('connStatus');
+    const statusDot         = $('statusDot');
+    const statusText        = $('statusText');
     const keyboardContainer = $('keyboardContainer');
     const phrasesContainer  = $('phrasesContainer');
-    const speedSlider   = $('speedSlider');
-    const shareModal    = $('shareModal');
-    const qrCanvas      = $('qrCanvas');
-    const shareURL      = $('shareURL');
-    const settingsPanel = $('settingsPanel');
-    const shareHint     = $('shareHint');
+    const speedSlider       = $('speedSlider');
+    const shareModal        = $('shareModal');
+    const qrCanvas          = $('qrCanvas');
+    const shareURL          = $('shareURL');
+    const settingsPanel     = $('settingsPanel');
+    const shareHint         = $('shareHint');
+    const pauseOverlay      = $('pauseOverlay');
+    const kbModeLabel       = $('kbModeLabel');
 
-    // --- Init ---
+    // =========================================================================
+    // INIT
+    // =========================================================================
     const lang = I18N.init();
     $('appLang').value = lang;
 
+    // Restore keyboard mode preference
+    const savedKbMode = localStorage.getItem('okc-kb-mode');
+    if (savedKbMode && ['abc', 'smart', 'wild'].includes(savedKbMode)) {
+        Keyboard.setMode(savedKbMode);
+    }
+    updateKbModeLabel();
+
     // =========================================================================
-    // ROUTING — hash-based, minimal
+    // ROUTING
     // =========================================================================
     function navigate() {
         const hash = location.hash.slice(1) || '/';
         const parts = hash.split('/').filter(Boolean);
 
-        // Cleanup previous view
         if (currentView === 'write' || currentView === 'read') {
             Runner.stop();
             WS.disconnect();
@@ -57,13 +81,10 @@
         hideAll();
 
         if (parts[0] === 'read' && parts[1]) {
-            // Reader mode
             showReadView(parts[1]);
         } else if (parts[0] === 'room' && parts[1]) {
-            // Writer mode with existing room
             showWriteView(parts[1]);
         } else {
-            // Default: auto-create a room
             autoCreateRoom();
         }
     }
@@ -85,14 +106,12 @@
     async function autoCreateRoom() {
         showView('loading');
 
-        // Check if we have a recent room stored
         const stored = localStorage.getItem('okc-room');
         if (stored) {
             try {
                 const info = JSON.parse(stored);
-                // Use stored room if less than 12 hours old
                 if (Date.now() - info.ts < 12 * 60 * 60 * 1000) {
-                    location.hash = `/room/${info.id}`;
+                    location.hash = '/room/' + info.id;
                     return;
                 }
             } catch (e) { /* ignore */ }
@@ -106,7 +125,6 @@
             location.hash = '/room/' + data.id;
         } catch (err) {
             console.error('Failed to create room:', err);
-            // Show write view anyway with error state
             showView('write');
         }
     }
@@ -118,48 +136,69 @@
         currentView = 'write';
         roomId = id;
         currentText = '';
+        paused = false;
+        inputMode = 'keyboard';
         views.write.classList.remove('hidden');
         views.loading.classList.add('hidden');
         views.read.classList.add('hidden');
         connStatus.classList.remove('hidden');
+        pauseOverlay.classList.add('hidden');
 
         updateTextDisplay();
-        renderKeyboard();
-        startRunner();
+        renderAndStart();
 
         WS.connect(id, 'write', onWriterMessage, onConnectionStatus);
 
-        // Show share hint for 8 seconds on first use
+        // Share hint on first use
         if (!localStorage.getItem('okc-hint-dismissed')) {
             shareHint.classList.remove('hidden');
-            setTimeout(() => {
-                shareHint.classList.add('hidden');
-            }, 8000);
+            setTimeout(() => shareHint.classList.add('hidden'), 8000);
         } else {
             shareHint.classList.add('hidden');
         }
     }
 
-    function renderKeyboard() {
-        const lang = I18N.getLang();
-        keys = Keyboard.render(keyboardContainer, lang);
-        phraseButtons = Keyboard.renderPhrases(phrasesContainer);
-    }
-
-    function startRunner() {
+    // =========================================================================
+    // KEYBOARD / PHRASES / TOOLBAR RENDERING
+    // =========================================================================
+    function renderAndStart() {
+        Runner.stop();
         const speed = parseInt(speedSlider.value);
-        if (mode === 'runner') {
+
+        if (inputMode === 'keyboard') {
             keyboardContainer.classList.remove('hidden');
             phrasesContainer.classList.add('hidden');
+            keys = Keyboard.render(keyboardContainer, I18N.getLang(), currentText);
             Runner.start(keys, speed, onKeySelected);
-        } else {
+        } else if (inputMode === 'phrases') {
             keyboardContainer.classList.add('hidden');
             phrasesContainer.classList.remove('hidden');
+            phraseButtons = Keyboard.renderPhrases(phrasesContainer);
             Runner.start(phraseButtons, speed, onPhraseSelected);
+        } else if (inputMode === 'toolbar') {
+            keyboardContainer.classList.remove('hidden');
+            phrasesContainer.classList.add('hidden');
+            keys = Keyboard.renderToolbar(keyboardContainer);
+            Runner.start(keys, speed, onToolbarSelected);
         }
     }
 
+    // =========================================================================
+    // KEY SELECTION HANDLERS
+    // =========================================================================
     function onKeySelected(value) {
+        // Navigation keys
+        if (value === 'MENU') {
+            inputMode = 'toolbar';
+            renderAndStart();
+            return;
+        }
+        if (value === 'PAUSE') {
+            enterPause();
+            return;
+        }
+
+        // Regular key input
         switch (value) {
             case 'BACKSPACE':
                 currentText = currentText.slice(0, -1);
@@ -168,19 +207,42 @@
                 currentText += '\n';
                 break;
             case 'DONE':
-                if (!currentText.endsWith('.') && !currentText.endsWith('!') && !currentText.endsWith('?')) {
+                if (currentText && !currentText.endsWith('.') && !currentText.endsWith('!') && !currentText.endsWith('?')) {
                     currentText += '.';
                 }
                 break;
             default:
-                currentText += value.toLowerCase();
+                // Could be a letter OR a whole word (wild mode)
+                if (value.length > 1 && value === value.toUpperCase()) {
+                    // Word suggestion from wild mode — append word
+                    const currentWord = SmartKeyboard.getCurrentWord(currentText);
+                    // Remove partially typed portion and replace with full word
+                    if (currentWord) {
+                        currentText = currentText.slice(0, -currentWord.length);
+                    }
+                    currentText += value.toLowerCase() + ' ';
+                } else {
+                    currentText += value.toLowerCase();
+                }
                 break;
         }
+
         updateTextDisplay();
         WS.sendText(currentText);
+
+        // In smart/wild mode, re-render keyboard with new frequency order
+        if (Keyboard.getMode() !== 'abc') {
+            renderAndStart();
+        }
     }
 
     function onPhraseSelected(value) {
+        if (value === 'TB_BACK') {
+            inputMode = 'keyboard';
+            renderAndStart();
+            return;
+        }
+
         if (currentText && !currentText.endsWith(' ') && !currentText.endsWith('\n')) {
             currentText += ' ';
         }
@@ -189,6 +251,92 @@
         WS.sendText(currentText);
     }
 
+    function onToolbarSelected(value) {
+        switch (value) {
+            case 'TB_BACK':
+                inputMode = 'keyboard';
+                renderAndStart();
+                break;
+            case 'TB_CLEAR':
+                currentText = '';
+                updateTextDisplay();
+                WS.sendClear();
+                inputMode = 'keyboard';
+                renderAndStart();
+                break;
+            case 'TB_SHARE':
+                Runner.stop();
+                openShareModal();
+                break;
+            case 'TB_SETTINGS':
+                Runner.stop();
+                settingsPanel.classList.remove('hidden');
+                break;
+            case 'TB_PHRASES':
+                inputMode = 'phrases';
+                renderAndStart();
+                break;
+            case 'TB_MODE':
+                cycleKeyboardMode();
+                inputMode = 'keyboard';
+                renderAndStart();
+                break;
+            case 'TB_FASTER':
+                adjustSpeed(-100);
+                // Stay in toolbar
+                break;
+            case 'TB_SLOWER':
+                adjustSpeed(100);
+                break;
+        }
+    }
+
+    // =========================================================================
+    // PAUSE MODE
+    // =========================================================================
+    function enterPause() {
+        paused = true;
+        Runner.stop();
+        pauseOverlay.classList.remove('hidden');
+    }
+
+    function leavePause() {
+        paused = false;
+        pauseOverlay.classList.add('hidden');
+        renderAndStart();
+    }
+
+    // =========================================================================
+    // KEYBOARD MODE CYCLING
+    // =========================================================================
+    function cycleKeyboardMode() {
+        const modes = ['abc', 'smart', 'wild'];
+        const idx = modes.indexOf(Keyboard.getMode());
+        const next = modes[(idx + 1) % modes.length];
+        Keyboard.setMode(next);
+        localStorage.setItem('okc-kb-mode', next);
+        updateKbModeLabel();
+    }
+
+    function updateKbModeLabel() {
+        const mode = Keyboard.getMode();
+        const labels = { abc: 'ABC', smart: 'Smart', wild: 'Wild' };
+        if (kbModeLabel) kbModeLabel.textContent = labels[mode] || 'ABC';
+    }
+
+    // =========================================================================
+    // SPEED ADJUSTMENT
+    // =========================================================================
+    function adjustSpeed(delta) {
+        let val = parseInt(speedSlider.value) + delta;
+        val = Math.max(200, Math.min(2000, val));
+        speedSlider.value = val;
+        Runner.setSpeed(val);
+    }
+
+    // =========================================================================
+    // TEXT DISPLAY
+    // =========================================================================
     function updateTextDisplay() {
         const escaped = currentText
             .replace(/&/g, '&amp;')
@@ -200,7 +348,18 @@
     }
 
     function onWriterMessage(msg) {
-        // Writer might receive status updates in the future
+        // Future: status updates
+    }
+
+    // =========================================================================
+    // SHARE MODAL
+    // =========================================================================
+    function openShareModal() {
+        if (!roomId) return;
+        const readURL = location.origin + '/app/#/read/' + roomId;
+        shareURL.textContent = readURL;
+        QRCode.draw(qrCanvas, readURL, 200);
+        shareModal.classList.remove('hidden');
     }
 
     // =========================================================================
@@ -213,9 +372,7 @@
         views.loading.classList.add('hidden');
         views.write.classList.add('hidden');
 
-        const readerConnStatus = $('readerConnStatus');
-        readerConnStatus.classList.remove('hidden');
-
+        $('readerConnStatus').classList.remove('hidden');
         const readerText = $('readerText');
         readerText.textContent = I18N.t('waiting');
         readerText.classList.add('empty');
@@ -276,32 +433,41 @@
     }
 
     // =========================================================================
-    // EVENT LISTENERS
+    // UI EVENT LISTENERS (header buttons — for sighted helpers)
     // =========================================================================
 
-    // --- Settings panel ---
+    // Settings panel
     $('btnSettings').addEventListener('click', () => {
+        Runner.stop();
         settingsPanel.classList.remove('hidden');
     });
     $('btnCloseSettings').addEventListener('click', () => {
         settingsPanel.classList.add('hidden');
+        if (currentView === 'write' && !paused) renderAndStart();
     });
     $('settingsBackdrop').addEventListener('click', () => {
         settingsPanel.classList.add('hidden');
+        if (currentView === 'write' && !paused) renderAndStart();
     });
 
     // Language change
     $('appLang').addEventListener('change', (e) => {
         I18N.setLang(e.target.value);
         if (currentView === 'write') {
-            Runner.stop();
-            renderKeyboard();
-            startRunner();
+            renderAndStart();
+        }
+    });
+
+    // Keyboard mode cycling (header button)
+    $('btnKbMode').addEventListener('click', () => {
+        cycleKeyboardMode();
+        if (currentView === 'write' && inputMode === 'keyboard') {
+            renderAndStart();
         }
     });
 
     // New room
-    $('btnNewRoom').addEventListener('click', async () => {
+    $('btnNewRoom').addEventListener('click', () => {
         settingsPanel.classList.add('hidden');
         localStorage.removeItem('okc-room');
         location.hash = '/';
@@ -316,36 +482,34 @@
         }
     });
 
-    // --- Clear text ---
+    // Clear (header button)
     $('btnClear').addEventListener('click', () => {
         currentText = '';
         updateTextDisplay();
         WS.sendClear();
     });
 
-    // --- Speed slider ---
+    // Speed slider
     speedSlider.addEventListener('input', () => {
         Runner.setSpeed(parseInt(speedSlider.value));
     });
 
-    // --- Mode toggle ---
-    $('btnMode').addEventListener('click', () => {
-        Runner.stop();
-        mode = mode === 'runner' ? 'phrases' : 'runner';
-        $('modeLabel').setAttribute('data-i18n', mode === 'runner' ? 'mode_keyboard' : 'mode_phrases');
-        $('modeLabel').textContent = I18N.t(mode === 'runner' ? 'mode_keyboard' : 'mode_phrases');
-        startRunner();
+    // Pause button (header — for helpers)
+    $('btnPause').addEventListener('click', () => {
+        if (paused) {
+            leavePause();
+        } else {
+            enterPause();
+        }
     });
 
-    // --- Share / QR ---
+    // Share (header button)
     $('btnShare').addEventListener('click', () => {
-        if (!roomId) return;
-        const readURL = location.origin + '/app/#/read/' + roomId;
-        shareURL.textContent = readURL;
-        QRCode.draw(qrCanvas, readURL, 200);
-        shareModal.classList.remove('hidden');
+        Runner.stop();
+        openShareModal();
     });
 
+    // Share modal buttons
     $('btnCopyURL').addEventListener('click', () => {
         const url = shareURL.textContent;
         navigator.clipboard.writeText(url).then(() => {
@@ -355,59 +519,68 @@
             }, 2000);
         });
     });
-
     $('btnCloseModal').addEventListener('click', () => {
         shareModal.classList.add('hidden');
+        if (currentView === 'write' && !paused) renderAndStart();
     });
     shareModal.addEventListener('click', (e) => {
-        if (e.target === shareModal) shareModal.classList.add('hidden');
+        if (e.target === shareModal) {
+            shareModal.classList.add('hidden');
+            if (currentView === 'write' && !paused) renderAndStart();
+        }
     });
 
-    // --- Share hint dismiss ---
+    // Share hint dismiss
     $('btnDismissHint').addEventListener('click', () => {
         shareHint.classList.add('hidden');
         localStorage.setItem('okc-hint-dismissed', '1');
     });
 
     // =========================================================================
-    // GLOBAL INPUT — ANY key / ANY touch = select
+    // GLOBAL INPUT — ANY key / ANY touch / ANY click = select or unpause
     // =========================================================================
-    document.addEventListener('keydown', (e) => {
+    function handleGlobalInput(e) {
         if (currentView !== 'write') return;
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
-        if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
+        // If paused, ANY input unpauses
+        if (paused) {
+            e.preventDefault && e.preventDefault();
+            leavePause();
+            return;
         }
+
+        // Don't capture when in settings/modal/form
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
+        if (e.target && e.target.closest && (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel'))) return;
+        if (e.target && e.target.closest && e.target.closest('.share-hint')) return;
+
+        if (e.type === 'keydown') {
+            if (e.key === ' ' || e.key === 'Enter') e.preventDefault();
+        }
+        if (e.type === 'touchstart') e.preventDefault();
 
         if (Runner.isActive()) {
             Runner.select();
         }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+        handleGlobalInput(e);
     });
 
     document.addEventListener('touchstart', (e) => {
-        if (currentView !== 'write') return;
         if (e.target.closest('.toolbar') || e.target.closest('.writer-header')) return;
         if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
         if (e.target.closest('.share-hint')) return;
-
-        e.preventDefault();
-
-        if (Runner.isActive()) {
-            Runner.select();
-        }
+        handleGlobalInput(e);
     }, { passive: false });
 
-    // Also handle mouse clicks on the text area and keyboard for desktop
     document.addEventListener('mousedown', (e) => {
-        if (currentView !== 'write') return;
         if (e.target.closest('.toolbar') || e.target.closest('.writer-header')) return;
         if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
         if (e.target.closest('.share-hint')) return;
-
-        if (Runner.isActive()) {
-            Runner.select();
-        }
+        handleGlobalInput(e);
     });
 
     // =========================================================================

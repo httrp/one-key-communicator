@@ -565,6 +565,158 @@ button {
 }
 
 /* ==========================================================================
+   Pause Overlay
+   ========================================================================== */
+.pause-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.pause-content {
+    text-align: center;
+    color: white;
+}
+.pause-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.8;
+    animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+}
+.pause-content p {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.pause-hint {
+    font-size: 0.9rem !important;
+    font-weight: 400 !important;
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+   Navigation & Special Keys
+   ========================================================================== */
+.key.nav-key {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+    font-weight: 700;
+    font-size: 0.8rem;
+    min-width: 50px;
+}
+.key.nav-key.active {
+    background: var(--accent);
+    color: white;
+}
+.key.pause-key {
+    background: #fef3c7;
+    color: #d97706;
+    border-color: #f59e0b;
+    font-weight: 700;
+    font-size: 0.8rem;
+    min-width: 50px;
+}
+.key.pause-key.active {
+    background: #f59e0b;
+    color: white;
+    border-color: #d97706;
+}
+
+/* ==========================================================================
+   Toolbar Grid (one-key scannable toolbar)
+   ========================================================================== */
+.toolbar-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 8px;
+    background: var(--bg-soft);
+}
+.toolbar-key {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px 10px;
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.06s ease;
+    cursor: default;
+}
+.toolbar-key.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow);
+    transform: scale(1.04);
+}
+.tb-icon {
+    font-size: 1.4rem;
+}
+.tb-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Word Keys (wild mode)
+   ========================================================================== */
+.word-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+.key.word-key {
+    min-width: 60px;
+    max-width: 120px;
+    padding: 0 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #6ee7b7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.key.word-key.active {
+    background: #059669;
+    color: white;
+    border-color: #059669;
+}
+
+/* ==========================================================================
+   Keyboard Mode Button
+   ========================================================================== */
+.kb-mode-icon {
+    font-size: 0.9rem;
+}
+#kbModeLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 @media (max-width: 480px) {
