@@ -1,0 +1,6 @@
+data/
+*.db
+/okc
+okc-*
+.env
+config.yaml

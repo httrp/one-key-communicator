@@ -1,0 +1,14 @@
+# OKC Configuration
+# Copy this to config.yaml and adjust as needed.
+
+# Port to listen on (default: 8090)
+# Can also be set via OKC_PORT environment variable or --port flag
+port: 8090
+
+# Public base URL (used for generating share links)
+# Can also be set via OKC_BASE_URL or --base-url flag
+# base_url: https://app.okc.example.com
+
+# Directory for SQLite database (default: data/)
+# Can also be set via OKC_DATA_DIR or --data-dir flag
+data_dir: data

@@ -1,0 +1,18 @@
+# Caddyfile for OKC deployment
+# Automatic HTTPS with Let's Encrypt
+
+# Option A: Single domain (recommended for simplicity)
+okc.example.com {
+    reverse_proxy localhost:8090
+}
+
+# Option B: Separate landing page and app domains
+# okc.example.com {
+#     reverse_proxy localhost:8090 {
+#         # Only forward /app, /api, /ws to the app
+#     }
+# }
+# 
+# app.okc.example.com {
+#     reverse_proxy localhost:8090
+# }

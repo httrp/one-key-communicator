@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One-Key-Communicator — Communicate with a single key</title>
+    <meta name="description" content="Free, open-source communication tool for people who can only press a single key. No installation, no account — just open and communicate.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #ffffff;
+            --bg-soft: #f8fafc;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .logo span { color: var(--text); }
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.95rem;
+        }
+        nav a:hover { color: var(--primary); }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .hero .cta {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 16px 40px;
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-size: 1.15rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .hero .cta:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Steps */
+        .steps {
+            padding: 60px 0;
+            background: var(--bg-soft);
+        }
+        .steps h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+        }
+        .step {
+            text-align: center;
+            padding: 24px;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .step h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .step p {
+            font-size: 0.95rem;
+            color: var(--text-light);
+        }
+
+        /* Features */
+        .features {
+            padding: 60px 0;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+        }
+        .features-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .feature {
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        .feature h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .feature p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Language selector */
+        .lang-select {
+            position: relative;
+            display: inline-block;
+        }
+        .lang-select select {
+            appearance: none;
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 6px 28px 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8rem; }
+            .hero p { font-size: 1rem; }
+            .features-list { grid-template-columns: 1fr; }
+            nav a { margin-left: 12px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <a href="/" class="logo">OKC <span>One-Key-Communicator</span></a>
+        <nav>
+            <a href="#how">How it works</a>
+            <a href="#features">Features</a>
+            <a href="https://github.com/dominikhattrup/one-key-communicator" target="_blank">GitHub</a>
+            <div class="lang-select">
+                <select id="langSwitch" onchange="switchLang(this.value)">
+                    <option value="de" selected>Deutsch</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                    <option value="it">Italiano</option>
+                    <option value="nl">Nederlands</option>
+                    <option value="pl">Polski</option>
+                    <option value="tr">Türkçe</option>
+                </select>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <h1 data-i18n="hero_title">Kommunizieren mit nur einer einzigen Taste</h1>
+        <p data-i18n="hero_subtitle">Kostenlos, quelloffen und radikal einfach. Für Menschen, die nicht mehr sprechen können — aber trotzdem alles zu sagen haben.</p>
+        <a href="/app" class="cta" data-i18n="hero_cta">Jetzt starten</a>
+    </div>
+</section>
+
+<section class="steps" id="how">
+    <div class="container">
+        <h2 data-i18n="how_title">So funktioniert es</h2>
+        <div class="steps-grid">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3 data-i18n="step1_title">Öffnen</h3>
+                <p data-i18n="step1_text">Öffne OKC im Browser auf deinem Tablet oder Handy. Kein Download nötig.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3 data-i18n="step2_title">Raum erstellen</h3>
+                <p data-i18n="step2_text">Erstelle einen Raum mit einem Tipp. Du bekommst einen QR-Code zum Teilen.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3 data-i18n="step3_title">QR-Code scannen</h3>
+                <p data-i18n="step3_text">Deine Familie scannt den QR-Code — sie sehen sofort, was du schreibst.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3 data-i18n="step4_title">Kommunizieren</h3>
+                <p data-i18n="step4_text">Drücke deine Taste, um Buchstaben auszuwählen. Der Rest passiert automatisch.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features" id="features">
+    <div class="container">
+        <h2 data-i18n="features_title">Eigenschaften</h2>
+        <div class="features-list">
+            <div class="feature">
+                <h3 data-i18n="f1_title">🎯 Eine Taste reicht</h3>
+                <p data-i18n="f1_text">Alles funktioniert mit einem einzigen Tastendruck, Touch oder Sensor.</p>
+            </div>
+            <div class="feature">
+                <h3 data-i18n="f2_title">📱 Läuft überall</h3>
+                <p data-i18n="f2_text">Handy, Tablet, Laptop, TV — jedes Gerät mit Browser funktioniert.</p>
+            </div>
+            <div class="feature">
+                <h3 data-i18n="f3_title">🔒 Privat</h3>
+                <p data-i18n="f3_text">Kein Account, kein Tracking. Räume löschen sich automatisch.</p>
+            </div>
+            <div class="feature">
+                <h3 data-i18n="f4_title">🌍 Mehrsprachig</h3>
+                <p data-i18n="f4_text">Deutsch, Englisch, Französisch, Spanisch und weitere Sprachen.</p>
+            </div>
+            <div class="feature">
+                <h3 data-i18n="f5_title">💬 Schnell-Sätze</h3>
+                <p data-i18n="f5_text">Vordefinierte Sätze für häufige Situationen: Essen, Trinken, Hilfe.</p>
+            </div>
+            <div class="feature">
+                <h3 data-i18n="f6_title">🆓 Kostenlos & Open Source</h3>
+                <p data-i18n="f6_text">Komplett kostenlos. Jeder kann OKC selbst betreiben.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>One-Key-Communicator — <a href="https://github.com/dominikhattrup/one-key-communicator">Open Source (GPLv3)</a></p>
+    </div>
+</footer>
+
+<script>
+const translations = {
+    de: {}, // Default content is German
+    en: {
+        hero_title: "Communicate with just a single key",
+        hero_subtitle: "Free, open-source, and radically simple. For people who can no longer speak — but still have everything to say.",
+        hero_cta: "Get started",
+        how_title: "How it works",
+        step1_title: "Open", step1_text: "Open OKC in any browser on your tablet or phone. No download needed.",
+        step2_title: "Create a room", step2_text: "Create a room with a single tap. You'll get a QR code to share.",
+        step3_title: "Scan QR code", step3_text: "Your family scans the QR code — they instantly see what you type.",
+        step4_title: "Communicate", step4_text: "Press your key to select letters. Everything else happens automatically.",
+        features_title: "Features",
+        f1_title: "🎯 One key is enough", f1_text: "Everything works with a single keypress, touch, or sensor.",
+        f2_title: "📱 Works everywhere", f2_text: "Phone, tablet, laptop, TV — any device with a browser works.",
+        f3_title: "🔒 Private", f3_text: "No account, no tracking. Rooms auto-delete.",
+        f4_title: "🌍 Multi-language", f4_text: "German, English, French, Spanish, and more.",
+        f5_title: "💬 Quick phrases", f5_text: "Pre-defined sentences for common situations: eating, drinking, help.",
+        f6_title: "🆓 Free & Open Source", f6_text: "Completely free. Anyone can host their own OKC.",
+    },
+    fr: {
+        hero_title: "Communiquer avec une seule touche",
+        hero_subtitle: "Gratuit, open-source et radicalement simple. Pour les personnes qui ne peuvent plus parler — mais qui ont encore tout à dire.",
+        hero_cta: "Commencer",
+        how_title: "Comment ça marche",
+        step1_title: "Ouvrir", step1_text: "Ouvrez OKC dans le navigateur de votre tablette ou téléphone. Aucun téléchargement nécessaire.",
+        step2_title: "Créer une salle", step2_text: "Créez une salle d'un seul geste. Vous obtenez un QR code à partager.",
+        step3_title: "Scanner le QR code", step3_text: "Votre famille scanne le QR code — ils voient instantanément ce que vous écrivez.",
+        step4_title: "Communiquer", step4_text: "Appuyez sur votre touche pour sélectionner des lettres. Le reste se fait automatiquement.",
+        features_title: "Fonctionnalités",
+        f1_title: "🎯 Une touche suffit", f1_text: "Tout fonctionne avec une seule pression, un toucher ou un capteur.",
+        f2_title: "📱 Fonctionne partout", f2_text: "Téléphone, tablette, ordinateur, TV — tout appareil avec un navigateur.",
+        f3_title: "🔒 Privé", f3_text: "Pas de compte, pas de suivi. Les salles se suppriment automatiquement.",
+        f4_title: "🌍 Multilingue", f4_text: "Allemand, anglais, français, espagnol et plus encore.",
+        f5_title: "💬 Phrases rapides", f5_text: "Phrases prédéfinies pour les situations courantes : manger, boire, aide.",
+        f6_title: "🆓 Gratuit & Open Source", f6_text: "Entièrement gratuit. Chacun peut héberger son propre OKC.",
+    },
+    es: {
+        hero_title: "Comunicarse con una sola tecla",
+        hero_subtitle: "Gratuito, de código abierto y radicalmente simple. Para personas que ya no pueden hablar — pero aún tienen todo por decir.",
+        hero_cta: "Empezar",
+        how_title: "Cómo funciona",
+        step1_title: "Abrir", step1_text: "Abre OKC en el navegador de tu tablet o teléfono. Sin descarga.",
+        step2_title: "Crear sala", step2_text: "Crea una sala con un toque. Recibirás un código QR para compartir.",
+        step3_title: "Escanear QR", step3_text: "Tu familia escanea el código QR — verán al instante lo que escribes.",
+        step4_title: "Comunicar", step4_text: "Pulsa tu tecla para seleccionar letras. El resto ocurre automáticamente.",
+        features_title: "Características",
+        f1_title: "🎯 Una tecla basta", f1_text: "Todo funciona con una sola pulsación, toque o sensor.",
+        f2_title: "📱 Funciona en todo", f2_text: "Teléfono, tablet, portátil, TV — cualquier dispositivo con navegador.",
+        f3_title: "🔒 Privado", f3_text: "Sin cuenta, sin rastreo. Las salas se eliminan automáticamente.",
+        f4_title: "🌍 Multilingüe", f4_text: "Alemán, inglés, francés, español y más idiomas.",
+        f5_title: "💬 Frases rápidas", f5_text: "Frases predefinidas para situaciones comunes: comer, beber, ayuda.",
+        f6_title: "🆓 Gratis & Open Source", f6_text: "Completamente gratis. Cualquiera puede alojar su propio OKC.",
+    }
+};
+
+function switchLang(lang) {
+    const dict = translations[lang] || {};
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+    document.documentElement.lang = lang;
+    localStorage.setItem('okc-lang', lang);
+}
+
+// Restore saved language
+const savedLang = localStorage.getItem('okc-lang');
+if (savedLang && savedLang !== 'de') {
+    document.getElementById('langSwitch').value = savedLang;
+    switchLang(savedLang);
+}
+</script>
+
+</body>
+</html>

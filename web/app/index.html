@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OKC — One-Key-Communicator</title>
+    <meta name="description" content="Communicate with a single key">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+    <a href="#/" class="app-logo">OKC</a>
+    <div class="connection-status hidden" id="connStatus">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText"></span>
+    </div>
+</header>
+
+<!-- Home View -->
+<div id="home-view" class="view">
+    <h1 class="home-title" data-i18n="app_title">Was möchtest du sagen?</h1>
+    <p class="home-subtitle" data-i18n="app_subtitle">Erstelle einen Raum und beginne zu kommunizieren. Deine Familie kann mitlesen.</p>
+    <div class="home-actions">
+        <button class="btn btn-primary btn-large" id="btnCreateRoom" data-i18n="create_room">Raum erstellen</button>
+        <button class="btn btn-outline" id="btnJoinRoom" data-i18n="join_room">Raum beitreten</button>
+    </div>
+    <div class="lang-picker">
+        <select id="appLang">
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="nl">🇳🇱 Nederlands</option>
+            <option value="pl">🇵🇱 Polski</option>
+            <option value="tr">🇹🇷 Türkçe</option>
+        </select>
+    </div>
+</div>
+
+<!-- Writer View -->
+<div id="write-view" class="view hidden">
+    <div class="text-display" id="textDisplay"><span class="cursor"></span></div>
+    <div class="writer-toolbar">
+        <button id="btnClear" data-i18n="clear">Löschen</button>
+        <button id="btnShare">📤 QR</button>
+        <button id="btnMode" data-i18n="mode_runner">Modus: Runner</button>
+        <span class="speed-label" data-i18n="speed">Tempo</span>
+        <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100">
+    </div>
+    <div id="keyboardContainer" class="keyboard"></div>
+    <div id="phrasesContainer" class="quick-phrases hidden"></div>
+</div>
+
+<!-- Read View -->
+<div id="read-view" class="view hidden">
+    <div class="reader-text empty" id="readerText" data-i18n="waiting">Warte auf Nachricht…</div>
+    <div class="reader-bar">
+        <span data-i18n="reader_info">Du liest mit. Der Text erscheint automatisch.</span>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="modal-overlay hidden">
+    <div class="modal">
+        <h2 data-i18n="share_title">Teile diesen QR-Code</h2>
+        <p data-i18n="share_text">Deine Familie kann diesen QR-Code scannen, um mitzulesen.</p>
+        <canvas id="qrCanvas" width="200" height="200"></canvas>
+        <div class="url-box" id="shareURL"></div>
+        <button class="btn btn-primary" id="btnCopyURL" data-i18n="copy_link">Link kopieren</button>
+        <button class="btn btn-outline" id="btnCloseModal" data-i18n="close">Schließen</button>
+    </div>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/qrcode.js"></script>
+<script src="js/ws.js"></script>
+<script src="js/runner.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
