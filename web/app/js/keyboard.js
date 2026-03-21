@@ -6,26 +6,27 @@
  *   "smart" — Frequency-reordered, space promoted when word is long enough
  *   "wild"  — Letters + word suggestions, space promoted
  *
- * The keyboard renders ALL interactive elements in one flat list:
- *   letters → space → backspace → action buttons (clear, mode, phrases, speak, punct, pause)
+ * The keyboard renders ONLY letter/word keys:
+ *   word suggestions (wild) → space → letters → backspace → ☰ More
  *
- * This means the Runner scans through everything in one pass —
- * no separate toolbar/menu mode needed.
+ * Action buttons (clear, mode, phrases, speak, punct, pause) live in
+ * the toolbar above the keyboard. The Runner scans them separately
+ * when ☰ is selected.
  */
 const Keyboard = {
 
-    _mode: 'abc',
+    _mode: 'smart',  // Default to smart
 
     /** Language-specific letter layouts (alphabetical) */
     layouts: {
-        de: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ'.split(''),
+        de: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00dc'.split(''),
         en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-        fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÉÈÊÀÇÙÔ'.split(''),
-        es: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÑ'.split(''),
-        it: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÒÙ'.split(''),
+        fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c9\u00c8\u00ca\u00c0\u00c7\u00d9\u00d4'.split(''),
+        es: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c1\u00c9\u00cd\u00d3\u00da\u00d1'.split(''),
+        it: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c0\u00c8\u00c9\u00cc\u00d2\u00d9'.split(''),
         nl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-        pl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ'.split(''),
-        tr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÇĞİÖŞÜ'.split(''),
+        pl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u0104\u0106\u0118\u0141\u0143\u00d3\u015a\u0179\u017b'.split(''),
+        tr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c7\u011e\u0130\u00d6\u015e\u00dc'.split(''),
     },
 
     /** Punctuation characters per language */
@@ -33,29 +34,18 @@ const Keyboard = {
         de: ['.','!','?',',',':',';','"','(',')','-','...'],
         en: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
         fr: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
-        es: ['.','!','?',',',':',';','"','(',')','-','¡','¿','...'],
+        es: ['.','!','?',',',':',';','"','(',')','-','\u00a1','\u00bf','...'],
         it: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
         nl: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
         pl: ['.','!','?',',',':',';','"','(',')','-','...'],
         tr: ['.','!','?',',',':',';','"','(',')','-','...'],
     },
 
-    /** Action buttons rendered inline with keyboard */
-    actions: [
-        { id: 'BACKSPACE', icon: '⌫',  label: '' },
-        { id: 'CLEAR',     icon: '🗑',  labelKey: 'clear' },
-        { id: 'KB_MODE',   icon: '🔤',  labelKey: 'mode_keyboard' },
-        { id: 'PHRASES',   icon: '💬',  labelKey: 'mode_phrases' },
-        { id: 'PUNCT',     icon: '#?!', label: '' },
-        { id: 'SPEAK',     icon: '🔊',  labelKey: 'speak' },
-        { id: 'PAUSE',     icon: '⏸',   labelKey: 'pause' },
-    ],
-
     setMode(mode) { this._mode = mode; },
     getMode() { return this._mode; },
 
     /**
-     * Render main keyboard.
+     * Render main keyboard (letters + space + backspace + ☰).
      * Returns flat array of all scannable elements.
      */
     render(container, lang, currentText) {
@@ -105,7 +95,7 @@ const Keyboard = {
         if (promoteSpace) {
             const spaceRow = document.createElement('div');
             spaceRow.className = 'keyboard-row';
-            const spaceEl = this._createKey('␣', ' ', 'key space-key extra-wide');
+            const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
             spaceRow.appendChild(spaceEl);
             allKeys.push(spaceEl);
             container.appendChild(spaceRow);
@@ -128,33 +118,37 @@ const Keyboard = {
         if (!promoteSpace) {
             const spaceRow = document.createElement('div');
             spaceRow.className = 'keyboard-row';
-            const spaceEl = this._createKey('␣', ' ', 'key space-key extra-wide');
+            const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
             spaceRow.appendChild(spaceEl);
             allKeys.push(spaceEl);
             container.appendChild(spaceRow);
         }
 
-        // --- Action row ---
-        const actionRow = document.createElement('div');
-        actionRow.className = 'keyboard-row';
-        for (const act of this.actions) {
-            const label = act.labelKey ? I18N.t(act.labelKey) : act.label;
-            const isPause = act.id === 'PAUSE';
-            const css = 'key action-key' + (isPause ? ' pause-key' : '') + ' wide';
-            const el = document.createElement('div');
-            el.className = css;
-            el.dataset.value = act.id;
-            if (label) {
-                el.innerHTML = '<span class="action-icon">' + act.icon + '</span><span class="action-label">' + label + '</span>';
-            } else {
-                el.innerHTML = '<span class="action-icon">' + act.icon + '</span>';
-            }
-            actionRow.appendChild(el);
-            allKeys.push(el);
-        }
-        container.appendChild(actionRow);
+        // --- Bottom row: Backspace + ☰ More ---
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'keyboard-row';
+
+        const bsEl = this._createKey('\u232b', 'BACKSPACE', 'key action-key wide');
+        bottomRow.appendChild(bsEl);
+        allKeys.push(bsEl);
+
+        const moreEl = this._createKey('\u2630 ' + I18N.t('more'), 'MORE', 'key action-key wide');
+        bottomRow.appendChild(moreEl);
+        allKeys.push(moreEl);
+
+        container.appendChild(bottomRow);
 
         return allKeys;
+    },
+
+    /**
+     * Get the toolbar DOM elements for scanning.
+     * Returns array in the order: Back, Mode, Phrases, Punct, Speak, Clear, Pause
+     */
+    getToolbarKeys() {
+        const toolbar = document.getElementById('toolbar');
+        if (!toolbar) return [];
+        return Array.from(toolbar.querySelectorAll('.toolbar-btn'));
     },
 
     /**
@@ -180,7 +174,7 @@ const Keyboard = {
         // Back button
         const backRow = document.createElement('div');
         backRow.className = 'keyboard-row';
-        const backEl = this._createKey('⬅ ' + I18N.t('back'), 'BACK', 'key action-key extra-wide');
+        const backEl = this._createKey('\u2b05 ' + I18N.t('back'), 'BACK', 'key action-key extra-wide');
         backRow.appendChild(backEl);
         allKeys.push(backEl);
         container.appendChild(backRow);
@@ -210,7 +204,7 @@ const Keyboard = {
         // Back button
         const back = document.createElement('button');
         back.className = 'phrase-btn';
-        back.textContent = '⬅ ' + I18N.t('back');
+        back.textContent = '\u2b05 ' + I18N.t('back');
         back.dataset.value = 'BACK';
         grid.appendChild(back);
         allBtns.push(back);

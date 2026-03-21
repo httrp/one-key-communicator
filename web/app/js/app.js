@@ -2,18 +2,20 @@
  * One-Key-Communicator — Main application controller.
  *
  * The entire app is controllable with ONE key:
- *   1. Runner scans through keyboard keys + inline action buttons
- *   2. Mouse hover pauses runner & highlights; click selects
- *   3. Touch on any key selects it directly
+ *   1. Runner scans through keyboard keys (letters + space + backspace + ☰)
+ *   2. Selecting ☰ switches to toolbar scanning (mode, phrases, speak, etc.)
+ *   3. Mouse hover pauses runner & highlights; click selects
+ *   4. Touch on any key/button selects it directly
  *
  * Features:
  *   - Auto-capitalization (start of sentence, after punctuation)
  *   - Adaptive speed (slows down on errors, speeds up on accuracy)
  *   - Text-to-speech via Web Speech API
- *   - Reader count display (via WebSocket)
+ *   - Reader count + names display (via WebSocket)
  *   - Current word preview (large, accessible)
  *   - Desktop sidebar with QR code
- *   - Three keyboard modes: abc / smart / wild
+ *   - Three keyboard modes: abc / smart / wild (default: smart)
+ *   - Smart reader view with word-level display
  *   - Pause/lock overlay
  */
 (function () {
@@ -25,15 +27,21 @@
     let currentView = null;
     let currentText = '';
     let roomId = null;
-    let inputMode = 'keyboard';  // 'keyboard' | 'phrases' | 'punctuation'
+    let inputMode = 'keyboard';  // 'keyboard' | 'toolbar' | 'phrases' | 'punctuation'
     let paused = false;
     let keys = [];
     let readerCount = 0;
+    let readerNames = [];
 
     // Adaptive speed state
     const adaptiveHistory = [];
     const ADAPTIVE_MAX = 20;
     let baseSpeed = 800;
+
+    // Reader view state
+    let readerFontScale = 1;
+    let readerAutoScroll = true;
+    let readerViewMode = 'smart'; // 'smart' | 'full'
 
     // =========================================================================
     // DOM REFS
@@ -65,6 +73,11 @@
     const sidebarURL        = $('sidebarURL');
     const sidebarReaderCount = $('sidebarReaderCount');
     const sidebarRoomId     = $('sidebarRoomId');
+    const sidebarReaderList = $('sidebarReaderList');
+    const modeBadge         = $('modeBadge');
+    const modeLabel         = $('modeLabel');
+    const toolbarModeLabel  = $('toolbarModeLabel');
+    const toolbarBack       = $('toolbarBack');
 
     // =========================================================================
     // INIT
@@ -72,11 +85,14 @@
     const lang = I18N.init();
     $('appLang').value = lang;
 
-    // Restore keyboard mode
+    // Restore keyboard mode (default: smart)
     const savedKbMode = localStorage.getItem('okc-kb-mode');
     if (savedKbMode && ['abc', 'smart', 'wild'].includes(savedKbMode)) {
         Keyboard.setMode(savedKbMode);
+    } else {
+        Keyboard.setMode('smart');
     }
+    updateModeBadge();
 
     // Restore speed
     const savedSpeed = localStorage.getItem('okc-speed');
@@ -84,6 +100,10 @@
         baseSpeed = parseInt(savedSpeed) || 800;
         speedSlider.value = baseSpeed;
     }
+
+    // Set reader name input placeholder
+    const nameInput = $('readerNameInput');
+    if (nameInput) nameInput.placeholder = I18N.t('your_name');
 
     // =========================================================================
     // ROUTING
@@ -158,6 +178,7 @@
         paused = false;
         inputMode = 'keyboard';
         readerCount = 0;
+        readerNames = [];
         adaptiveHistory.length = 0;
 
         views.write.classList.remove('hidden');
@@ -168,7 +189,8 @@
 
         updateTextDisplay();
         updateCurrentWord();
-        updateReaderCount(0);
+        updateReaderInfo({ count: 0, names: [] });
+        updateModeBadge();
         setupSidebar();
         renderAndStart();
 
@@ -183,17 +205,26 @@
     }
 
     // =========================================================================
-    // RENDERING
+    // RENDERING — starts Runner on the appropriate set of elements
     // =========================================================================
     function renderAndStart() {
         Runner.stop();
         const speed = getAdaptiveSpeed();
+
+        // Show/hide toolbar back button
+        if (toolbarBack) {
+            toolbarBack.classList.toggle('hidden', inputMode !== 'toolbar');
+        }
 
         if (inputMode === 'keyboard') {
             keyboardContainer.classList.remove('hidden');
             phrasesContainer.classList.add('hidden');
             keys = Keyboard.render(keyboardContainer, I18N.getLang(), currentText);
             Runner.start(keys, speed, onKeySelected);
+        } else if (inputMode === 'toolbar') {
+            // Keep keyboard visible but scan toolbar
+            keys = Keyboard.getToolbarKeys();
+            Runner.start(keys, speed, onToolbarSelected);
         } else if (inputMode === 'phrases') {
             keyboardContainer.classList.add('hidden');
             phrasesContainer.classList.remove('hidden');
@@ -208,26 +239,24 @@
     }
 
     // =========================================================================
-    // KEY SELECTION HANDLER (main keyboard)
+    // KEY SELECTION HANDLER (main keyboard: letters + space + ⌫ + ☰)
     // =========================================================================
     function onKeySelected(value) {
-        // Action keys
         switch (value) {
-            case 'PAUSE':   enterPause(); return;
-            case 'CLEAR':   clearText(); return;
-            case 'KB_MODE': cycleKeyboardMode(); renderAndStart(); return;
-            case 'PHRASES': inputMode = 'phrases'; renderAndStart(); return;
-            case 'PUNCT':   inputMode = 'punctuation'; renderAndStart(); return;
-            case 'SPEAK':   speak(); return;
             case 'BACKSPACE':
                 if (currentText.length > 0) {
                     currentText = currentText.slice(0, -1);
                     recordAction('backspace');
                 }
                 break;
+            case 'MORE':
+                // Switch to toolbar scanning
+                inputMode = 'toolbar';
+                renderAndStart();
+                return;
             default:
                 // Letter or word suggestion
-                if (value.length > 1 && value === value.toUpperCase() && !/^[.!?,;:'"()\-¡¿…]/.test(value)) {
+                if (value.length > 1 && value === value.toUpperCase() && !/^[.!?,;:'"()\-\u00a1\u00bf\u2026]/.test(value)) {
                     // Word suggestion from wild mode
                     const cw = SmartKeyboard.getCurrentWord(currentText);
                     if (cw) currentText = currentText.slice(0, -cw.length);
@@ -235,7 +264,6 @@
                 } else if (value === ' ') {
                     currentText += ' ';
                 } else {
-                    // Single letter — apply auto-capitalization
                     currentText += autoCase(value.toLowerCase());
                 }
                 recordAction('select');
@@ -252,6 +280,46 @@
         }
     }
 
+    // =========================================================================
+    // TOOLBAR SELECTION HANDLER (action buttons outside keyboard)
+    // =========================================================================
+    function onToolbarSelected(value) {
+        switch (value) {
+            case 'TOOLBAR_BACK':
+                inputMode = 'keyboard';
+                renderAndStart();
+                return;
+            case 'KB_MODE':
+                cycleKeyboardMode();
+                updateModeBadge();
+                inputMode = 'keyboard';
+                renderAndStart();
+                return;
+            case 'PHRASES':
+                inputMode = 'phrases';
+                renderAndStart();
+                return;
+            case 'PUNCT':
+                inputMode = 'punctuation';
+                renderAndStart();
+                return;
+            case 'SPEAK':
+                speak();
+                inputMode = 'keyboard';
+                renderAndStart();
+                return;
+            case 'CLEAR':
+                clearText();
+                return; // clearText resets to keyboard
+            case 'PAUSE':
+                enterPause();
+                return;
+        }
+    }
+
+    // =========================================================================
+    // PHRASE SELECTION
+    // =========================================================================
     function onPhraseSelected(value) {
         if (value === 'BACK') {
             inputMode = 'keyboard';
@@ -268,6 +336,9 @@
         WS.sendText(currentText);
     }
 
+    // =========================================================================
+    // PUNCTUATION SELECTION
+    // =========================================================================
     function onPunctSelected(value) {
         if (value === 'BACK') {
             inputMode = 'keyboard';
@@ -286,11 +357,8 @@
     // =========================================================================
     function autoCase(char) {
         if (!char || char === ' ') return char;
-        // Capitalize at start of text
         if (currentText.length === 0) return char.toUpperCase();
-        // Capitalize after newline
         if (currentText.endsWith('\n')) return char.toUpperCase();
-        // Capitalize after sentence-ending punctuation + space
         const trimmed = currentText.trimEnd();
         if (trimmed.length > 0) {
             const last = trimmed[trimmed.length - 1];
@@ -316,10 +384,8 @@
 
         let speed = baseSpeed;
         if (rate > 0.35) {
-            // Many errors — slow down (up to 40%)
             speed = baseSpeed * (1 + rate);
         } else if (rate < 0.1 && adaptiveHistory.length >= 10) {
-            // Very accurate — speed up (up to 20%)
             speed = baseSpeed * 0.8;
         }
         return Math.round(Math.max(200, Math.min(2000, speed)));
@@ -337,6 +403,7 @@
     function leavePause() {
         paused = false;
         pauseOverlay.classList.add('hidden');
+        inputMode = 'keyboard';
         renderAndStart();
     }
 
@@ -349,6 +416,12 @@
         const next = modes[(idx + 1) % modes.length];
         Keyboard.setMode(next);
         localStorage.setItem('okc-kb-mode', next);
+    }
+
+    function updateModeBadge() {
+        const mode = Keyboard.getMode();
+        if (modeLabel) modeLabel.textContent = mode;
+        if (toolbarModeLabel) toolbarModeLabel.textContent = mode;
     }
 
     // =========================================================================
@@ -405,15 +478,25 @@
     }
 
     // =========================================================================
-    // READER COUNT
+    // READER INFO (count + names from backend)
     // =========================================================================
-    function updateReaderCount(count) {
-        readerCount = count;
-        if (readerCountEl) readerCountEl.textContent = count;
-        if (sidebarReaderCount) sidebarReaderCount.textContent = count;
-        // Show/hide badge based on count
-        if (readerBadge) {
-            readerBadge.style.display = count > 0 ? '' : 'none';
+    function updateReaderInfo(data) {
+        readerCount = data.count || 0;
+        readerNames = data.names || [];
+
+        if (readerCountEl) readerCountEl.textContent = readerCount;
+        if (sidebarReaderCount) sidebarReaderCount.textContent = readerCount;
+        if (readerBadge) readerBadge.style.display = readerCount > 0 ? '' : 'none';
+
+        // Update reader list in sidebar
+        if (sidebarReaderList) {
+            sidebarReaderList.innerHTML = '';
+            for (const name of readerNames) {
+                const li = document.createElement('li');
+                li.className = 'reader-list-item';
+                li.innerHTML = '<span class="reader-list-dot"></span>' + (name || I18N.t('anonymous'));
+                sidebarReaderList.appendChild(li);
+            }
         }
     }
 
@@ -424,24 +507,17 @@
         if (!roomId) return;
         const readURL = location.origin + '/app/#/read/' + roomId;
 
-        // QR code in sidebar
-        if (sidebarQR) {
-            QRCode.draw(sidebarQR, readURL, 180);
-        }
-        if (sidebarURL) {
-            sidebarURL.textContent = readURL;
-        }
-        if (sidebarRoomId) {
-            sidebarRoomId.textContent = roomId;
-        }
+        if (sidebarQR) QRCode.draw(sidebarQR, readURL, 180);
+        if (sidebarURL) sidebarURL.textContent = readURL;
+        if (sidebarRoomId) sidebarRoomId.textContent = roomId;
     }
 
     // =========================================================================
-    // WEBSOCKET MESSAGES
+    // WEBSOCKET MESSAGES (writer)
     // =========================================================================
     function onWriterMessage(msg) {
         if (msg.type === 'readers') {
-            updateReaderCount(parseInt(msg.data) || 0);
+            updateReaderInfo(msg.data);
         }
     }
 
@@ -457,7 +533,7 @@
     }
 
     // =========================================================================
-    // READER VIEW
+    // READER VIEW — Smart text display
     // =========================================================================
     function showReadView(id) {
         currentView = 'read';
@@ -467,23 +543,111 @@
         views.write.classList.add('hidden');
 
         $('readerConnStatus').classList.remove('hidden');
-        const readerText = $('readerText');
-        readerText.textContent = I18N.t('waiting');
-        readerText.classList.add('empty');
+
+        const lastWord = $('readerLastWord');
+        const recent = $('readerRecentWords');
+        const full = $('readerFullText');
+
+        if (lastWord) lastWord.textContent = '';
+        if (recent) recent.textContent = '';
+        if (full) {
+            full.innerHTML = '<span class="reader-empty-text">' + I18N.t('waiting') + '</span>';
+            full.classList.add('empty');
+        }
+
+        // Restore reader settings
+        const savedFontScale = localStorage.getItem('okc-reader-font');
+        if (savedFontScale) readerFontScale = parseFloat(savedFontScale) || 1;
+        applyReaderFontScale();
+
+        const savedAutoScroll = localStorage.getItem('okc-reader-scroll');
+        readerAutoScroll = savedAutoScroll !== 'false';
+        updateAutoScrollBtn();
+
+        // Restore view mode
+        const savedViewMode = localStorage.getItem('okc-reader-view');
+        if (savedViewMode === 'full') {
+            readerViewMode = 'full';
+            applyReaderViewMode();
+        }
 
         WS.connect(id, 'read', onReaderMessage, onReaderConnectionStatus);
+
+        // Send saved name
+        const savedName = localStorage.getItem('okc-reader-name');
+        const nameInput = $('readerNameInput');
+        if (savedName && nameInput) {
+            nameInput.value = savedName;
+            // Send name after connection is established (slight delay)
+            setTimeout(() => WS.sendName(savedName), 500);
+        }
     }
 
     function onReaderMessage(msg) {
-        const readerText = $('readerText');
-        if (msg.type === 'text') {
-            if (msg.data) {
-                readerText.textContent = msg.data;
-                readerText.classList.remove('empty');
-            } else {
-                readerText.textContent = I18N.t('waiting');
-                readerText.classList.add('empty');
+        if (msg.type !== 'text') return;
+
+        const lastWordEl = $('readerLastWord');
+        const recentEl = $('readerRecentWords');
+        const fullEl = $('readerFullText');
+
+        if (msg.data) {
+            if (fullEl) fullEl.classList.remove('empty');
+
+            const realWords = msg.data.trim().split(/\s+/);
+
+            if (lastWordEl) {
+                lastWordEl.textContent = realWords.length > 0 ? realWords[realWords.length - 1] : '';
             }
+
+            if (recentEl) {
+                const recentSlice = realWords.slice(Math.max(0, realWords.length - 6), realWords.length - 1);
+                recentEl.textContent = recentSlice.join(' ');
+            }
+
+            if (fullEl) {
+                fullEl.textContent = msg.data;
+                if (readerAutoScroll) {
+                    fullEl.scrollTop = fullEl.scrollHeight;
+                }
+            }
+        } else {
+            if (lastWordEl) lastWordEl.textContent = '';
+            if (recentEl) recentEl.textContent = '';
+            if (fullEl) {
+                fullEl.innerHTML = '<span class="reader-empty-text">' + I18N.t('waiting') + '</span>';
+                fullEl.classList.add('empty');
+            }
+        }
+    }
+
+    function applyReaderFontScale() {
+        const fullEl = $('readerFullText');
+        if (fullEl) {
+            fullEl.style.fontSize = (1.2 * readerFontScale) + 'rem';
+        }
+    }
+
+    function updateAutoScrollBtn() {
+        const btn = $('btnAutoScroll');
+        if (btn) btn.classList.toggle('active', readerAutoScroll);
+    }
+
+    function applyReaderViewMode() {
+        const lastWord = $('readerLastWord');
+        const recent = $('readerRecentWords');
+        const full = $('readerFullText');
+        const viewBtn = $('btnReaderViewToggle');
+
+        if (readerViewMode === 'full') {
+            // Full text mode — hide word break-down, show only full text
+            if (lastWord) lastWord.style.display = 'none';
+            if (recent) recent.style.display = 'none';
+            if (full) full.style.fontSize = (1.8 * readerFontScale) + 'rem';
+        } else {
+            // Smart mode — show word break-down
+            if (lastWord) lastWord.style.display = '';
+            if (recent) recent.style.display = '';
+            applyReaderFontScale();
         }
     }
 
@@ -511,31 +675,73 @@
     }
 
     // =========================================================================
-    // UI EVENT LISTENERS (header buttons — for sighted helpers / mouse / touch)
+    // TOOLBAR DIRECT CLICK HANDLERS (for sighted mouse/touch users)
+    // =========================================================================
+    function handleToolbarAction(value) {
+        if (currentView !== 'write') return;
+        switch (value) {
+            case 'KB_MODE':
+                cycleKeyboardMode();
+                updateModeBadge();
+                renderAndStart();
+                break;
+            case 'PHRASES':
+                inputMode = 'phrases';
+                renderAndStart();
+                break;
+            case 'PUNCT':
+                inputMode = 'punctuation';
+                renderAndStart();
+                break;
+            case 'SPEAK':
+                speak();
+                break;
+            case 'CLEAR':
+                clearText();
+                break;
+            case 'PAUSE':
+                enterPause();
+                break;
+        }
+    }
+
+    // Attach click handlers to each toolbar button (for direct interaction)
+    document.querySelectorAll('#toolbar .toolbar-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            // If toolbar is being scanned by runner, let runner handle it
+            if (inputMode === 'toolbar') return;
+            e.stopPropagation();
+            handleToolbarAction(btn.dataset.value);
+        });
+    });
+
+    // =========================================================================
+    // UI EVENT LISTENERS (header buttons)
     // =========================================================================
 
     // Settings
-    $('btnSettings').addEventListener('click', () => {
+    $('btnSettings').addEventListener('click', function() {
         Runner.stop();
         settingsPanel.classList.remove('hidden');
     });
-    $('btnCloseSettings').addEventListener('click', () => {
+    $('btnCloseSettings').addEventListener('click', function() {
         settingsPanel.classList.add('hidden');
         if (currentView === 'write' && !paused) renderAndStart();
     });
-    $('settingsBackdrop').addEventListener('click', () => {
+    $('settingsBackdrop').addEventListener('click', function() {
         settingsPanel.classList.add('hidden');
         if (currentView === 'write' && !paused) renderAndStart();
     });
 
     // Language
-    $('appLang').addEventListener('change', (e) => {
+    $('appLang').addEventListener('change', function(e) {
         I18N.setLang(e.target.value);
+        if (nameInput) nameInput.placeholder = I18N.t('your_name');
         if (currentView === 'write') renderAndStart();
     });
 
     // Speed (manual override resets adaptive)
-    speedSlider.addEventListener('input', () => {
+    speedSlider.addEventListener('input', function() {
         baseSpeed = parseInt(speedSlider.value);
         localStorage.setItem('okc-speed', baseSpeed);
         adaptiveHistory.length = 0;
@@ -543,14 +749,14 @@
     });
 
     // New room
-    $('btnNewRoom').addEventListener('click', () => {
+    $('btnNewRoom').addEventListener('click', function() {
         settingsPanel.classList.add('hidden');
         localStorage.removeItem('okc-room');
         location.hash = '/';
     });
 
     // Join room
-    $('btnJoinRoom').addEventListener('click', () => {
+    $('btnJoinRoom').addEventListener('click', function() {
         const code = $('joinRoomInput').value.trim();
         if (code) {
             settingsPanel.classList.add('hidden');
@@ -561,25 +767,25 @@
     // TTS button
     $('btnTTS').addEventListener('click', speak);
 
-    // Share (header, opens modal on mobile; on desktop sidebar is always visible)
-    $('btnShare').addEventListener('click', () => {
+    // Share (header, opens modal on mobile)
+    $('btnShare').addEventListener('click', function() {
         Runner.stop();
         openShareModal();
     });
 
     // Share modal buttons
-    $('btnCopyURL').addEventListener('click', () => {
-        const url = shareURL.textContent;
-        navigator.clipboard.writeText(url).then(() => {
+    $('btnCopyURL').addEventListener('click', function() {
+        var url = shareURL.textContent;
+        navigator.clipboard.writeText(url).then(function() {
             $('btnCopyURL').textContent = I18N.t('copied');
-            setTimeout(() => $('btnCopyURL').textContent = I18N.t('copy_link'), 2000);
+            setTimeout(function() { $('btnCopyURL').textContent = I18N.t('copy_link'); }, 2000);
         });
     });
-    $('btnCloseModal').addEventListener('click', () => {
+    $('btnCloseModal').addEventListener('click', function() {
         shareModal.classList.add('hidden');
         if (currentView === 'write' && !paused) renderAndStart();
     });
-    shareModal.addEventListener('click', (e) => {
+    shareModal.addEventListener('click', function(e) {
         if (e.target === shareModal) {
             shareModal.classList.add('hidden');
             if (currentView === 'write' && !paused) renderAndStart();
@@ -587,24 +793,81 @@
     });
 
     // Sidebar copy button
-    const btnSideCopy = $('btnSidebarCopy');
+    var btnSideCopy = $('btnSidebarCopy');
     if (btnSideCopy) {
-        btnSideCopy.addEventListener('click', () => {
-            const url = sidebarURL ? sidebarURL.textContent : '';
+        btnSideCopy.addEventListener('click', function() {
+            var url = sidebarURL ? sidebarURL.textContent : '';
             if (url) {
-                navigator.clipboard.writeText(url).then(() => {
+                navigator.clipboard.writeText(url).then(function() {
                     btnSideCopy.textContent = I18N.t('copied');
-                    setTimeout(() => btnSideCopy.textContent = I18N.t('copy_link'), 2000);
+                    setTimeout(function() { btnSideCopy.textContent = I18N.t('copy_link'); }, 2000);
                 });
             }
         });
     }
 
     // Share hint dismiss
-    $('btnDismissHint').addEventListener('click', () => {
+    $('btnDismissHint').addEventListener('click', function() {
         shareHint.classList.add('hidden');
         localStorage.setItem('okc-hint-dismissed', '1');
     });
+
+    // =========================================================================
+    // READER VIEW CONTROLS
+    // =========================================================================
+
+    // Reader name input
+    var readerNameEl = $('readerNameInput');
+    if (readerNameEl) {
+        readerNameEl.addEventListener('change', function() {
+            var name = readerNameEl.value.trim().slice(0, 20);
+            localStorage.setItem('okc-reader-name', name);
+            WS.sendName(name);
+        });
+        readerNameEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') readerNameEl.blur();
+        });
+    }
+
+    // Font size controls
+    var btnFontSmaller = $('btnFontSmaller');
+    var btnFontLarger = $('btnFontLarger');
+    if (btnFontSmaller) {
+        btnFontSmaller.addEventListener('click', function() {
+            readerFontScale = Math.max(0.6, readerFontScale - 0.15);
+            localStorage.setItem('okc-reader-font', readerFontScale);
+            applyReaderFontScale();
+            if (readerViewMode === 'full') applyReaderViewMode();
+        });
+    }
+    if (btnFontLarger) {
+        btnFontLarger.addEventListener('click', function() {
+            readerFontScale = Math.min(2.5, readerFontScale + 0.15);
+            localStorage.setItem('okc-reader-font', readerFontScale);
+            applyReaderFontScale();
+            if (readerViewMode === 'full') applyReaderViewMode();
+        });
+    }
+
+    // Auto-scroll toggle
+    var btnAutoScroll = $('btnAutoScroll');
+    if (btnAutoScroll) {
+        btnAutoScroll.addEventListener('click', function() {
+            readerAutoScroll = !readerAutoScroll;
+            localStorage.setItem('okc-reader-scroll', readerAutoScroll);
+            updateAutoScrollBtn();
+        });
+    }
+
+    // View mode toggle (smart vs full)
+    var btnViewToggle = $('btnReaderViewToggle');
+    if (btnViewToggle) {
+        btnViewToggle.addEventListener('click', function() {
+            readerViewMode = readerViewMode === 'smart' ? 'full' : 'smart';
+            localStorage.setItem('okc-reader-view', readerViewMode);
+            applyReaderViewMode();
+        });
+    }
 
     // =========================================================================
     // GLOBAL INPUT — single key / touch / click
@@ -623,8 +886,8 @@
         if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
         if (e.target && e.target.closest && (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel'))) return;
         if (e.target && e.target.closest && e.target.closest('.share-hint')) return;
-        // Don't capture clicks on header buttons
         if (e.target && e.target.closest && e.target.closest('.writer-header')) return;
+        if (e.target && e.target.closest && e.target.closest('.toolbar')) return;
 
         if (e.type === 'keydown') {
             if (e.key === ' ' || e.key === 'Enter') e.preventDefault();
@@ -636,28 +899,28 @@
         }
     }
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
         handleGlobalInput(e);
     });
 
-    document.addEventListener('touchstart', (e) => {
-        // Let clicks on specific keys be handled by Runner's per-key touch handlers
-        if (e.target.closest('.key') || e.target.closest('.phrase-btn')) return;
+    document.addEventListener('touchstart', function(e) {
+        if (e.target.closest('.key') || e.target.closest('.phrase-btn') || e.target.closest('.toolbar-btn')) return;
         if (e.target.closest('.writer-header')) return;
         if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
         if (e.target.closest('.share-hint')) return;
         if (e.target.closest('.writer-sidebar')) return;
+        if (e.target.closest('.toolbar')) return;
         handleGlobalInput(e);
     }, { passive: false });
 
-    document.addEventListener('mousedown', (e) => {
-        // Let clicks on specific keys be handled by Runner's per-key click handlers
-        if (e.target.closest('.key') || e.target.closest('.phrase-btn')) return;
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.key') || e.target.closest('.phrase-btn') || e.target.closest('.toolbar-btn')) return;
         if (e.target.closest('.writer-header')) return;
         if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
         if (e.target.closest('.share-hint')) return;
         if (e.target.closest('.writer-sidebar')) return;
+        if (e.target.closest('.toolbar')) return;
         handleGlobalInput(e);
     });
 

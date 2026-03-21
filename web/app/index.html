@@ -17,6 +17,9 @@
             <header class="writer-header">
                 <div class="header-left">
                     <span class="logo">One-Key</span>
+                    <span class="mode-badge" id="modeBadge">
+                        <span id="modeLabel">smart</span>
+                    </span>
                     <span class="status-pill" id="connStatus">
                         <span class="status-dot" id="statusDot"></span>
                         <span id="statusText"></span>
@@ -47,13 +50,43 @@
                 <span id="currentWord"></span>
             </div>
 
+            <!-- Toolbar (action buttons — always visible, scannable when ☰ selected) -->
+            <div class="toolbar" id="toolbar">
+                <div class="toolbar-btn back-btn hidden" id="toolbarBack" data-value="TOOLBAR_BACK">
+                    <span class="toolbar-icon">&#11013;</span>
+                </div>
+                <div class="toolbar-btn mode-toolbar-btn" id="toolbarMode" data-value="KB_MODE">
+                    <span class="toolbar-icon">&#128292;</span>
+                    <span class="toolbar-label" id="toolbarModeLabel">smart</span>
+                </div>
+                <div class="toolbar-btn" id="toolbarPhrases" data-value="PHRASES">
+                    <span class="toolbar-icon">&#128172;</span>
+                    <span class="toolbar-label" data-i18n="mode_phrases">S&#228;tze</span>
+                </div>
+                <div class="toolbar-btn" id="toolbarPunct" data-value="PUNCT">
+                    <span class="toolbar-icon">#?!</span>
+                </div>
+                <div class="toolbar-btn" id="toolbarSpeak" data-value="SPEAK">
+                    <span class="toolbar-icon">&#128266;</span>
+                    <span class="toolbar-label" data-i18n="speak">Vorlesen</span>
+                </div>
+                <div class="toolbar-btn" id="toolbarClear" data-value="CLEAR">
+                    <span class="toolbar-icon">&#128465;</span>
+                    <span class="toolbar-label" data-i18n="clear">L&#246;schen</span>
+                </div>
+                <div class="toolbar-btn pause-toolbar-btn" id="toolbarPause" data-value="PAUSE">
+                    <span class="toolbar-icon">&#9208;</span>
+                    <span class="toolbar-label" data-i18n="pause">Pause</span>
+                </div>
+            </div>
+
             <!-- Inline share hint (shown briefly on first load) -->
             <div class="share-hint hidden" id="shareHint">
                 <span data-i18n="share_hint">Tippe auf das QR-Symbol, damit andere mitlesen.</span>
                 <button class="share-hint-close" id="btnDismissHint">&times;</button>
             </div>
 
-            <!-- Keyboard area (letters + action keys in one flat scan) -->
+            <!-- Keyboard area (letters + space + backspace + ☰ more) -->
             <div id="keyboardContainer" class="keyboard"></div>
             <div id="phrasesContainer" class="quick-phrases hidden"></div>
         </main>
@@ -61,10 +94,16 @@
         <!-- Desktop sidebar (visible on wide screens) -->
         <aside class="writer-sidebar" id="writerSidebar">
             <div class="sidebar-section">
-                <div class="sidebar-label" data-i18n="share_title">Teilen</div>
                 <canvas id="sidebarQR" width="180" height="180"></canvas>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-label">Link</div>
                 <div class="sidebar-url" id="sidebarURL"></div>
                 <button class="btn btn-outline btn-block btn-small" id="btnSidebarCopy" data-i18n="copy_link">Link kopieren</button>
+            </div>
+            <div class="sidebar-section sidebar-room-info">
+                <div class="sidebar-label">Room</div>
+                <div class="sidebar-room-id" id="sidebarRoomId"></div>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-label" data-i18n="readers_label">Mitleser</div>
@@ -72,10 +111,7 @@
                     <span class="sidebar-reader-count" id="sidebarReaderCount">0</span>
                     <span class="sidebar-reader-text" data-i18n="readers_connected">verbunden</span>
                 </div>
-            </div>
-            <div class="sidebar-section sidebar-room-info">
-                <div class="sidebar-label">Room</div>
-                <div class="sidebar-room-id" id="sidebarRoomId"></div>
+                <ul class="reader-list" id="sidebarReaderList"></ul>
             </div>
         </aside>
     </div>
@@ -93,15 +129,33 @@
 <!-- ===== Reader View ===== -->
 <div id="read-view" class="view hidden">
     <header class="reader-header">
-        <span class="logo">One-Key</span>
-        <span class="status-pill" id="readerConnStatus">
-            <span class="status-dot" id="readerStatusDot"></span>
-            <span id="readerStatusText"></span>
-        </span>
+        <div class="header-left">
+            <span class="logo">One-Key</span>
+            <span class="status-pill" id="readerConnStatus">
+                <span class="status-dot" id="readerStatusDot"></span>
+                <span id="readerStatusText"></span>
+            </span>
+        </div>
+        <div class="header-right">
+            <button class="icon-btn" id="btnReaderViewToggle" title="View mode" aria-label="View mode">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+        </div>
     </header>
-    <div class="reader-text empty" id="readerText" data-i18n="waiting">Warte auf Nachricht&#8230;</div>
+    <div class="reader-display" id="readerDisplay">
+        <div class="reader-last-word" id="readerLastWord"></div>
+        <div class="reader-recent-words" id="readerRecentWords"></div>
+        <div class="reader-full-text" id="readerFullText">
+            <span class="reader-empty-text" data-i18n="waiting">Warte auf Nachricht&#8230;</span>
+        </div>
+    </div>
     <div class="reader-bar">
-        <span data-i18n="reader_info">Du liest mit. Der Text erscheint automatisch.</span>
+        <input type="text" class="reader-name-input" id="readerNameInput" maxlength="20">
+        <div class="reader-view-controls">
+            <button class="view-btn" id="btnFontSmaller" title="Smaller">A&#8722;</button>
+            <button class="view-btn" id="btnFontLarger" title="Larger">A+</button>
+            <button class="view-btn active" id="btnAutoScroll" title="Auto-scroll">&#8597;</button>
+        </div>
     </div>
 </div>
 

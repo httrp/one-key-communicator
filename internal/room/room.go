@@ -2,7 +2,6 @@ package room
 
 import (
 	"encoding/json"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -24,6 +23,7 @@ type Room struct {
 type Client struct {
 	Send     chan []byte
 	IsWriter bool
+	Name     string
 }
 
 // Message types sent over WebSocket.
@@ -47,10 +47,11 @@ func (r *Room) AddReader(c *Client) {
 	r.readers[c] = true
 	r.lastActive = time.Now()
 	count := len(r.readers)
+	names := r.readerNames()
 	writer := r.writer
 	r.mu.Unlock()
 
-	r.sendReaderCount(writer, count)
+	r.sendReaderInfo(writer, count, names)
 }
 
 // RemoveClient removes a client (writer or reader).
@@ -63,12 +64,25 @@ func (r *Room) RemoveClient(c *Client) {
 	}
 	delete(r.readers, c)
 	count := len(r.readers)
+	names := r.readerNames()
 	writer := r.writer
 	r.mu.Unlock()
 
 	if !isWriter && writer != nil {
-		r.sendReaderCount(writer, count)
+		r.sendReaderInfo(writer, count, names)
 	}
+}
+
+// SetReaderName sets the display name for a reader and notifies the writer.
+func (r *Room) SetReaderName(c *Client, name string) {
+	r.mu.Lock()
+	c.Name = name
+	count := len(r.readers)
+	names := r.readerNames()
+	writer := r.writer
+	r.mu.Unlock()
+
+	r.sendReaderInfo(writer, count, names)
 }
 
 // UpdateText sets the text and broadcasts to all readers.
@@ -112,12 +126,26 @@ func (r *Room) HasWriter() bool {
 	return r.writer != nil
 }
 
-// sendReaderCount notifies the writer of the current reader count.
-func (r *Room) sendReaderCount(w *Client, count int) {
+// readerNames returns all reader names. Must be called with r.mu held.
+func (r *Room) readerNames() []string {
+	names := make([]string, 0, len(r.readers))
+	for c := range r.readers {
+		names = append(names, c.Name)
+	}
+	return names
+}
+
+// sendReaderInfo notifies the writer of the current reader count and names.
+func (r *Room) sendReaderInfo(w *Client, count int, names []string) {
 	if w == nil {
 		return
 	}
-	msg := []byte(`{"type":"readers","data":"` + strconv.Itoa(count) + `"}`)
+	info := struct {
+		Count int      `json:"count"`
+		Names []string `json:"names"`
+	}{count, names}
+	infoBytes, _ := json.Marshal(info)
+	msg := []byte(`{"type":"readers","data":` + string(infoBytes) + `}`)
 	select {
 	case w.Send <- msg:
 	default:

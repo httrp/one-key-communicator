@@ -189,12 +189,17 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 		if err != nil {
 			break
 		}
-		if !client.IsWriter {
-			continue
-		}
 
 		var msg room.Message
 		if err := json.Unmarshal(buf[:n], &msg); err != nil {
+			continue
+		}
+
+		// Readers can only send "name" messages
+		if !client.IsWriter {
+			if msg.Type == "name" {
+				rm.SetReaderName(client, msg.Data)
+			}
 			continue
 		}
 

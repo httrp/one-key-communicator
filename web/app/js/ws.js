@@ -75,6 +75,13 @@ const WS = {
         }
     },
 
+    /** Send reader display name */
+    sendName(name) {
+        if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+            this._ws.send(JSON.stringify({ type: 'name', data: name }));
+        }
+    },
+
     /** Disconnect */
     disconnect() {
         clearTimeout(this._reconnectTimer);
