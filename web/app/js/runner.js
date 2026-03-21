@@ -1,20 +1,28 @@
 /**
- * Runner — the core input mechanism.
+ * Runner — the core single-key input mechanism.
+ *
  * A highlight moves across keys; pressing the action key selects the current one.
+ *
+ * Interaction modes (all co-exist):
+ *   1. Auto-scan: highlight advances at interval (for switch/single-key users)
+ *   2. Mouse hover: pauses auto-scan, highlights hovered key; click selects
+ *   3. Touch: tap any key directly to select it
+ *   4. Keyboard: any keypress selects current highlighted key
  */
 const Runner = {
     _active: false,
     _index: 0,
     _timer: null,
-    _speed: 800,       // ms per step
-    _keys: [],         // array of key elements
-    _onSelect: null,   // callback(keyValue)
+    _speed: 800,
+    _keys: [],
+    _onSelect: null,
+    _hoverPaused: false,
 
     /**
      * Start the runner.
      * @param {HTMLElement[]} keys - array of key DOM elements
      * @param {number} speed - ms per step
-     * @param {function} onSelect - callback when a key is selected
+     * @param {function} onSelect - callback(keyValue)
      */
     start(keys, speed, onSelect) {
         this.stop();
@@ -23,15 +31,18 @@ const Runner = {
         this._onSelect = onSelect;
         this._index = 0;
         this._active = true;
+        this._hoverPaused = false;
         this._highlight();
         this._timer = setInterval(() => this._advance(), this._speed);
+        this._attachInteraction();
     },
 
-    /** Stop the runner */
+    /** Stop the runner and clean up */
     stop() {
         this._active = false;
         clearInterval(this._timer);
         this._timer = null;
+        this._hoverPaused = false;
         this._clearHighlight();
     },
 
@@ -44,7 +55,12 @@ const Runner = {
         }
     },
 
-    /** Called when the user presses their key */
+    /** Get current speed */
+    getSpeed() {
+        return this._speed;
+    },
+
+    /** Called when the user presses their single key (auto-scan mode) */
     select() {
         if (!this._active || this._keys.length === 0) return;
         const key = this._keys[this._index];
@@ -52,11 +68,11 @@ const Runner = {
 
         // Flash effect
         key.style.transition = 'none';
-        key.style.transform = 'scale(1.3)';
+        key.style.transform = 'scale(1.25)';
         setTimeout(() => {
-            key.style.transition = 'all 0.15s';
+            key.style.transition = 'all 0.12s';
             key.style.transform = '';
-        }, 150);
+        }, 120);
 
         if (this._onSelect) this._onSelect(value);
     },
@@ -66,7 +82,51 @@ const Runner = {
         return this._active;
     },
 
+    /** Attach mouse/touch interaction to each key element */
+    _attachInteraction() {
+        for (let i = 0; i < this._keys.length; i++) {
+            const key = this._keys[i];
+
+            // Mouse hover: pause auto-scan, highlight this key
+            key._rkEnter = () => {
+                if (!this._active) return;
+                this._hoverPaused = true;
+                this._clearHighlight();
+                this._index = i;
+                this._highlight();
+            };
+            key._rkLeave = () => {
+                this._hoverPaused = false;
+            };
+            // Direct click
+            key._rkClick = (e) => {
+                e.stopPropagation();
+                if (!this._active) return;
+                this._clearHighlight();
+                this._index = i;
+                this._highlight();
+                this.select();
+            };
+            // Direct touch
+            key._rkTouch = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!this._active) return;
+                this._clearHighlight();
+                this._index = i;
+                this._highlight();
+                this.select();
+            };
+
+            key.addEventListener('mouseenter', key._rkEnter);
+            key.addEventListener('mouseleave', key._rkLeave);
+            key.addEventListener('click', key._rkClick);
+            key.addEventListener('touchstart', key._rkTouch, { passive: false });
+        }
+    },
+
     _advance() {
+        if (this._hoverPaused) return;
         this._clearHighlight();
         this._index = (this._index + 1) % this._keys.length;
         this._highlight();

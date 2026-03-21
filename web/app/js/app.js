@@ -1,18 +1,20 @@
 /**
- * OKC App — Main application controller.
- *
- * Flow:  Open /app/ → auto-create room → keyboard is immediately active.
+ * One-Key-Communicator — Main application controller.
  *
  * The entire app is controllable with ONE key:
- *   - Keyboard has ⏸ PAUSE and ☰ MENU at the end of every layout
- *   - MENU switches the runner to scan over toolbar actions
- *   - Toolbar has a ⬅ BACK to return to keyboard
- *   - PAUSE dims the screen; one key press resumes
+ *   1. Runner scans through keyboard keys + inline action buttons
+ *   2. Mouse hover pauses runner & highlights; click selects
+ *   3. Touch on any key selects it directly
  *
- * Keyboard modes:
- *   "abc"   — classic alphabetical
- *   "smart" — frequency-reordered after each keystroke
- *   "wild"  — letters + word suggestions mixed
+ * Features:
+ *   - Auto-capitalization (start of sentence, after punctuation)
+ *   - Adaptive speed (slows down on errors, speeds up on accuracy)
+ *   - Text-to-speech via Web Speech API
+ *   - Reader count display (via WebSocket)
+ *   - Current word preview (large, accessible)
+ *   - Desktop sidebar with QR code
+ *   - Three keyboard modes: abc / smart / wild
+ *   - Pause/lock overlay
  */
 (function () {
     'use strict';
@@ -23,10 +25,15 @@
     let currentView = null;
     let currentText = '';
     let roomId = null;
-    let inputMode = 'keyboard';  // 'keyboard' | 'phrases' | 'toolbar'
+    let inputMode = 'keyboard';  // 'keyboard' | 'phrases' | 'punctuation'
     let paused = false;
     let keys = [];
-    let phraseButtons = [];
+    let readerCount = 0;
+
+    // Adaptive speed state
+    const adaptiveHistory = [];
+    const ADAPTIVE_MAX = 20;
+    let baseSpeed = 800;
 
     // =========================================================================
     // DOM REFS
@@ -51,7 +58,13 @@
     const settingsPanel     = $('settingsPanel');
     const shareHint         = $('shareHint');
     const pauseOverlay      = $('pauseOverlay');
-    const kbModeLabel       = $('kbModeLabel');
+    const currentWordEl     = $('currentWord');
+    const readerBadge       = $('readerBadge');
+    const readerCountEl     = $('readerCount');
+    const sidebarQR         = $('sidebarQR');
+    const sidebarURL        = $('sidebarURL');
+    const sidebarReaderCount = $('sidebarReaderCount');
+    const sidebarRoomId     = $('sidebarRoomId');
 
     // =========================================================================
     // INIT
@@ -59,12 +72,18 @@
     const lang = I18N.init();
     $('appLang').value = lang;
 
-    // Restore keyboard mode preference
+    // Restore keyboard mode
     const savedKbMode = localStorage.getItem('okc-kb-mode');
     if (savedKbMode && ['abc', 'smart', 'wild'].includes(savedKbMode)) {
         Keyboard.setMode(savedKbMode);
     }
-    updateKbModeLabel();
+
+    // Restore speed
+    const savedSpeed = localStorage.getItem('okc-speed');
+    if (savedSpeed) {
+        baseSpeed = parseInt(savedSpeed) || 800;
+        speedSlider.value = baseSpeed;
+    }
 
     // =========================================================================
     // ROUTING
@@ -138,6 +157,9 @@
         currentText = '';
         paused = false;
         inputMode = 'keyboard';
+        readerCount = 0;
+        adaptiveHistory.length = 0;
+
         views.write.classList.remove('hidden');
         views.loading.classList.add('hidden');
         views.read.classList.add('hidden');
@@ -145,25 +167,27 @@
         pauseOverlay.classList.add('hidden');
 
         updateTextDisplay();
+        updateCurrentWord();
+        updateReaderCount(0);
+        setupSidebar();
         renderAndStart();
 
         WS.connect(id, 'write', onWriterMessage, onConnectionStatus);
 
-        // Share hint on first use
         if (!localStorage.getItem('okc-hint-dismissed')) {
             shareHint.classList.remove('hidden');
-            setTimeout(() => shareHint.classList.add('hidden'), 8000);
+            setTimeout(() => shareHint.classList.add('hidden'), 6000);
         } else {
             shareHint.classList.add('hidden');
         }
     }
 
     // =========================================================================
-    // KEYBOARD / PHRASES / TOOLBAR RENDERING
+    // RENDERING
     // =========================================================================
     function renderAndStart() {
         Runner.stop();
-        const speed = parseInt(speedSlider.value);
+        const speed = getAdaptiveSpeed();
 
         if (inputMode === 'keyboard') {
             keyboardContainer.classList.remove('hidden');
@@ -173,122 +197,132 @@
         } else if (inputMode === 'phrases') {
             keyboardContainer.classList.add('hidden');
             phrasesContainer.classList.remove('hidden');
-            phraseButtons = Keyboard.renderPhrases(phrasesContainer);
-            Runner.start(phraseButtons, speed, onPhraseSelected);
-        } else if (inputMode === 'toolbar') {
+            keys = Keyboard.renderPhrases(phrasesContainer);
+            Runner.start(keys, speed, onPhraseSelected);
+        } else if (inputMode === 'punctuation') {
             keyboardContainer.classList.remove('hidden');
             phrasesContainer.classList.add('hidden');
-            keys = Keyboard.renderToolbar(keyboardContainer);
-            Runner.start(keys, speed, onToolbarSelected);
+            keys = Keyboard.renderPunctuation(keyboardContainer, I18N.getLang());
+            Runner.start(keys, speed, onPunctSelected);
         }
     }
 
     // =========================================================================
-    // KEY SELECTION HANDLERS
+    // KEY SELECTION HANDLER (main keyboard)
     // =========================================================================
     function onKeySelected(value) {
-        // Navigation keys
-        if (value === 'MENU') {
-            inputMode = 'toolbar';
-            renderAndStart();
-            return;
-        }
-        if (value === 'PAUSE') {
-            enterPause();
-            return;
-        }
-
-        // Regular key input
+        // Action keys
         switch (value) {
+            case 'PAUSE':   enterPause(); return;
+            case 'CLEAR':   clearText(); return;
+            case 'KB_MODE': cycleKeyboardMode(); renderAndStart(); return;
+            case 'PHRASES': inputMode = 'phrases'; renderAndStart(); return;
+            case 'PUNCT':   inputMode = 'punctuation'; renderAndStart(); return;
+            case 'SPEAK':   speak(); return;
             case 'BACKSPACE':
-                currentText = currentText.slice(0, -1);
-                break;
-            case 'NEWLINE':
-                currentText += '\n';
-                break;
-            case 'DONE':
-                if (currentText && !currentText.endsWith('.') && !currentText.endsWith('!') && !currentText.endsWith('?')) {
-                    currentText += '.';
+                if (currentText.length > 0) {
+                    currentText = currentText.slice(0, -1);
+                    recordAction('backspace');
                 }
                 break;
             default:
-                // Could be a letter OR a whole word (wild mode)
-                if (value.length > 1 && value === value.toUpperCase()) {
-                    // Word suggestion from wild mode — append word
-                    const currentWord = SmartKeyboard.getCurrentWord(currentText);
-                    // Remove partially typed portion and replace with full word
-                    if (currentWord) {
-                        currentText = currentText.slice(0, -currentWord.length);
-                    }
-                    currentText += value.toLowerCase() + ' ';
+                // Letter or word suggestion
+                if (value.length > 1 && value === value.toUpperCase() && !/^[.!?,;:'"()\-¡¿…]/.test(value)) {
+                    // Word suggestion from wild mode
+                    const cw = SmartKeyboard.getCurrentWord(currentText);
+                    if (cw) currentText = currentText.slice(0, -cw.length);
+                    currentText += autoCase(value.toLowerCase()) + ' ';
+                } else if (value === ' ') {
+                    currentText += ' ';
                 } else {
-                    currentText += value.toLowerCase();
+                    // Single letter — apply auto-capitalization
+                    currentText += autoCase(value.toLowerCase());
                 }
+                recordAction('select');
                 break;
         }
 
         updateTextDisplay();
+        updateCurrentWord();
         WS.sendText(currentText);
 
-        // In smart/wild mode, re-render keyboard with new frequency order
+        // In smart/wild mode, re-render for new frequency order
         if (Keyboard.getMode() !== 'abc') {
             renderAndStart();
         }
     }
 
     function onPhraseSelected(value) {
-        if (value === 'TB_BACK') {
+        if (value === 'BACK') {
             inputMode = 'keyboard';
             renderAndStart();
             return;
         }
-
         if (currentText && !currentText.endsWith(' ') && !currentText.endsWith('\n')) {
             currentText += ' ';
         }
         currentText += value;
+        recordAction('select');
         updateTextDisplay();
+        updateCurrentWord();
         WS.sendText(currentText);
     }
 
-    function onToolbarSelected(value) {
-        switch (value) {
-            case 'TB_BACK':
-                inputMode = 'keyboard';
-                renderAndStart();
-                break;
-            case 'TB_CLEAR':
-                currentText = '';
-                updateTextDisplay();
-                WS.sendClear();
-                inputMode = 'keyboard';
-                renderAndStart();
-                break;
-            case 'TB_SHARE':
-                Runner.stop();
-                openShareModal();
-                break;
-            case 'TB_SETTINGS':
-                Runner.stop();
-                settingsPanel.classList.remove('hidden');
-                break;
-            case 'TB_PHRASES':
-                inputMode = 'phrases';
-                renderAndStart();
-                break;
-            case 'TB_MODE':
-                cycleKeyboardMode();
-                inputMode = 'keyboard';
-                renderAndStart();
-                break;
-            case 'TB_FASTER':
-                adjustSpeed(-100);
-                // Stay in toolbar
-                break;
-            case 'TB_SLOWER':
-                adjustSpeed(100);
-                break;
+    function onPunctSelected(value) {
+        if (value === 'BACK') {
+            inputMode = 'keyboard';
+            renderAndStart();
+            return;
         }
+        currentText += value;
+        recordAction('select');
+        updateTextDisplay();
+        updateCurrentWord();
+        WS.sendText(currentText);
+    }
+
+    // =========================================================================
+    // AUTO-CAPITALIZATION
+    // =========================================================================
+    function autoCase(char) {
+        if (!char || char === ' ') return char;
+        // Capitalize at start of text
+        if (currentText.length === 0) return char.toUpperCase();
+        // Capitalize after newline
+        if (currentText.endsWith('\n')) return char.toUpperCase();
+        // Capitalize after sentence-ending punctuation + space
+        const trimmed = currentText.trimEnd();
+        if (trimmed.length > 0) {
+            const last = trimmed[trimmed.length - 1];
+            if ('.!?'.includes(last) && currentText.endsWith(' ')) {
+                return char.toUpperCase();
+            }
+        }
+        return char;
+    }
+
+    // =========================================================================
+    // ADAPTIVE SPEED
+    // =========================================================================
+    function recordAction(type) {
+        adaptiveHistory.push(type);
+        if (adaptiveHistory.length > ADAPTIVE_MAX) adaptiveHistory.shift();
+    }
+
+    function getAdaptiveSpeed() {
+        if (adaptiveHistory.length < 5) return baseSpeed;
+        const backspaces = adaptiveHistory.filter(a => a === 'backspace').length;
+        const rate = backspaces / adaptiveHistory.length;
+
+        let speed = baseSpeed;
+        if (rate > 0.35) {
+            // Many errors — slow down (up to 40%)
+            speed = baseSpeed * (1 + rate);
+        } else if (rate < 0.1 && adaptiveHistory.length >= 10) {
+            // Very accurate — speed up (up to 20%)
+            speed = baseSpeed * 0.8;
+        }
+        return Math.round(Math.max(200, Math.min(2000, speed)));
     }
 
     // =========================================================================
@@ -315,23 +349,36 @@
         const next = modes[(idx + 1) % modes.length];
         Keyboard.setMode(next);
         localStorage.setItem('okc-kb-mode', next);
-        updateKbModeLabel();
-    }
-
-    function updateKbModeLabel() {
-        const mode = Keyboard.getMode();
-        const labels = { abc: 'ABC', smart: 'Smart', wild: 'Wild' };
-        if (kbModeLabel) kbModeLabel.textContent = labels[mode] || 'ABC';
     }
 
     // =========================================================================
-    // SPEED ADJUSTMENT
+    // CLEAR TEXT
     // =========================================================================
-    function adjustSpeed(delta) {
-        let val = parseInt(speedSlider.value) + delta;
-        val = Math.max(200, Math.min(2000, val));
-        speedSlider.value = val;
-        Runner.setSpeed(val);
+    function clearText() {
+        currentText = '';
+        updateTextDisplay();
+        updateCurrentWord();
+        WS.sendClear();
+        inputMode = 'keyboard';
+        renderAndStart();
+    }
+
+    // =========================================================================
+    // TEXT-TO-SPEECH
+    // =========================================================================
+    function speak() {
+        if (!currentText.trim()) return;
+        if (!('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(currentText);
+        const langMap = {
+            de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES',
+            it: 'it-IT', nl: 'nl-NL', pl: 'pl-PL', tr: 'tr-TR'
+        };
+        utt.lang = langMap[I18N.getLang()] || 'de-DE';
+        utt.rate = 0.9;
+        window.speechSynthesis.speak(utt);
     }
 
     // =========================================================================
@@ -347,8 +394,55 @@
         textDisplay.scrollTop = textDisplay.scrollHeight;
     }
 
+    // =========================================================================
+    // CURRENT WORD PREVIEW
+    // =========================================================================
+    function updateCurrentWord() {
+        const word = SmartKeyboard.getCurrentWord(currentText);
+        if (currentWordEl) {
+            currentWordEl.textContent = word || '';
+        }
+    }
+
+    // =========================================================================
+    // READER COUNT
+    // =========================================================================
+    function updateReaderCount(count) {
+        readerCount = count;
+        if (readerCountEl) readerCountEl.textContent = count;
+        if (sidebarReaderCount) sidebarReaderCount.textContent = count;
+        // Show/hide badge based on count
+        if (readerBadge) {
+            readerBadge.style.display = count > 0 ? '' : 'none';
+        }
+    }
+
+    // =========================================================================
+    // DESKTOP SIDEBAR
+    // =========================================================================
+    function setupSidebar() {
+        if (!roomId) return;
+        const readURL = location.origin + '/app/#/read/' + roomId;
+
+        // QR code in sidebar
+        if (sidebarQR) {
+            QRCode.draw(sidebarQR, readURL, 180);
+        }
+        if (sidebarURL) {
+            sidebarURL.textContent = readURL;
+        }
+        if (sidebarRoomId) {
+            sidebarRoomId.textContent = roomId;
+        }
+    }
+
+    // =========================================================================
+    // WEBSOCKET MESSAGES
+    // =========================================================================
     function onWriterMessage(msg) {
-        // Future: status updates
+        if (msg.type === 'readers') {
+            updateReaderCount(parseInt(msg.data) || 0);
+        }
     }
 
     // =========================================================================
@@ -399,17 +493,9 @@
     function onConnectionStatus(status) {
         statusDot.className = 'status-dot';
         switch (status) {
-            case 'connected':
-                statusDot.classList.add('connected');
-                statusText.textContent = I18N.t('connected');
-                break;
-            case 'disconnected':
-                statusDot.classList.add('disconnected');
-                statusText.textContent = I18N.t('disconnected');
-                break;
-            case 'reconnecting':
-                statusText.textContent = I18N.t('reconnecting');
-                break;
+            case 'connected':    statusDot.classList.add('connected'); statusText.textContent = I18N.t('connected'); break;
+            case 'disconnected': statusDot.classList.add('disconnected'); statusText.textContent = I18N.t('disconnected'); break;
+            case 'reconnecting': statusText.textContent = I18N.t('reconnecting'); break;
         }
     }
 
@@ -418,25 +504,17 @@
         const text = $('readerStatusText');
         dot.className = 'status-dot';
         switch (status) {
-            case 'connected':
-                dot.classList.add('connected');
-                text.textContent = I18N.t('connected');
-                break;
-            case 'disconnected':
-                dot.classList.add('disconnected');
-                text.textContent = I18N.t('disconnected');
-                break;
-            case 'reconnecting':
-                text.textContent = I18N.t('reconnecting');
-                break;
+            case 'connected':    dot.classList.add('connected'); text.textContent = I18N.t('connected'); break;
+            case 'disconnected': dot.classList.add('disconnected'); text.textContent = I18N.t('disconnected'); break;
+            case 'reconnecting': text.textContent = I18N.t('reconnecting'); break;
         }
     }
 
     // =========================================================================
-    // UI EVENT LISTENERS (header buttons — for sighted helpers)
+    // UI EVENT LISTENERS (header buttons — for sighted helpers / mouse / touch)
     // =========================================================================
 
-    // Settings panel
+    // Settings
     $('btnSettings').addEventListener('click', () => {
         Runner.stop();
         settingsPanel.classList.remove('hidden');
@@ -450,20 +528,18 @@
         if (currentView === 'write' && !paused) renderAndStart();
     });
 
-    // Language change
+    // Language
     $('appLang').addEventListener('change', (e) => {
         I18N.setLang(e.target.value);
-        if (currentView === 'write') {
-            renderAndStart();
-        }
+        if (currentView === 'write') renderAndStart();
     });
 
-    // Keyboard mode cycling (header button)
-    $('btnKbMode').addEventListener('click', () => {
-        cycleKeyboardMode();
-        if (currentView === 'write' && inputMode === 'keyboard') {
-            renderAndStart();
-        }
+    // Speed (manual override resets adaptive)
+    speedSlider.addEventListener('input', () => {
+        baseSpeed = parseInt(speedSlider.value);
+        localStorage.setItem('okc-speed', baseSpeed);
+        adaptiveHistory.length = 0;
+        Runner.setSpeed(baseSpeed);
     });
 
     // New room
@@ -482,28 +558,10 @@
         }
     });
 
-    // Clear (header button)
-    $('btnClear').addEventListener('click', () => {
-        currentText = '';
-        updateTextDisplay();
-        WS.sendClear();
-    });
+    // TTS button
+    $('btnTTS').addEventListener('click', speak);
 
-    // Speed slider
-    speedSlider.addEventListener('input', () => {
-        Runner.setSpeed(parseInt(speedSlider.value));
-    });
-
-    // Pause button (header — for helpers)
-    $('btnPause').addEventListener('click', () => {
-        if (paused) {
-            leavePause();
-        } else {
-            enterPause();
-        }
-    });
-
-    // Share (header button)
+    // Share (header, opens modal on mobile; on desktop sidebar is always visible)
     $('btnShare').addEventListener('click', () => {
         Runner.stop();
         openShareModal();
@@ -514,9 +572,7 @@
         const url = shareURL.textContent;
         navigator.clipboard.writeText(url).then(() => {
             $('btnCopyURL').textContent = I18N.t('copied');
-            setTimeout(() => {
-                $('btnCopyURL').textContent = I18N.t('copy_link');
-            }, 2000);
+            setTimeout(() => $('btnCopyURL').textContent = I18N.t('copy_link'), 2000);
         });
     });
     $('btnCloseModal').addEventListener('click', () => {
@@ -530,6 +586,20 @@
         }
     });
 
+    // Sidebar copy button
+    const btnSideCopy = $('btnSidebarCopy');
+    if (btnSideCopy) {
+        btnSideCopy.addEventListener('click', () => {
+            const url = sidebarURL ? sidebarURL.textContent : '';
+            if (url) {
+                navigator.clipboard.writeText(url).then(() => {
+                    btnSideCopy.textContent = I18N.t('copied');
+                    setTimeout(() => btnSideCopy.textContent = I18N.t('copy_link'), 2000);
+                });
+            }
+        });
+    }
+
     // Share hint dismiss
     $('btnDismissHint').addEventListener('click', () => {
         shareHint.classList.add('hidden');
@@ -537,7 +607,7 @@
     });
 
     // =========================================================================
-    // GLOBAL INPUT — ANY key / ANY touch / ANY click = select or unpause
+    // GLOBAL INPUT — single key / touch / click
     // =========================================================================
     function handleGlobalInput(e) {
         if (currentView !== 'write') return;
@@ -549,10 +619,12 @@
             return;
         }
 
-        // Don't capture when in settings/modal/form
+        // Don't capture form inputs or overlays
         if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
         if (e.target && e.target.closest && (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel'))) return;
         if (e.target && e.target.closest && e.target.closest('.share-hint')) return;
+        // Don't capture clicks on header buttons
+        if (e.target && e.target.closest && e.target.closest('.writer-header')) return;
 
         if (e.type === 'keydown') {
             if (e.key === ' ' || e.key === 'Enter') e.preventDefault();
@@ -570,16 +642,22 @@
     });
 
     document.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.toolbar') || e.target.closest('.writer-header')) return;
+        // Let clicks on specific keys be handled by Runner's per-key touch handlers
+        if (e.target.closest('.key') || e.target.closest('.phrase-btn')) return;
+        if (e.target.closest('.writer-header')) return;
         if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
         if (e.target.closest('.share-hint')) return;
+        if (e.target.closest('.writer-sidebar')) return;
         handleGlobalInput(e);
     }, { passive: false });
 
     document.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.toolbar') || e.target.closest('.writer-header')) return;
+        // Let clicks on specific keys be handled by Runner's per-key click handlers
+        if (e.target.closest('.key') || e.target.closest('.phrase-btn')) return;
+        if (e.target.closest('.writer-header')) return;
         if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
         if (e.target.closest('.share-hint')) return;
+        if (e.target.closest('.writer-sidebar')) return;
         handleGlobalInput(e);
     });
 

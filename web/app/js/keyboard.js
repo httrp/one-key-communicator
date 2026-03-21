@@ -1,216 +1,195 @@
 /**
- * Keyboard — renders the on-screen keyboard and quick phrases.
+ * Keyboard — renders the on-screen keyboard.
  *
- * Supports three keyboard modes:
- *   "abc"   — Standard alphabetical layout
- *   "smart" — Letters reordered by bigram frequency after each keystroke
- *   "wild"  — Letters + word suggestions mixed
+ * Three keyboard modes:
+ *   "abc"   — Alphabetical, space first
+ *   "smart" — Frequency-reordered, space promoted when word is long enough
+ *   "wild"  — Letters + word suggestions, space promoted
  *
- * Navigation keys added to every mode so the entire app
- * can be operated with a single key:
- *   ☰ MENU    — switch to toolbar scanning
- *   ⏸ PAUSE   — enter pause/lock mode
+ * The keyboard renders ALL interactive elements in one flat list:
+ *   letters → space → backspace → action buttons (clear, mode, phrases, speak, punct, pause)
+ *
+ * This means the Runner scans through everything in one pass —
+ * no separate toolbar/menu mode needed.
  */
 const Keyboard = {
 
-    /** Current keyboard mode: 'abc', 'smart', 'wild' */
     _mode: 'abc',
 
-    /** Language-specific keyboard base layouts (alphabetical) */
+    /** Language-specific letter layouts (alphabetical) */
     layouts: {
-        de: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','Ä','Ö','Ü','ß'],
-        en: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'],
-        fr: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','É','È','Ê','Ë','À','Ç','Ù','Ô','Î'],
-        es: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','Á','É','Í','Ó','Ú','Ñ','Ü'],
-        it: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','À','È','É','Ì','Ò','Ù'],
-        nl: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'],
-        pl: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','Ą','Ć','Ę','Ł','Ń','Ó','Ś','Ź','Ż'],
-        tr: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','Ç','Ğ','İ','Ö','Ş','Ü'],
+        de: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ'.split(''),
+        en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+        fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÉÈÊÀÇÙÔ'.split(''),
+        es: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÑ'.split(''),
+        it: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÒÙ'.split(''),
+        nl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+        pl: 'ABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ'.split(''),
+        tr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÇĞİÖŞÜ'.split(''),
     },
 
-    /** Punctuation per language */
+    /** Punctuation characters per language */
     punctuation: {
-        de: ['.','!','?',','],
-        en: ['.','!','?',',','\'','-'],
-        fr: ['.','!','?',',','\''],
-        es: ['.','!','?',',','¡','¿'],
-        it: ['.','!','?',',','\''],
-        nl: ['.','!','?',',','\'','-'],
-        pl: ['.','!','?',','],
-        tr: ['.','!','?',','],
+        de: ['.','!','?',',',':',';','"','(',')','-','...'],
+        en: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
+        fr: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
+        es: ['.','!','?',',',':',';','"','(',')','-','¡','¿','...'],
+        it: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
+        nl: ['.','!','?',',',':',';','"','\'','(',')','-','...'],
+        pl: ['.','!','?',',',':',';','"','(',')','-','...'],
+        tr: ['.','!','?',',',':',';','"','(',')','-','...'],
     },
 
-    /** Special key display and values */
-    specialKeys: {
-        '⎵':  { display: '␣',  css: 'extra-wide', value: ' ' },
-        '⌫':  { display: '⌫',  css: 'wide',       value: 'BACKSPACE' },
-        '↵':  { display: '↵',  css: 'wide',       value: 'NEWLINE' },
-        '✓':  { display: '✓',  css: 'wide',       value: 'DONE' },
-        '☰':  { display: '☰',  css: 'wide nav-key', value: 'MENU' },
-        '⏸':  { display: '⏸',  css: 'wide nav-key pause-key', value: 'PAUSE' },
-    },
+    /** Action buttons rendered inline with keyboard */
+    actions: [
+        { id: 'BACKSPACE', icon: '⌫',  label: '' },
+        { id: 'CLEAR',     icon: '🗑',  labelKey: 'clear' },
+        { id: 'KB_MODE',   icon: '🔤',  labelKey: 'mode_keyboard' },
+        { id: 'PHRASES',   icon: '💬',  labelKey: 'mode_phrases' },
+        { id: 'PUNCT',     icon: '#?!', label: '' },
+        { id: 'SPEAK',     icon: '🔊',  labelKey: 'speak' },
+        { id: 'PAUSE',     icon: '⏸',   labelKey: 'pause' },
+    ],
 
-    /** Set the keyboard mode */
-    setMode(mode) {
-        this._mode = mode;
-    },
-
-    /** Get current mode */
-    getMode() {
-        return this._mode;
-    },
+    setMode(mode) { this._mode = mode; },
+    getMode() { return this._mode; },
 
     /**
-     * Render keyboard with current mode.
-     * @param {HTMLElement} container
-     * @param {string} lang
-     * @param {string} currentText - text typed so far (for smart/wild modes)
-     * @returns {HTMLElement[]} flat array of key elements for the Runner
+     * Render main keyboard.
+     * Returns flat array of all scannable elements.
      */
     render(container, lang, currentText) {
         container.innerHTML = '';
-
+        const allKeys = [];
         let letters;
-        let wordBtns = [];
+        const currentWord = SmartKeyboard.getCurrentWord(currentText || '');
+        const lastChar = currentWord ? currentWord[currentWord.length - 1] : '';
 
+        // --- Determine letter order ---
         if (this._mode === 'smart' || this._mode === 'wild') {
-            // Get the last typed character for bigram lookup
-            const currentWord = SmartKeyboard.getCurrentWord(currentText || '');
-            const lastChar = currentWord ? currentWord[currentWord.length - 1] : '';
             const ordered = SmartKeyboard.getOrderedLetters(lang, lastChar);
-
-            // Filter to only letters available in this language
             const langLetters = new Set(this.layouts[lang] || this.layouts.en);
             letters = [];
             const seen = new Set();
             for (const ch of ordered) {
-                if (langLetters.has(ch) && !seen.has(ch)) {
-                    letters.push(ch);
-                    seen.add(ch);
-                }
+                if (langLetters.has(ch) && !seen.has(ch)) { letters.push(ch); seen.add(ch); }
             }
-            // Add any remaining language-specific chars (umlauts, accents)
             for (const ch of (this.layouts[lang] || this.layouts.en)) {
-                if (!seen.has(ch)) {
-                    letters.push(ch);
-                    seen.add(ch);
-                }
-            }
-
-            // Wild mode: get word suggestions
-            if (this._mode === 'wild') {
-                wordBtns = SmartKeyboard.getWordSuggestions(lang, currentWord);
+                if (!seen.has(ch)) { letters.push(ch); seen.add(ch); }
             }
         } else {
-            // ABC mode: plain alphabetical
             letters = [...(this.layouts[lang] || this.layouts.en)];
         }
 
-        const punct = this.punctuation[lang] || this.punctuation.en;
-        const allKeys = [];
-
-        // --- Word suggestions row (wild mode only) ---
-        if (wordBtns.length > 0) {
-            const wordRow = document.createElement('div');
-            wordRow.className = 'keyboard-row word-row';
-            for (const word of wordBtns) {
-                const el = this._createKey(word, word, 'word-key');
-                wordRow.appendChild(el);
-                allKeys.push(el);
+        // --- Word suggestions row (wild mode) ---
+        if (this._mode === 'wild') {
+            const words = SmartKeyboard.getWordSuggestions(lang, currentWord);
+            if (words.length > 0) {
+                const row = document.createElement('div');
+                row.className = 'keyboard-row word-row';
+                for (const w of words) {
+                    const el = this._createKey(w, w, 'key word-key');
+                    row.appendChild(el);
+                    allKeys.push(el);
+                }
+                container.appendChild(row);
             }
-            container.appendChild(wordRow);
         }
 
-        // --- Letter rows (adaptive row size) ---
-        const perRow = window.innerWidth < 480 ? 7 : 9;
+        // --- Space positioning ---
+        const promoteSpace = (this._mode !== 'abc')
+            ? SmartKeyboard.shouldPromoteSpace(lang, currentWord)
+            : true;  // ABC mode: space always first
+
+        // If promoting space, add it before letters
+        if (promoteSpace) {
+            const spaceRow = document.createElement('div');
+            spaceRow.className = 'keyboard-row';
+            const spaceEl = this._createKey('␣', ' ', 'key space-key extra-wide');
+            spaceRow.appendChild(spaceEl);
+            allKeys.push(spaceEl);
+            container.appendChild(spaceRow);
+        }
+
+        // --- Letter rows ---
+        const perRow = this._getKeysPerRow();
         for (let i = 0; i < letters.length; i += perRow) {
-            const rowEl = document.createElement('div');
-            rowEl.className = 'keyboard-row';
-            const slice = letters.slice(i, i + perRow);
-            for (const ch of slice) {
+            const row = document.createElement('div');
+            row.className = 'keyboard-row';
+            for (const ch of letters.slice(i, i + perRow)) {
                 const el = this._createKey(ch, ch, 'key');
-                rowEl.appendChild(el);
+                row.appendChild(el);
                 allKeys.push(el);
             }
-            container.appendChild(rowEl);
+            container.appendChild(row);
         }
 
-        // --- Punctuation row ---
-        const punctRow = document.createElement('div');
-        punctRow.className = 'keyboard-row';
-        for (const p of punct) {
-            const el = this._createKey(p, p, 'key');
-            punctRow.appendChild(el);
-            allKeys.push(el);
+        // If not promoting space, add it after letters
+        if (!promoteSpace) {
+            const spaceRow = document.createElement('div');
+            spaceRow.className = 'keyboard-row';
+            const spaceEl = this._createKey('␣', ' ', 'key space-key extra-wide');
+            spaceRow.appendChild(spaceEl);
+            allKeys.push(spaceEl);
+            container.appendChild(spaceRow);
         }
-        container.appendChild(punctRow);
 
-        // --- Action row: Space, Backspace, Newline, Done ---
+        // --- Action row ---
         const actionRow = document.createElement('div');
         actionRow.className = 'keyboard-row';
-        for (const sym of ['⎵', '⌫', '↵', '✓']) {
-            const spec = this.specialKeys[sym];
-            const el = this._createKey(spec.display, spec.value, 'key ' + spec.css);
+        for (const act of this.actions) {
+            const label = act.labelKey ? I18N.t(act.labelKey) : act.label;
+            const isPause = act.id === 'PAUSE';
+            const css = 'key action-key' + (isPause ? ' pause-key' : '') + ' wide';
+            const el = document.createElement('div');
+            el.className = css;
+            el.dataset.value = act.id;
+            if (label) {
+                el.innerHTML = '<span class="action-icon">' + act.icon + '</span><span class="action-label">' + label + '</span>';
+            } else {
+                el.innerHTML = '<span class="action-icon">' + act.icon + '</span>';
+            }
             actionRow.appendChild(el);
             allKeys.push(el);
         }
         container.appendChild(actionRow);
 
-        // --- Navigation row: Pause, Menu ---
-        const navRow = document.createElement('div');
-        navRow.className = 'keyboard-row nav-row';
-        for (const sym of ['⏸', '☰']) {
-            const spec = this.specialKeys[sym];
-            const el = this._createKey(spec.display, spec.value, 'key ' + spec.css);
-            actionRow.appendChild(el);
-            allKeys.push(el);
-        }
-        // nav row keys are added to action row to keep compact
-
         return allKeys;
     },
 
     /**
-     * Render toolbar actions as scannable keys.
-     * Called when user selects ☰ MENU from keyboard.
-     * @param {HTMLElement} container
-     * @returns {HTMLElement[]}
+     * Render punctuation page.
      */
-    renderToolbar(container) {
+    renderPunctuation(container, lang) {
         container.innerHTML = '';
         const allKeys = [];
+        const punct = this.punctuation[lang] || this.punctuation.en;
 
-        const actions = [
-            { label: I18N.t('tb_clear'),    value: 'TB_CLEAR',    icon: '🗑' },
-            { label: I18N.t('tb_share'),    value: 'TB_SHARE',    icon: '📤' },
-            { label: I18N.t('tb_settings'), value: 'TB_SETTINGS', icon: '⚙' },
-            { label: I18N.t('tb_phrases'),  value: 'TB_PHRASES',  icon: '💬' },
-            { label: I18N.t('tb_mode'),     value: 'TB_MODE',     icon: '🔤' },
-            { label: I18N.t('tb_speed_up'), value: 'TB_FASTER',   icon: '⏩' },
-            { label: I18N.t('tb_speed_dn'), value: 'TB_SLOWER',   icon: '⏪' },
-            { label: I18N.t('tb_back'),     value: 'TB_BACK',     icon: '⬅' },
-        ];
-
-        const grid = document.createElement('div');
-        grid.className = 'toolbar-grid';
-
-        for (const act of actions) {
-            const el = document.createElement('div');
-            el.className = 'key toolbar-key';
-            el.dataset.value = act.value;
-            el.innerHTML = '<span class="tb-icon">' + act.icon + '</span><span class="tb-label">' + act.label + '</span>';
-            grid.appendChild(el);
-            allKeys.push(el);
+        const perRow = this._getKeysPerRow();
+        for (let i = 0; i < punct.length; i += perRow) {
+            const row = document.createElement('div');
+            row.className = 'keyboard-row';
+            for (const ch of punct.slice(i, i + perRow)) {
+                const el = this._createKey(ch, ch, 'key wide');
+                row.appendChild(el);
+                allKeys.push(el);
+            }
+            container.appendChild(row);
         }
 
-        container.appendChild(grid);
+        // Back button
+        const backRow = document.createElement('div');
+        backRow.className = 'keyboard-row';
+        const backEl = this._createKey('⬅ ' + I18N.t('back'), 'BACK', 'key action-key extra-wide');
+        backRow.appendChild(backEl);
+        allKeys.push(backEl);
+        container.appendChild(backRow);
+
         return allKeys;
     },
 
     /**
      * Render quick phrases.
-     * @param {HTMLElement} container
-     * @returns {HTMLElement[]}
      */
     renderPhrases(container) {
         container.innerHTML = '';
@@ -228,24 +207,30 @@ const Keyboard = {
             allBtns.push(btn);
         }
 
-        // Add a "back" button at the end
-        const backBtn = document.createElement('button');
-        backBtn.className = 'phrase-btn nav-key';
-        backBtn.textContent = '⬅ ' + I18N.t('tb_back');
-        backBtn.dataset.value = 'TB_BACK';
-        grid.appendChild(backBtn);
-        allBtns.push(backBtn);
+        // Back button
+        const back = document.createElement('button');
+        back.className = 'phrase-btn';
+        back.textContent = '⬅ ' + I18N.t('back');
+        back.dataset.value = 'BACK';
+        grid.appendChild(back);
+        allBtns.push(back);
 
         container.appendChild(grid);
         return allBtns;
     },
 
     /** Helper: create a key element */
-    _createKey(display, value, cssClass) {
+    _createKey(display, value, css) {
         const el = document.createElement('div');
-        el.className = cssClass;
+        el.className = css;
         el.textContent = display;
         el.dataset.value = value;
         return el;
+    },
+
+    /** Get keys per row based on CSS variable */
+    _getKeysPerRow() {
+        const v = getComputedStyle(document.documentElement).getPropertyValue('--keys-per-row');
+        return parseInt(v) || 9;
     },
 };

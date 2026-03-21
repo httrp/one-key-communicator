@@ -2,6 +2,7 @@ package room
 
 import (
 	"encoding/json"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -40,22 +41,34 @@ func (r *Room) SetWriter(c *Client) {
 	r.lastActive = time.Now()
 }
 
-// AddReader adds a reader client.
+// AddReader adds a reader client and notifies the writer of the new count.
 func (r *Room) AddReader(c *Client) {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 	r.readers[c] = true
 	r.lastActive = time.Now()
+	count := len(r.readers)
+	writer := r.writer
+	r.mu.Unlock()
+
+	r.sendReaderCount(writer, count)
 }
 
 // RemoveClient removes a client (writer or reader).
+// If a reader is removed, notifies the writer of the new count.
 func (r *Room) RemoveClient(c *Client) {
 	r.mu.Lock()
-	defer r.mu.Unlock()
-	if c.IsWriter && r.writer == c {
+	isWriter := c.IsWriter && r.writer == c
+	if isWriter {
 		r.writer = nil
 	}
 	delete(r.readers, c)
+	count := len(r.readers)
+	writer := r.writer
+	r.mu.Unlock()
+
+	if !isWriter && writer != nil {
+		r.sendReaderCount(writer, count)
+	}
 }
 
 // UpdateText sets the text and broadcasts to all readers.
@@ -97,6 +110,18 @@ func (r *Room) HasWriter() bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.writer != nil
+}
+
+// sendReaderCount notifies the writer of the current reader count.
+func (r *Room) sendReaderCount(w *Client, count int) {
+	if w == nil {
+		return
+	}
+	msg := []byte(`{"type":"readers","data":"` + strconv.Itoa(count) + `"}`)
+	select {
+	case w.Send <- msg:
+	default:
+	}
 }
 
 func jsonEscapeStr(s string) string {
