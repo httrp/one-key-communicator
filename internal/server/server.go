@@ -4,9 +4,12 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
+	"mime"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -34,11 +37,11 @@ func New(cfg *config.Config, db *storage.DB, landingFS, appFS embed.FS) *Server 
 	}
 
 	var err error
-	s.landing, err = fs.Sub(landingFS, "web/landing")
+	s.landing, err = fs.Sub(landingFS, "landing")
 	if err != nil {
 		log.Fatalf("landing FS: %v", err)
 	}
-	s.app, err = fs.Sub(appFS, "web/app")
+	s.app, err = fs.Sub(appFS, "app")
 	if err != nil {
 		log.Fatalf("app FS: %v", err)
 	}
@@ -216,28 +219,29 @@ func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/app")
 	if path == "" || path == "/" {
-		path = "/index.html"
+		path = "index.html"
+	} else {
+		path = strings.TrimPrefix(path, "/")
 	}
 
-	f, err := s.app.Open(strings.TrimPrefix(path, "/"))
+	f, err := s.app.Open(path)
 	if err != nil {
-		path = "/index.html"
+		// SPA fallback: serve index.html for unknown routes
 		f, err = s.app.Open("index.html")
 		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
+		path = "index.html"
 	}
-	f.Close()
+	defer f.Close()
 
-	if strings.HasSuffix(path, ".js") {
-		w.Header().Set("Content-Type", "application/javascript")
-	} else if strings.HasSuffix(path, ".css") {
-		w.Header().Set("Content-Type", "text/css")
-	} else if strings.HasSuffix(path, ".json") {
-		w.Header().Set("Content-Type", "application/json")
+	// Detect content type from extension
+	ct := mime.TypeByExtension(filepath.Ext(path))
+	if ct == "" {
+		ct = "application/octet-stream"
 	}
+	w.Header().Set("Content-Type", ct)
 
-	r.URL.Path = path
-	http.FileServer(http.FS(s.app)).ServeHTTP(w, r)
+	io.Copy(w, f.(io.Reader))
 }
