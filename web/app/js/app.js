@@ -1,6 +1,9 @@
 /**
  * OKC App — Main application controller.
- * Hash-based routing, no dependencies.
+ *
+ * New flow: Open app → auto-create room → immediately show keyboard.
+ * The writer can share a QR code so readers can join.
+ * No home screen. Minimal steps.
  */
 (function () {
     'use strict';
@@ -16,26 +19,31 @@
     // --- DOM refs ---
     const $ = (id) => document.getElementById(id);
     const views = {
-        home: $('home-view'),
         write: $('write-view'),
         read: $('read-view'),
+        loading: $('loading-view'),
     };
-    const textDisplay = $('textDisplay');
-    const connStatus = $('connStatus');
-    const statusDot = $('statusDot');
-    const statusText = $('statusText');
+
+    const textDisplay   = $('textDisplay');
+    const connStatus    = $('connStatus');
+    const statusDot     = $('statusDot');
+    const statusText    = $('statusText');
     const keyboardContainer = $('keyboardContainer');
-    const phrasesContainer = $('phrasesContainer');
-    const speedSlider = $('speedSlider');
-    const shareModal = $('shareModal');
-    const qrCanvas = $('qrCanvas');
-    const shareURL = $('shareURL');
+    const phrasesContainer  = $('phrasesContainer');
+    const speedSlider   = $('speedSlider');
+    const shareModal    = $('shareModal');
+    const qrCanvas      = $('qrCanvas');
+    const shareURL      = $('shareURL');
+    const settingsPanel = $('settingsPanel');
+    const shareHint     = $('shareHint');
 
     // --- Init ---
     const lang = I18N.init();
     $('appLang').value = lang;
 
-    // --- Routing ---
+    // =========================================================================
+    // ROUTING — hash-based, minimal
+    // =========================================================================
     function navigate() {
         const hash = location.hash.slice(1) || '/';
         const parts = hash.split('/').filter(Boolean);
@@ -46,31 +54,73 @@
             WS.disconnect();
         }
 
-        // Hide all views
-        Object.values(views).forEach(v => v.classList.add('hidden'));
-        connStatus.classList.add('hidden');
+        hideAll();
 
-        if (parts[0] === 'room' && parts[1]) {
-            showWriteView(parts[1]);
-        } else if (parts[0] === 'read' && parts[1]) {
+        if (parts[0] === 'read' && parts[1]) {
+            // Reader mode
             showReadView(parts[1]);
+        } else if (parts[0] === 'room' && parts[1]) {
+            // Writer mode with existing room
+            showWriteView(parts[1]);
         } else {
-            showHomeView();
+            // Default: auto-create a room
+            autoCreateRoom();
         }
     }
 
-    // --- Home ---
-    function showHomeView() {
-        currentView = 'home';
-        views.home.classList.remove('hidden');
+    function hideAll() {
+        Object.values(views).forEach(v => v.classList.add('hidden'));
+        connStatus.classList.add('hidden');
     }
 
-    // --- Writer ---
+    function showView(name) {
+        hideAll();
+        views[name].classList.remove('hidden');
+        currentView = name;
+    }
+
+    // =========================================================================
+    // AUTO-CREATE ROOM
+    // =========================================================================
+    async function autoCreateRoom() {
+        showView('loading');
+
+        // Check if we have a recent room stored
+        const stored = localStorage.getItem('okc-room');
+        if (stored) {
+            try {
+                const info = JSON.parse(stored);
+                // Use stored room if less than 12 hours old
+                if (Date.now() - info.ts < 12 * 60 * 60 * 1000) {
+                    location.hash = `/room/${info.id}`;
+                    return;
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        try {
+            const resp = await fetch('/api/rooms?lang=' + I18N.getLang(), { method: 'POST' });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            localStorage.setItem('okc-room', JSON.stringify({ id: data.id, ts: Date.now() }));
+            location.hash = '/room/' + data.id;
+        } catch (err) {
+            console.error('Failed to create room:', err);
+            // Show write view anyway with error state
+            showView('write');
+        }
+    }
+
+    // =========================================================================
+    // WRITER VIEW
+    // =========================================================================
     function showWriteView(id) {
         currentView = 'write';
         roomId = id;
         currentText = '';
         views.write.classList.remove('hidden');
+        views.loading.classList.add('hidden');
+        views.read.classList.add('hidden');
         connStatus.classList.remove('hidden');
 
         updateTextDisplay();
@@ -78,6 +128,16 @@
         startRunner();
 
         WS.connect(id, 'write', onWriterMessage, onConnectionStatus);
+
+        // Show share hint for 8 seconds on first use
+        if (!localStorage.getItem('okc-hint-dismissed')) {
+            shareHint.classList.remove('hidden');
+            setTimeout(() => {
+                shareHint.classList.add('hidden');
+            }, 8000);
+        } else {
+            shareHint.classList.add('hidden');
+        }
     }
 
     function renderKeyboard() {
@@ -108,7 +168,6 @@
                 currentText += '\n';
                 break;
             case 'DONE':
-                // Could trigger a special action; for now, just add a period
                 if (!currentText.endsWith('.') && !currentText.endsWith('!') && !currentText.endsWith('?')) {
                     currentText += '.';
                 }
@@ -131,14 +190,12 @@
     }
 
     function updateTextDisplay() {
-        // Render text with cursor
         const escaped = currentText
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/\n/g, '<br>');
         textDisplay.innerHTML = escaped + '<span class="cursor"></span>';
-        // Auto-scroll to bottom
         textDisplay.scrollTop = textDisplay.scrollHeight;
     }
 
@@ -146,18 +203,24 @@
         // Writer might receive status updates in the future
     }
 
-    // --- Reader ---
+    // =========================================================================
+    // READER VIEW
+    // =========================================================================
     function showReadView(id) {
         currentView = 'read';
         roomId = id;
         views.read.classList.remove('hidden');
-        connStatus.classList.remove('hidden');
+        views.loading.classList.add('hidden');
+        views.write.classList.add('hidden');
+
+        const readerConnStatus = $('readerConnStatus');
+        readerConnStatus.classList.remove('hidden');
 
         const readerText = $('readerText');
         readerText.textContent = I18N.t('waiting');
         readerText.classList.add('empty');
 
-        WS.connect(id, 'read', onReaderMessage, onConnectionStatus);
+        WS.connect(id, 'read', onReaderMessage, onReaderConnectionStatus);
     }
 
     function onReaderMessage(msg) {
@@ -173,7 +236,9 @@
         }
     }
 
-    // --- Connection status ---
+    // =========================================================================
+    // CONNECTION STATUS
+    // =========================================================================
     function onConnectionStatus(status) {
         statusDot.className = 'status-dot';
         switch (status) {
@@ -191,25 +256,38 @@
         }
     }
 
-    // --- Event listeners ---
-
-    // Create room
-    $('btnCreateRoom').addEventListener('click', async () => {
-        try {
-            const resp = await fetch(`/api/rooms?lang=${I18N.getLang()}`, { method: 'POST' });
-            const data = await resp.json();
-            location.hash = `/room/${data.id}`;
-        } catch (err) {
-            console.error('Failed to create room:', err);
+    function onReaderConnectionStatus(status) {
+        const dot = $('readerStatusDot');
+        const text = $('readerStatusText');
+        dot.className = 'status-dot';
+        switch (status) {
+            case 'connected':
+                dot.classList.add('connected');
+                text.textContent = I18N.t('connected');
+                break;
+            case 'disconnected':
+                dot.classList.add('disconnected');
+                text.textContent = I18N.t('disconnected');
+                break;
+            case 'reconnecting':
+                text.textContent = I18N.t('reconnecting');
+                break;
         }
+    }
+
+    // =========================================================================
+    // EVENT LISTENERS
+    // =========================================================================
+
+    // --- Settings panel ---
+    $('btnSettings').addEventListener('click', () => {
+        settingsPanel.classList.remove('hidden');
     });
-
-    // Join room
-    $('btnJoinRoom').addEventListener('click', () => {
-        const code = prompt(I18N.t('join_prompt'));
-        if (code && code.trim()) {
-            location.hash = `/read/${code.trim()}`;
-        }
+    $('btnCloseSettings').addEventListener('click', () => {
+        settingsPanel.classList.add('hidden');
+    });
+    $('settingsBackdrop').addEventListener('click', () => {
+        settingsPanel.classList.add('hidden');
     });
 
     // Language change
@@ -222,31 +300,47 @@
         }
     });
 
-    // Clear text
+    // New room
+    $('btnNewRoom').addEventListener('click', async () => {
+        settingsPanel.classList.add('hidden');
+        localStorage.removeItem('okc-room');
+        location.hash = '/';
+    });
+
+    // Join room
+    $('btnJoinRoom').addEventListener('click', () => {
+        const code = $('joinRoomInput').value.trim();
+        if (code) {
+            settingsPanel.classList.add('hidden');
+            location.hash = '/read/' + code;
+        }
+    });
+
+    // --- Clear text ---
     $('btnClear').addEventListener('click', () => {
         currentText = '';
         updateTextDisplay();
         WS.sendClear();
     });
 
-    // Speed slider
+    // --- Speed slider ---
     speedSlider.addEventListener('input', () => {
         Runner.setSpeed(parseInt(speedSlider.value));
     });
 
-    // Mode toggle
+    // --- Mode toggle ---
     $('btnMode').addEventListener('click', () => {
         Runner.stop();
         mode = mode === 'runner' ? 'phrases' : 'runner';
-        $('btnMode').setAttribute('data-i18n', mode === 'runner' ? 'mode_runner' : 'mode_phrases');
-        $('btnMode').textContent = I18N.t(mode === 'runner' ? 'mode_runner' : 'mode_phrases');
+        $('modeLabel').setAttribute('data-i18n', mode === 'runner' ? 'mode_keyboard' : 'mode_phrases');
+        $('modeLabel').textContent = I18N.t(mode === 'runner' ? 'mode_keyboard' : 'mode_phrases');
         startRunner();
     });
 
-    // Share / QR
+    // --- Share / QR ---
     $('btnShare').addEventListener('click', () => {
         if (!roomId) return;
-        const readURL = `${location.origin}/app#/read/${roomId}`;
+        const readURL = location.origin + '/app/#/read/' + roomId;
         shareURL.textContent = readURL;
         QRCode.draw(qrCanvas, readURL, 200);
         shareModal.classList.remove('hidden');
@@ -265,34 +359,37 @@
     $('btnCloseModal').addEventListener('click', () => {
         shareModal.classList.add('hidden');
     });
-
     shareModal.addEventListener('click', (e) => {
         if (e.target === shareModal) shareModal.classList.add('hidden');
     });
 
-    // --- Global key handler: ANY key triggers the runner selection ---
+    // --- Share hint dismiss ---
+    $('btnDismissHint').addEventListener('click', () => {
+        shareHint.classList.add('hidden');
+        localStorage.setItem('okc-hint-dismissed', '1');
+    });
+
+    // =========================================================================
+    // GLOBAL INPUT — ANY key / ANY touch = select
+    // =========================================================================
     document.addEventListener('keydown', (e) => {
         if (currentView !== 'write') return;
-        // Don't capture when typing in an input
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
-        // Prevent default for spacebar (scroll) and others
         if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault();
         }
 
-        // Any key press triggers selection
         if (Runner.isActive()) {
             Runner.select();
         }
     });
 
-    // Touch handler: tap anywhere on the screen to select
     document.addEventListener('touchstart', (e) => {
         if (currentView !== 'write') return;
-        // Don't capture toolbar buttons
-        if (e.target.closest('.writer-toolbar') || e.target.closest('.app-header')) return;
-        if (e.target.closest('.modal-overlay')) return;
+        if (e.target.closest('.toolbar') || e.target.closest('.writer-header')) return;
+        if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
+        if (e.target.closest('.share-hint')) return;
 
         e.preventDefault();
 
@@ -301,8 +398,22 @@
         }
     }, { passive: false });
 
-    // --- Router ---
+    // Also handle mouse clicks on the text area and keyboard for desktop
+    document.addEventListener('mousedown', (e) => {
+        if (currentView !== 'write') return;
+        if (e.target.closest('.toolbar') || e.target.closest('.writer-header')) return;
+        if (e.target.closest('.modal-overlay') || e.target.closest('.settings-panel')) return;
+        if (e.target.closest('.share-hint')) return;
+
+        if (Runner.isActive()) {
+            Runner.select();
+        }
+    });
+
+    // =========================================================================
+    // ROUTER
+    // =========================================================================
     window.addEventListener('hashchange', navigate);
-    navigate(); // Initial route
+    navigate();
 
 })();

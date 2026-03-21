@@ -59,7 +59,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/rooms/", s.handleRoomInfo)
 	s.mux.Handle("/ws/", websocket.Handler(s.handleWebSocket))
 	s.mux.HandleFunc("/app/", s.handleApp)
-	s.mux.HandleFunc("/app", s.handleApp)
+	s.mux.HandleFunc("/app", s.handleAppRedirect)
 	s.mux.HandleFunc("/", s.handleLanding)
 }
 
@@ -214,6 +214,10 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 
 func (s *Server) handleLanding(w http.ResponseWriter, r *http.Request) {
 	http.FileServer(http.FS(s.landing)).ServeHTTP(w, r)
+}
+
+func (s *Server) handleAppRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/app/", http.StatusMovedPermanently)
 }
 
 func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {

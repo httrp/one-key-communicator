@@ -5,73 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OKC — One-Key-Communicator</title>
     <meta name="description" content="Communicate with a single key">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#6366f1">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- Header -->
-<header class="app-header">
-    <a href="#/" class="app-logo">OKC</a>
-    <div class="connection-status hidden" id="connStatus">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText"></span>
-    </div>
-</header>
-
-<!-- Home View -->
-<div id="home-view" class="view">
-    <h1 class="home-title" data-i18n="app_title">Was möchtest du sagen?</h1>
-    <p class="home-subtitle" data-i18n="app_subtitle">Erstelle einen Raum und beginne zu kommunizieren. Deine Familie kann mitlesen.</p>
-    <div class="home-actions">
-        <button class="btn btn-primary btn-large" id="btnCreateRoom" data-i18n="create_room">Raum erstellen</button>
-        <button class="btn btn-outline" id="btnJoinRoom" data-i18n="join_room">Raum beitreten</button>
-    </div>
-    <div class="lang-picker">
-        <select id="appLang">
-            <option value="de">🇩🇪 Deutsch</option>
-            <option value="en">🇬🇧 English</option>
-            <option value="fr">🇫🇷 Français</option>
-            <option value="es">🇪🇸 Español</option>
-            <option value="it">🇮🇹 Italiano</option>
-            <option value="nl">🇳🇱 Nederlands</option>
-            <option value="pl">🇵🇱 Polski</option>
-            <option value="tr">🇹🇷 Türkçe</option>
-        </select>
-    </div>
-</div>
-
-<!-- Writer View -->
+<!-- ===== Writer View (default) ===== -->
 <div id="write-view" class="view hidden">
-    <div class="text-display" id="textDisplay"><span class="cursor"></span></div>
-    <div class="writer-toolbar">
-        <button id="btnClear" data-i18n="clear">Löschen</button>
-        <button id="btnShare">📤 QR</button>
-        <button id="btnMode" data-i18n="mode_runner">Modus: Runner</button>
-        <span class="speed-label" data-i18n="speed">Tempo</span>
-        <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100">
+    <header class="writer-header">
+        <div class="header-left">
+            <span class="logo">OKC</span>
+            <span class="status-pill" id="connStatus">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText"></span>
+            </span>
+        </div>
+        <div class="header-right">
+            <button class="icon-btn" id="btnShare" title="QR / Share" aria-label="Share">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="14.01"/><line x1="14" y1="20" x2="14" y2="20.01"/><line x1="20" y1="20" x2="20" y2="20.01"/></svg>
+            </button>
+            <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Text output area -->
+    <div class="text-area" id="textDisplay"><span class="cursor"></span></div>
+
+    <!-- Inline share hint (shown briefly on first load) -->
+    <div class="share-hint" id="shareHint">
+        <span data-i18n="share_hint">Tippe auf das QR-Symbol, damit andere mitlesen.</span>
+        <button class="share-hint-close" id="btnDismissHint">&times;</button>
     </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button class="tool-btn" id="btnClear" title="Clear">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>
+        </button>
+        <button class="tool-btn" id="btnMode">
+            <span id="modeLabel" data-i18n="mode_keyboard">Tastatur</span>
+        </button>
+        <div class="speed-control">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100">
+        </div>
+    </div>
+
+    <!-- Keyboard area -->
     <div id="keyboardContainer" class="keyboard"></div>
     <div id="phrasesContainer" class="quick-phrases hidden"></div>
 </div>
 
-<!-- Read View -->
+<!-- ===== Reader View ===== -->
 <div id="read-view" class="view hidden">
+    <header class="reader-header">
+        <span class="logo">OKC</span>
+        <span class="status-pill" id="readerConnStatus">
+            <span class="status-dot" id="readerStatusDot"></span>
+            <span id="readerStatusText"></span>
+        </span>
+    </header>
     <div class="reader-text empty" id="readerText" data-i18n="waiting">Warte auf Nachricht…</div>
     <div class="reader-bar">
         <span data-i18n="reader_info">Du liest mit. Der Text erscheint automatisch.</span>
     </div>
 </div>
 
-<!-- Share Modal -->
+<!-- ===== Loading View ===== -->
+<div id="loading-view" class="view">
+    <div class="loading-center">
+        <div class="spinner"></div>
+        <p data-i18n="loading">Wird vorbereitet…</p>
+    </div>
+</div>
+
+<!-- ===== Settings Panel (slide-in) ===== -->
+<div id="settingsPanel" class="settings-panel hidden">
+    <div class="settings-backdrop" id="settingsBackdrop"></div>
+    <div class="settings-content">
+        <div class="settings-header">
+            <h2 data-i18n="settings">Einstellungen</h2>
+            <button class="icon-btn settings-close" id="btnCloseSettings">&times;</button>
+        </div>
+        <div class="settings-body">
+            <label class="setting-label" data-i18n="language">Sprache</label>
+            <select id="appLang" class="setting-select">
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+                <option value="it">Italiano</option>
+                <option value="nl">Nederlands</option>
+                <option value="pl">Polski</option>
+                <option value="tr">Türkçe</option>
+            </select>
+
+            <label class="setting-label" data-i18n="new_room">Neuen Raum</label>
+            <button class="btn btn-outline btn-block" id="btnNewRoom" data-i18n="new_room_btn">Neuen Raum erstellen</button>
+
+            <label class="setting-label" data-i18n="join_room">Raum beitreten</label>
+            <div class="setting-row">
+                <input type="text" id="joinRoomInput" class="setting-input" placeholder="abc123">
+                <button class="btn btn-primary btn-small" id="btnJoinRoom" data-i18n="join">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Share Modal ===== -->
 <div id="shareModal" class="modal-overlay hidden">
     <div class="modal">
-        <h2 data-i18n="share_title">Teile diesen QR-Code</h2>
-        <p data-i18n="share_text">Deine Familie kann diesen QR-Code scannen, um mitzulesen.</p>
+        <h2 data-i18n="share_title">Mitlesen</h2>
+        <p data-i18n="share_text">QR-Code scannen oder Link öffnen, um mitzulesen.</p>
         <canvas id="qrCanvas" width="200" height="200"></canvas>
         <div class="url-box" id="shareURL"></div>
-        <button class="btn btn-primary" id="btnCopyURL" data-i18n="copy_link">Link kopieren</button>
-        <button class="btn btn-outline" id="btnCloseModal" data-i18n="close">Schließen</button>
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="btnCopyURL" data-i18n="copy_link">Link kopieren</button>
+            <button class="btn btn-ghost" id="btnCloseModal" data-i18n="close">Schließen</button>
+        </div>
     </div>
 </div>
 
