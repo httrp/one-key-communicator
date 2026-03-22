@@ -37,7 +37,7 @@
     // Adaptive speed state
     const adaptiveHistory = [];
     const ADAPTIVE_MAX = 20;
-    let baseSpeed = 800;
+    let baseSpeed = 1000;
 
     // Reader view state
     let readerFontScale = 1;
@@ -84,12 +84,12 @@
     const lang = I18N.init();
     $('appLang').value = lang;
 
-    // Restore keyboard mode (default: smart)
+    // Restore keyboard mode (default: mix)
     const savedKbMode = localStorage.getItem('okc-kb-mode');
     if (savedKbMode && ['abc', 'smart', 'mix'].includes(savedKbMode)) {
         Keyboard.setMode(savedKbMode);
     } else {
-        Keyboard.setMode('smart');
+        Keyboard.setMode('mix');
     }
     updateModeBadge();
 
@@ -100,7 +100,7 @@
     // Restore speed
     const savedSpeed = localStorage.getItem('okc-speed');
     if (savedSpeed) {
-        baseSpeed = parseInt(savedSpeed) || 800;
+        baseSpeed = parseInt(savedSpeed) || 1000;
         speedSlider.value = baseSpeed;
     }
 

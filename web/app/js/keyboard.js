@@ -15,7 +15,7 @@
  */
 const Keyboard = {
 
-    _mode: 'smart',  // Default to smart
+    _mode: 'mix',  // Default to mix (letters + word suggestions)
     _showNumbers: false,  // Toggle for numbers row
 
     /** Number row */

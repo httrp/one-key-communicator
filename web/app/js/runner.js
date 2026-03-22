@@ -13,11 +13,11 @@ const Runner = {
     _active: false,
     _index: 0,
     _timer: null,
-    _speed: 800,
+    _speed: 1000,
     _keys: [],
     _onSelect: null,
     _hoverPaused: false,
-    _firstKeyDelay: 1.5,  // Multiplier for first key delay
+    _firstKeyDelay: 2.0,  // Multiplier for first key delay (restart pause)
     _resetAfterSelect: true,  // Reset to first key after selection
 
     /**
