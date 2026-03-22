@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dominikhattrup/one-key-communicator/internal/crypto"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -86,24 +87,28 @@ func (db *DB) migrate() error {
 }
 
 // SaveRoom creates or updates a room record.
+// Text is encrypted with PIN before storage.
 func (db *DB) SaveRoom(r *RoomRecord) error {
+	encryptedText := crypto.Encrypt(r.TextState, r.PIN)
 	_, err := db.conn.Exec(`
 		INSERT INTO rooms (id, pin, created_at, last_active, text_state, language)
 		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			last_active = excluded.last_active,
 			text_state  = excluded.text_state
-	`, r.ID, r.PIN, r.CreatedAt, r.LastActive, r.TextState, r.Language)
+	`, r.ID, r.PIN, r.CreatedAt, r.LastActive, encryptedText, r.Language)
 	return err
 }
 
 // GetRoom retrieves a room by ID.
+// Text is decrypted with PIN after loading.
 func (db *DB) GetRoom(id string) (*RoomRecord, error) {
 	row := db.conn.QueryRow(`SELECT id, pin, created_at, last_active, text_state, language FROM rooms WHERE id = ?`, id)
 	r := &RoomRecord{}
 	if err := row.Scan(&r.ID, &r.PIN, &r.CreatedAt, &r.LastActive, &r.TextState, &r.Language); err != nil {
 		return nil, err
 	}
+	r.TextState = crypto.Decrypt(r.TextState, r.PIN)
 	return r, nil
 }
 

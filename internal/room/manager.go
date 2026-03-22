@@ -144,9 +144,11 @@ func (m *Manager) Save(r *Room) {
 	}
 	r.mu.RLock()
 	text := r.Text
+	pin := r.PIN
 	r.mu.RUnlock()
 	_ = m.db.SaveRoom(&storage.RoomRecord{
 		ID:         r.ID,
+		PIN:        pin,
 		CreatedAt:  r.CreatedAt,
 		LastActive: time.Now(),
 		TextState:  text,
