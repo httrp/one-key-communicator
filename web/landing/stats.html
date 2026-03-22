@@ -181,9 +181,18 @@
         }
 
         @media (max-width: 600px) {
-            .hero h1 { font-size: 1.8rem; }
-            .stat-value { font-size: 2.5rem; }
-            nav a { margin-left: 12px; font-size: 0.85rem; }
+            .hero h1 { font-size: 1.6rem; }
+            .hero p { font-size: 0.95rem; }
+            .stat-value { font-size: 2rem; }
+            .stat-label { font-size: 0.85rem; }
+            nav a { display: none; }
+            nav select { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+            .stat-card { padding: 20px; }
+            .country-grid { grid-template-columns: repeat(2, 1fr); }
+            header .container { padding: 0 12px; }
+            .container { padding: 0 16px; }
+            footer p { font-size: 0.85rem; }
         }
     </style>
 </head>

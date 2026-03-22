@@ -9,7 +9,7 @@ import (
 // Room represents a communication session.
 type Room struct {
 	ID        string
-	PIN       string // 4-digit access PIN for readers
+	PIN       string // 6-digit access PIN for readers
 	CreatedAt time.Time
 	Language  string
 	Text      string
