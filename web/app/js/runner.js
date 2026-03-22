@@ -17,6 +17,8 @@ const Runner = {
     _keys: [],
     _onSelect: null,
     _hoverPaused: false,
+    _firstKeyDelay: 1.5,  // Multiplier for first key delay
+    _resetAfterSelect: true,  // Reset to first key after selection
 
     /**
      * Start the runner.
@@ -74,6 +76,19 @@ const Runner = {
             key.style.transform = '';
         }, 120);
 
+        // Reset to first key after selection
+        if (this._resetAfterSelect) {
+            this._clearHighlight();
+            this._index = 0;
+            this._highlight();
+            // Restart timer to give extra time on first key
+            clearInterval(this._timer);
+            this._timer = setTimeout(() => {
+                this._advance();
+                this._timer = setInterval(() => this._advance(), this._speed);
+            }, this._speed * this._firstKeyDelay);
+        }
+
         if (this._onSelect) this._onSelect(value);
     },
 
@@ -130,6 +145,15 @@ const Runner = {
         this._clearHighlight();
         this._index = (this._index + 1) % this._keys.length;
         this._highlight();
+        
+        // Adjust timer speed for first key (longer pause)
+        if (this._index === 0 && this._firstKeyDelay > 1) {
+            clearInterval(this._timer);
+            this._timer = setTimeout(() => {
+                this._advance();
+                this._timer = setInterval(() => this._advance(), this._speed);
+            }, this._speed * this._firstKeyDelay);
+        }
     },
 
     _highlight() {

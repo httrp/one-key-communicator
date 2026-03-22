@@ -5,9 +5,16 @@
  * so the most likely next letter is scanned first. Similar to T9 / Smart TV input.
  *
  * Also handles intelligent space positioning:
- *   - In smart/wild modes, space is promoted when a word boundary is likely.
+ *   - In smart/mix modes, space is promoted when a word boundary is likely.
+ *
+ * User word tracking:
+ *   - Remembers frequently used words and suggests them in mix mode.
  */
 const SmartKeyboard = {
+
+    // User word frequency storage key
+    _userWordsKey: 'okc-user-words',
+    _maxUserWords: 100,
 
     // =========================================================================
     // LETTER FREQUENCY DATA (unigram — used for first letter / after space)
@@ -253,32 +260,6 @@ const SmartKeyboard = {
     },
 
     /**
-     * Get word suggestions for wild mode.
-     * @param {string} lang
-     * @param {string} currentWord - partially typed word
-     * @returns {string[]} up to 5 word suggestions
-     */
-    getWordSuggestions(lang, currentWord) {
-        const table = this.wordSuggestions[lang] || this.wordSuggestions.en || {};
-        const prefix = (currentWord || '').toUpperCase();
-
-        // Try progressively shorter prefixes
-        for (let len = prefix.length; len >= 0; len--) {
-            const key = prefix.slice(0, len);
-            if (table[key]) {
-                // Filter to words that actually start with the typed prefix
-                const filtered = prefix.length > 0
-                    ? table[key].filter(w => w.startsWith(prefix))
-                    : table[key];
-                if (filtered.length > 0) return filtered.slice(0, 5);
-                // If no match with filter, return unfiltered suggestions
-                return table[key].slice(0, 5);
-            }
-        }
-        return [];
-    },
-
-    /**
      * Extract the current (partially typed) word from text.
      * @param {string} text
      * @returns {string}
@@ -301,5 +282,99 @@ const SmartKeyboard = {
         const avg = this.avgWordLen[lang] || 5;
         // Promote space when current word is at or above average length
         return currentWord.length >= avg - 1;
+    },
+
+    // =========================================================================
+    // USER WORD FREQUENCY TRACKING
+    // =========================================================================
+
+    /**
+     * Get stored user words with frequencies.
+     * @returns {Object} { word: count }
+     */
+    getUserWords() {
+        try {
+            const stored = localStorage.getItem(this._userWordsKey);
+            return stored ? JSON.parse(stored) : {};
+        } catch (e) {
+            return {};
+        }
+    },
+
+    /**
+     * Record a word the user typed (called when word is completed).
+     * @param {string} word
+     */
+    recordUserWord(word) {
+        if (!word || word.length < 2) return;
+        const normalized = word.toUpperCase().trim();
+        if (!/^[A-ZÄÖÜÉÈÊÀÇÙÔÁÍÓÚÑĄĆĘŁŃŚŹŻ]+$/.test(normalized)) return;
+        
+        const words = this.getUserWords();
+        words[normalized] = (words[normalized] || 0) + 1;
+        
+        // Prune to max words (keep most frequent)
+        const entries = Object.entries(words);
+        if (entries.length > this._maxUserWords) {
+            entries.sort((a, b) => b[1] - a[1]);
+            const pruned = Object.fromEntries(entries.slice(0, this._maxUserWords));
+            localStorage.setItem(this._userWordsKey, JSON.stringify(pruned));
+        } else {
+            localStorage.setItem(this._userWordsKey, JSON.stringify(words));
+        }
+    },
+
+    /**
+     * Get word suggestions including user's frequent words.
+     * @param {string} lang
+     * @param {string} currentWord
+     * @returns {string[]} up to 6 word suggestions (user words first)
+     */
+    getWordSuggestions(lang, currentWord) {
+        const table = this.wordSuggestions[lang] || this.wordSuggestions.en || {};
+        const prefix = (currentWord || '').toUpperCase();
+        
+        // Get user's frequent words matching prefix
+        const userWords = this.getUserWords();
+        const userMatches = Object.entries(userWords)
+            .filter(([word]) => prefix.length === 0 || word.startsWith(prefix))
+            .sort((a, b) => b[1] - a[1])  // Sort by frequency
+            .map(([word]) => word)
+            .slice(0, 3);  // Max 3 user words
+        
+        // Get built-in suggestions
+        let builtIn = [];
+        for (let len = prefix.length; len >= 0; len--) {
+            const key = prefix.slice(0, len);
+            if (table[key]) {
+                const filtered = prefix.length > 0
+                    ? table[key].filter(w => w.startsWith(prefix))
+                    : table[key];
+                if (filtered.length > 0) {
+                    builtIn = filtered;
+                    break;
+                }
+                builtIn = table[key];
+                break;
+            }
+        }
+
+        // Merge: user words first, then built-in (deduplicated)
+        const seen = new Set(userMatches);
+        const merged = [...userMatches];
+        for (const w of builtIn) {
+            if (!seen.has(w) && merged.length < 6) {
+                merged.push(w);
+                seen.add(w);
+            }
+        }
+        return merged;
+    },
+
+    /**
+     * Clear user word history.
+     */
+    clearUserWords() {
+        localStorage.removeItem(this._userWordsKey);
     },
 };

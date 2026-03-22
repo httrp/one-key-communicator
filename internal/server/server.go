@@ -57,9 +57,14 @@ func New(cfg *config.Config, db *storage.DB, landingFS, appFS embed.FS) *Server 
 func (s *Server) routes() {
 	s.mux.HandleFunc("/api/rooms", s.handleCreateRoom)
 	s.mux.HandleFunc("/api/rooms/", s.handleRoomInfo)
+	s.mux.HandleFunc("/api/verify-pin", s.handleVerifyPIN)
+	s.mux.HandleFunc("/api/stats", s.handleStats)
 	s.mux.Handle("/ws/", websocket.Handler(s.handleWebSocket))
 	s.mux.HandleFunc("/app/", s.handleApp)
 	s.mux.HandleFunc("/app", s.handleAppRedirect)
+	s.mux.HandleFunc("/stats", s.handleStatsPage)
+	s.mux.HandleFunc("/hardware", s.handleHardwarePage)
+	s.mux.HandleFunc("/impressum", s.handleImpressumPage)
 	s.mux.HandleFunc("/", s.handleLanding)
 }
 
@@ -108,8 +113,9 @@ func (s *Server) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"id":       rm.ID,
+		"pin":      rm.PIN,
 		"writeURL": fmt.Sprintf("%s/app#/room/%s", s.cfg.BaseURL, rm.ID),
-		"readURL":  fmt.Sprintf("%s/app#/read/%s", s.cfg.BaseURL, rm.ID),
+		"readURL":  fmt.Sprintf("%s/app#/read/%s?pin=%s", s.cfg.BaseURL, rm.ID, rm.PIN),
 	})
 }
 
@@ -128,10 +134,44 @@ func (s *Server) handleRoomInfo(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":       rm.ID,
-		"language": rm.Language,
-		"readers":  rm.ReaderCount(),
-		"writer":   rm.HasWriter(),
+		"id":          rm.ID,
+		"language":    rm.Language,
+		"readers":     rm.ReaderCount(),
+		"writer":      rm.HasWriter(),
+		"pinRequired": rm.PIN != "",
+	})
+}
+
+// handleVerifyPIN validates a PIN for room access.
+func (s *Server) handleVerifyPIN(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		RoomID string `json:"roomId"`
+		PIN    string `json:"pin"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	rm := s.rooms.Get(req.RoomID)
+	if rm == nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"valid": false,
+			"error": "room_not_found",
+		})
+		return
+	}
+
+	valid := rm.ValidatePIN(req.PIN)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"valid": valid,
 	})
 }
 
@@ -149,8 +189,28 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 	rm := s.rooms.Get(roomID)
 	if rm == nil {
 		log.Printf("WS: room %s not found", roomID)
+		// Send error to client before closing
+		ws.Write([]byte(`{"type":"error","data":"room_not_found"}`))
+		time.Sleep(100 * time.Millisecond) // Give client time to receive
 		return
 	}
+
+	// Validate PIN for readers
+	if role == "read" && rm.PIN != "" {
+		pin := ws.Request().URL.Query().Get("pin")
+		if !rm.ValidatePIN(pin) {
+			log.Printf("WS: invalid PIN for room %s", roomID)
+			ws.Write([]byte(`{"type":"error","data":"invalid_pin"}`))
+			time.Sleep(100 * time.Millisecond) // Give client time to receive
+			return
+		}
+	}
+
+	// Track active connections and country stats
+	s.rooms.IncrementConnections()
+	country := extractCountry(ws.Request().Header.Get("Accept-Language"))
+	s.rooms.TrackConnection(country)
+	defer s.rooms.DecrementConnections()
 
 	client := &room.Client{
 		Send: make(chan []byte, 64),
@@ -159,6 +219,17 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 	switch role {
 	case "write":
 		rm.SetWriter(client)
+		// Send existing text back to writer (important for page refresh)
+		text := rm.GetText()
+		if text != "" {
+			b, _ := json.Marshal(map[string]string{"type": "text", "data": text})
+			client.Send <- b
+		}
+		// Also send PIN to writer (for display)
+		if rm.PIN != "" {
+			b, _ := json.Marshal(map[string]string{"type": "pin", "data": rm.PIN})
+			client.Send <- b
+		}
 	case "read":
 		rm.AddReader(client)
 		text := rm.GetText()
@@ -253,4 +324,73 @@ func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", ct)
 
 	io.Copy(w, f.(io.Reader))
+}
+
+func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	stats := s.rooms.GetStats()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-cache")
+	json.NewEncoder(w).Encode(stats)
+}
+
+func (s *Server) handleStatsPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	f, err := s.landing.Open("stats.html")
+	if err != nil {
+		http.Error(w, "Stats page not found", http.StatusNotFound)
+		return
+	}
+	defer f.Close()
+	io.Copy(w, f.(io.Reader))
+}
+
+func (s *Server) handleHardwarePage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	f, err := s.landing.Open("hardware.html")
+	if err != nil {
+		http.Error(w, "Hardware page not found", http.StatusNotFound)
+		return
+	}
+	defer f.Close()
+	io.Copy(w, f.(io.Reader))
+}
+
+func (s *Server) handleImpressumPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	f, err := s.landing.Open("impressum.html")
+	if err != nil {
+		http.Error(w, "Impressum page not found", http.StatusNotFound)
+		return
+	}
+	defer f.Close()
+	io.Copy(w, f.(io.Reader))
+}
+
+// extractCountry extracts country code from Accept-Language header.
+// Returns 2-letter country code (e.g., "DE", "US") or empty string.
+func extractCountry(acceptLang string) string {
+	if acceptLang == "" {
+		return ""
+	}
+	// Parse first language tag, e.g., "de-DE,de;q=0.9,en;q=0.8"
+	parts := strings.Split(acceptLang, ",")
+	if len(parts) == 0 {
+		return ""
+	}
+	lang := strings.TrimSpace(strings.Split(parts[0], ";")[0])
+	// Look for region subtag (e.g., "de-DE" -> "DE")
+	if idx := strings.Index(lang, "-"); idx > 0 && len(lang) > idx+1 {
+		return strings.ToUpper(lang[idx+1:])
+	}
+	// Fall back to language code as country approximation
+	if len(lang) >= 2 {
+		return strings.ToUpper(lang[:2])
+	}
+	return ""
 }

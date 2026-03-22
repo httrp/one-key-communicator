@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impressum — One-Key-Communicator</title>
+    <meta name="robots" content="noindex">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #6366f1;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #ffffff;
+            --bg-soft: #f8fafc;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .logo span { color: var(--text); }
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.95rem;
+        }
+        nav a:hover { color: var(--primary); }
+
+        main {
+            padding: 60px 0;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin: 32px 0 12px;
+            color: var(--primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        a {
+            color: var(--primary);
+        }
+
+        ul {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .info-box {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <a href="/" class="logo">One-Key-<span>Communicator</span></a>
+        <nav>
+            <a href="/" data-i18n="nav_home">Home</a>
+            <select id="langSwitch" onchange="switchLang(this.value)" style="margin-left: 16px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;">
+                <option value="de">🇩🇪 DE</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="fr">🇫🇷 FR</option>
+                <option value="es">🇪🇸 ES</option>
+            </select>
+            <a href="/app" data-i18n="nav_app">App</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        <h1 data-i18n="imp_title">Impressum</h1>
+
+        <h2 data-i18n="imp_info">§ 5 TMG</h2>
+        <div class="info-box">
+            <p><strong>Dominik Hattrup</strong><br>
+            Deutschland</p>
+            <p><strong>Kontakt:</strong><br>
+            E-Mail: contact@one-key-communicator.com</p>
+            <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-light);">Dies ist ein nicht-kommerzielles Open-Source-Projekt. Eine vollständige Anschrift wird gemäß § 5 TMG nicht veröffentlicht, da keine geschäftsmäßige Tätigkeit vorliegt.</p>
+        </div>
+
+        <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
+        <p>Dominik Hattrup (Anschrift wie oben)</p>
+
+        <h2>Haftung für Inhalte</h2>
+        <p>Als Diensteanbieter bin ich gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG bin ich als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.</p>
+        <p>Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werde ich diese Inhalte umgehend entfernen.</p>
+
+        <h2>Haftung für Links</h2>
+        <p>Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte ich keinen Einfluss habe. Deshalb kann ich für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte waren zum Zeitpunkt der Verlinkung nicht erkennbar.</p>
+
+        <h2>Urheberrecht</h2>
+        <p>Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen der <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU General Public License v3.0 (GPLv3)</a>. Die gesamte Software ist Open Source und kann frei verwendet, modifiziert und weiterverbreitet werden, solange die Lizenzbedingungen eingehalten werden.</p>
+        <p>Der vollständige Quellcode ist auf <a href="https://github.com/httrp/one-key-communicator" target="_blank">GitHub</a> verfügbar.</p>
+
+        <h2>Datenschutz</h2>
+        <p>One-Key-Communicator erhebt und speichert nur die absolut notwendigen Daten für die Funktionalität:</p>
+        <ul>
+            <li><strong>Räume:</strong> Raum-ID, PIN (gehasht), Erstellungszeit, letzter Aktivitätszeitpunkt, aktueller Text</li>
+            <li><strong>Automatische Löschung:</strong> Räume werden nach 24 Stunden Inaktivität automatisch gelöscht</li>
+            <li><strong>Keine Benutzerkonten:</strong> Es werden keine Benutzerkonten erstellt oder verwaltet</li>
+            <li><strong>Keine Tracking-Cookies:</strong> Es werden keine Tracking-Cookies gesetzt</li>
+            <li><strong>Keine Weitergabe:</strong> Es werden keine Daten an Dritte weitergegeben</li>
+        </ul>
+        <p>Die Kommunikation zwischen Geräten erfolgt über WebSocket-Verbindungen. Der Textinhalt wird temporär auf dem Server gespeichert, um die Synchronisation zwischen Schreiber und Lesern zu ermöglichen.</p>
+
+        <h2 data-i18n="imp_opensource">Open Source</h2>
+        <p data-i18n="imp_opensource_text">One-Key-Communicator ist ein nicht-kommerzielles Open-Source-Projekt. Es ist und bleibt kostenlos. Es gibt keine Premium-Features, keine Abonnements und keine versteckten Kosten.</p>
+        <p data-i18n="imp_inspect">Jeder kann den Quellcode einsehen, verändern und eine eigene Instanz betreiben.</p>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <a href="/" data-i18n="nav_back">← Zurück zur Startseite</a>
+    </div>
+</footer>
+
+<script>
+const translations = {
+    de: {},
+    en: {
+        nav_home: "Home", nav_app: "App", nav_back: "← Back to Home",
+        imp_title: "Imprint",
+        imp_info: "Legal Information",
+        imp_opensource: "Open Source",
+        imp_opensource_text: "One-Key-Communicator is a non-commercial open source project. It is and will remain free. No premium features, no subscriptions, no hidden costs.",
+        imp_inspect: "Everyone can view the source code, modify it, and run their own instance."
+    },
+    fr: {
+        nav_home: "Accueil", nav_app: "App", nav_back: "← Retour",
+        imp_title: "Mentions légales",
+        imp_info: "Informations légales",
+        imp_opensource: "Open Source",
+        imp_opensource_text: "One-Key-Communicator est un projet open source non commercial. Il est et restera gratuit. Pas de fonctionnalités premium, pas d'abonnement, pas de coûts cachés.",
+        imp_inspect: "Tout le monde peut voir le code source, le modifier et exécuter sa propre instance."
+    },
+    es: {
+        nav_home: "Inicio", nav_app: "App", nav_back: "← Volver",
+        imp_title: "Aviso legal",
+        imp_info: "Información legal",
+        imp_opensource: "Open Source",
+        imp_opensource_text: "One-Key-Communicator es un proyecto de código abierto no comercial. Es y seguirá siendo gratuito. Sin funciones premium, sin suscripciones, sin costes ocultos.",
+        imp_inspect: "Cualquiera puede ver el código fuente, modificarlo y ejecutar su propia instancia."
+    }
+};
+
+function switchLang(lang) {
+    const dict = translations[lang] || {};
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+    document.documentElement.lang = lang;
+    localStorage.setItem('okc-lang', lang);
+}
+
+const savedLang = localStorage.getItem('okc-lang');
+if (savedLang && savedLang !== 'de') {
+    document.getElementById('langSwitch').value = savedLang;
+    switchLang(savedLang);
+}
+</script>
+</body>
+</html>

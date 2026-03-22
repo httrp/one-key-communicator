@@ -6,34 +6,44 @@ const WS = {
     _ws: null,
     _roomId: null,
     _role: null,
+    _pin: null,
     _onMessage: null,
     _onStatus: null,
     _reconnectTimer: null,
     _reconnectDelay: 1000,
+    _permanentError: false, // Set to true if we should stop reconnecting
 
     /**
      * Connect to a room.
      * @param {string} roomId
      * @param {string} role - "write" or "read"
      * @param {function} onMessage - callback({type, data})
-     * @param {function} onStatus - callback("connected"|"disconnected"|"reconnecting")
+     * @param {function} onStatus - callback("connected"|"disconnected"|"reconnecting"|"error")
+     * @param {string} [pin] - optional PIN for readers
      */
-    connect(roomId, role, onMessage, onStatus) {
+    connect(roomId, role, onMessage, onStatus, pin = null) {
         this._roomId = roomId;
         this._role = role;
+        this._pin = pin;
         this._onMessage = onMessage;
         this._onStatus = onStatus;
+        this._permanentError = false;
         this._doConnect();
     },
 
     _doConnect() {
+        if (this._permanentError) return;
+        
         if (this._ws) {
             this._ws.onclose = null;
             this._ws.close();
         }
 
         const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = `${proto}//${location.host}/ws/${this._roomId}/${this._role}`;
+        let url = `${proto}//${location.host}/ws/${this._roomId}/${this._role}`;
+        if (this._pin) {
+            url += `?pin=${encodeURIComponent(this._pin)}`;
+        }
 
         this._ws = new WebSocket(url);
 
@@ -45,6 +55,14 @@ const WS = {
         this._ws.onmessage = (e) => {
             try {
                 const msg = JSON.parse(e.data);
+                
+                // Handle error messages
+                if (msg.type === 'error') {
+                    this._permanentError = true;
+                    if (this._onStatus) this._onStatus('error', msg.data);
+                    return;
+                }
+                
                 if (this._onMessage) this._onMessage(msg);
             } catch (err) {
                 console.error('WS parse error:', err);
@@ -52,6 +70,10 @@ const WS = {
         };
 
         this._ws.onclose = () => {
+            if (this._permanentError) {
+                // Don't reconnect on permanent errors (invalid PIN, room not found)
+                return;
+            }
             if (this._onStatus) this._onStatus('disconnected');
             this._scheduleReconnect();
         };

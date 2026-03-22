@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats — One-Key-Communicator</title>
+    <meta name="description" content="Live statistics for One-Key-Communicator usage.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #ffffff;
+            --bg-soft: #f8fafc;
+            --border: #e2e8f0;
+            --radius: 16px;
+            --success: #10b981;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg-soft);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .logo span { color: var(--text); }
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.95rem;
+        }
+        nav a:hover { color: var(--primary); }
+
+        /* Hero */
+        .hero {
+            background: var(--gradient);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Stats Grid */
+        .stats-section {
+            padding: 60px 0;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        .stat-card.highlight {
+            background: var(--gradient);
+            color: white;
+        }
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .stat-card.highlight .stat-value {
+            color: white;
+        }
+        .stat-label {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        .stat-card.highlight .stat-label {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Live indicator */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Info section */
+        .info-section {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-top: 20px;
+        }
+        .info-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+        }
+        .info-section p {
+            color: var(--text-light);
+            margin-bottom: 12px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 0;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Loading */
+        .loading {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8rem; }
+            .stat-value { font-size: 2.5rem; }
+            nav a { margin-left: 12px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <a href="/" class="logo">One-Key-<span>Communicator</span></a>
+        <nav>
+            <a href="/" data-i18n="nav_home">Home</a>
+            <a href="/hardware" data-i18n="nav_hardware">Hardware</a>
+            <select id="langSwitch" onchange="switchLang(this.value)" style="margin-left: 16px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;">
+                <option value="de">🇩🇪 DE</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="fr">🇫🇷 FR</option>
+                <option value="es">🇪🇸 ES</option>
+            </select>
+            <a href="/app" data-i18n="nav_start">App starten</a>
+        </nav>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <h1 data-i18n="stats_title">📊 Live Statistiken</h1>
+        <p data-i18n="stats_subtitle">Aktuelle Nutzung von One-Key-Communicator</p>
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="container">
+        <div style="text-align: center;">
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span data-i18n="stats_live">Live — Aktualisiert alle 10 Sekunden</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-value" id="activeConnections">-</div>
+                <div class="stat-label" data-i18n="stats_connections">Aktive Verbindungen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalConnections">-</div>
+                <div class="stat-label" data-i18n="stats_alltime">Nutzer insgesamt</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeRooms">-</div>
+                <div class="stat-label" data-i18n="stats_rooms">Aktive Räume</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRoomsCreated">-</div>
+                <div class="stat-label" data-i18n="stats_total">Räume insgesamt</div>
+            </div>
+        </div>
+
+        <div class="info-section" id="countrySection" style="display: none; margin-top: 32px;">
+            <h2 data-i18n="stats_countries">🌍 Länder</h2>
+            <div id="countryList" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px;"></div>
+        </div>
+
+        <div class="info-section">
+            <h2 data-i18n="stats_about">ℹ️ Über diese Statistiken</h2>
+            <p><strong data-i18n="stats_conn_label">Aktive Verbindungen:</strong> <span data-i18n="stats_conn_desc">Anzahl der derzeit offenen WebSocket-Verbindungen (Writer und Reader).</span></p>
+            <p><strong data-i18n="stats_alltime_label">Nutzer insgesamt:</strong> <span data-i18n="stats_alltime_desc">Alle jemals hergestellten Verbindungen (all-time).</span></p>
+            <p><strong data-i18n="stats_rooms_label">Aktive Räume:</strong> <span data-i18n="stats_rooms_desc">Räume, die noch nicht automatisch gelöscht wurden (max. 24h Inaktivität).</span></p>
+            <p><strong data-i18n="stats_total_label">Räume insgesamt:</strong> <span data-i18n="stats_total_desc">Gesamtzahl aller jemals erstellten Räume.</span></p>
+            <p style="margin-top: 20px; font-style: italic;" data-i18n="stats_privacy">
+                One-Key-Communicator speichert keine persönlichen Daten. Räume werden nach 24 Stunden Inaktivität automatisch gelöscht.
+            </p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p><a href="/" data-i18n="nav_back">← Zurück zur Startseite</a> · <a href="/impressum" data-i18n="nav_impressum">Impressum</a></p>
+    </div>
+</footer>
+
+<script>
+const countryFlags = {
+    'DE': '🇩🇪', 'EN': '🇬🇧', 'US': '🇺🇸', 'FR': '🇫🇷', 'ES': '🇪🇸', 'IT': '🇮🇹',
+    'AT': '🇦🇹', 'CH': '🇨🇭', 'NL': '🇳🇱', 'BE': '🇧🇪', 'PL': '🇵🇱', 'PT': '🇵🇹',
+    'BR': '🇧🇷', 'MX': '🇲🇽', 'AR': '🇦🇷', 'CA': '🇨🇦', 'AU': '🇦🇺', 'JP': '🇯🇵',
+    'CN': '🇨🇳', 'KR': '🇰🇷', 'IN': '🇮🇳', 'RU': '🇷🇺', 'TR': '🇹🇷', 'SE': '🇸🇪',
+    'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'CZ': '🇨🇿', 'GR': '🇬🇷', 'HU': '🇭🇺'
+};
+
+async function loadStats() {
+    try {
+        const res = await fetch('/api/stats');
+        const stats = await res.json();
+        
+        document.getElementById('activeConnections').textContent = stats.activeConnections.toLocaleString('de-DE');
+        document.getElementById('totalConnections').textContent = stats.totalConnections.toLocaleString('de-DE');
+        document.getElementById('activeRooms').textContent = stats.activeRooms.toLocaleString('de-DE');
+        document.getElementById('totalRoomsCreated').textContent = stats.totalRoomsCreated.toLocaleString('de-DE');
+        
+        // Country stats
+        if (stats.countryStats && Object.keys(stats.countryStats).length > 0) {
+            document.getElementById('countrySection').style.display = 'block';
+            const list = document.getElementById('countryList');
+            list.innerHTML = '';
+            
+            // Sort by count descending
+            const sorted = Object.entries(stats.countryStats).sort((a, b) => b[1] - a[1]);
+            for (const [country, count] of sorted) {
+                const flag = countryFlags[country] || '🌐';
+                const el = document.createElement('div');
+                el.style.cssText = 'background: var(--bg-soft); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem;';
+                el.innerHTML = `${flag} <strong>${country}</strong>: ${count.toLocaleString('de-DE')}`;
+                list.appendChild(el);
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load stats:', e);
+    }
+}
+
+// Load immediately and then every 10 seconds
+loadStats();
+setInterval(loadStats, 10000);
+
+// i18n translations
+const translations = {
+    de: {},
+    en: {
+        nav_home: "Home", nav_hardware: "Hardware", nav_start: "Launch App", nav_back: "← Back to Home", nav_impressum: "Imprint",
+        stats_title: "📊 Live Statistics",
+        stats_subtitle: "Current usage of One-Key-Communicator",
+        stats_live: "Live — Updates every 10 seconds",
+        stats_connections: "Active Connections",
+        stats_alltime: "Total Users",
+        stats_rooms: "Active Rooms",
+        stats_total: "Total Rooms",
+        stats_countries: "🌍 Countries",
+        stats_about: "ℹ️ About these Statistics",
+        stats_conn_label: "Active Connections:", stats_conn_desc: "Number of currently open WebSocket connections (writers and readers).",
+        stats_alltime_label: "Total Users:", stats_alltime_desc: "All connections ever made (all-time).",
+        stats_rooms_label: "Active Rooms:", stats_rooms_desc: "Rooms that have not yet been automatically deleted (max. 24h inactivity).",
+        stats_total_label: "Total Rooms:", stats_total_desc: "Total number of rooms ever created.",
+        stats_privacy: "One-Key-Communicator does not store personal data. Rooms are automatically deleted after 24 hours of inactivity."
+    },
+    fr: {
+        nav_home: "Accueil", nav_hardware: "Matériel", nav_start: "Lancer l'app", nav_back: "← Retour", nav_impressum: "Mentions légales",
+        stats_title: "📊 Statistiques en direct",
+        stats_subtitle: "Utilisation actuelle de One-Key-Communicator",
+        stats_live: "En direct — Mise à jour toutes les 10 secondes",
+        stats_connections: "Connexions actives",
+        stats_alltime: "Utilisateurs total",
+        stats_rooms: "Salles actives",
+        stats_total: "Total des salles",
+        stats_countries: "🌍 Pays"
+    },
+    es: {
+        nav_home: "Inicio", nav_hardware: "Hardware", nav_start: "Iniciar App", nav_back: "← Volver", nav_impressum: "Aviso legal",
+        stats_title: "📊 Estadísticas en vivo",
+        stats_subtitle: "Uso actual de One-Key-Communicator",
+        stats_live: "En vivo — Actualiza cada 10 segundos",
+        stats_connections: "Conexiones activas",
+        stats_alltime: "Usuarios totales",
+        stats_rooms: "Salas activas",
+        stats_total: "Total de salas",
+        stats_countries: "🌍 Países"
+    }
+};
+
+function switchLang(lang) {
+    const dict = translations[lang] || {};
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+    document.documentElement.lang = lang;
+    localStorage.setItem('okc-lang', lang);
+}
+
+const savedLang = localStorage.getItem('okc-lang');
+if (savedLang && savedLang !== 'de') {
+    document.getElementById('langSwitch').value = savedLang;
+    switchLang(savedLang);
+}
+</script>
+
+</body>
+</html>

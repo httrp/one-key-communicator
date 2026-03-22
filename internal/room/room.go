@@ -9,6 +9,7 @@ import (
 // Room represents a communication session.
 type Room struct {
 	ID        string
+	PIN       string // 4-digit access PIN for readers
 	CreatedAt time.Time
 	Language  string
 	Text      string
@@ -17,6 +18,13 @@ type Room struct {
 	writer     *Client
 	readers    map[*Client]bool
 	lastActive time.Time
+}
+
+// ValidatePIN checks if the provided PIN matches the room's PIN.
+func (r *Room) ValidatePIN(pin string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.PIN == pin
 }
 
 // Client represents a connected WebSocket client.

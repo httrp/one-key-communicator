@@ -27,6 +27,7 @@
     let currentView = null;
     let currentText = '';
     let roomId = null;
+    let roomPIN = null; // PIN for reader access
     let inputMode = 'keyboard';  // 'keyboard' | 'toolbar' | 'phrases' | 'punctuation'
     let paused = false;
     let keys = [];
@@ -76,8 +77,6 @@
     const sidebarReaderList = $('sidebarReaderList');
     const modeBadge         = $('modeBadge');
     const modeLabel         = $('modeLabel');
-    const toolbarModeLabel  = $('toolbarModeLabel');
-    const toolbarBack       = $('toolbarBack');
 
     // =========================================================================
     // INIT
@@ -87,12 +86,16 @@
 
     // Restore keyboard mode (default: smart)
     const savedKbMode = localStorage.getItem('okc-kb-mode');
-    if (savedKbMode && ['abc', 'smart', 'wild'].includes(savedKbMode)) {
+    if (savedKbMode && ['abc', 'smart', 'mix'].includes(savedKbMode)) {
         Keyboard.setMode(savedKbMode);
     } else {
         Keyboard.setMode('smart');
     }
     updateModeBadge();
+
+    // Restore numbers toggle
+    const savedNumbers = localStorage.getItem('okc-show-numbers');
+    Keyboard.setShowNumbers(savedNumbers === 'true');
 
     // Restore speed
     const savedSpeed = localStorage.getItem('okc-speed');
@@ -110,7 +113,10 @@
     // =========================================================================
     function navigate() {
         const hash = location.hash.slice(1) || '/';
-        const parts = hash.split('/').filter(Boolean);
+        // Extract query string from hash (e.g., #/read/abc123?pin=1234)
+        const [hashPath, hashQuery] = hash.split('?');
+        const parts = hashPath.split('/').filter(Boolean);
+        const params = new URLSearchParams(hashQuery || '');
 
         if (currentView === 'write' || currentView === 'read') {
             Runner.stop();
@@ -120,7 +126,8 @@
         hideAll();
 
         if (parts[0] === 'read' && parts[1]) {
-            showReadView(parts[1]);
+            const pin = params.get('pin');
+            showReadView(parts[1], pin);
         } else if (parts[0] === 'room' && parts[1]) {
             showWriteView(parts[1]);
         } else {
@@ -149,11 +156,23 @@
         if (stored) {
             try {
                 const info = JSON.parse(stored);
+                // Check if stored room ID is still fresh (< 12 hours)
                 if (Date.now() - info.ts < 12 * 60 * 60 * 1000) {
-                    location.hash = '/room/' + info.id;
-                    return;
+                    // Verify room still exists on server before using it
+                    const checkResp = await fetch('/api/rooms/' + info.id);
+                    if (checkResp.ok) {
+                        location.hash = '/room/' + info.id;
+                        return;
+                    } else {
+                        // Room was deleted on server, clear localStorage
+                        console.log('Stored room no longer exists, creating new one');
+                        localStorage.removeItem('okc-room');
+                    }
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+                // Parsing error or network issue, clear and create new
+                localStorage.removeItem('okc-room');
+            }
         }
 
         try {
@@ -211,20 +230,12 @@
         Runner.stop();
         const speed = getAdaptiveSpeed();
 
-        // Show/hide toolbar back button
-        if (toolbarBack) {
-            toolbarBack.classList.toggle('hidden', inputMode !== 'toolbar');
-        }
-
         if (inputMode === 'keyboard') {
             keyboardContainer.classList.remove('hidden');
             phrasesContainer.classList.add('hidden');
+            // Render keyboard (letters + space + backspace + menu button)
             keys = Keyboard.render(keyboardContainer, I18N.getLang(), currentText);
             Runner.start(keys, speed, onKeySelected);
-        } else if (inputMode === 'toolbar') {
-            // Keep keyboard visible but scan toolbar
-            keys = Keyboard.getToolbarKeys();
-            Runner.start(keys, speed, onToolbarSelected);
         } else if (inputMode === 'phrases') {
             keyboardContainer.classList.add('hidden');
             phrasesContainer.classList.remove('hidden');
@@ -235,34 +246,44 @@
             phrasesContainer.classList.add('hidden');
             keys = Keyboard.renderPunctuation(keyboardContainer, I18N.getLang());
             Runner.start(keys, speed, onPunctSelected);
+        } else if (inputMode === 'delete') {
+            // Delete mode keeps its own rendering (handled in showDeleteOptions)
         }
     }
 
     // =========================================================================
-    // KEY SELECTION HANDLER (main keyboard: letters + space + ⌫ + ☰)
+    // KEY SELECTION HANDLER (keyboard only - no toolbar actions here)
     // =========================================================================
     function onKeySelected(value) {
+        // Handle keyboard actions
         switch (value) {
+            case 'MENU':
+                showToolbarScan();
+                return;
             case 'BACKSPACE':
                 if (currentText.length > 0) {
                     currentText = currentText.slice(0, -1);
                     recordAction('backspace');
                 }
                 break;
-            case 'MORE':
-                // Switch to toolbar scanning
-                inputMode = 'toolbar';
-                renderAndStart();
-                return;
             default:
-                // Letter or word suggestion
-                if (value.length > 1 && value === value.toUpperCase() && !/^[.!?,;:'"()\-\u00a1\u00bf\u2026]/.test(value)) {
-                    // Word suggestion from wild mode
+                // Letter, number, or word suggestion
+                if (value.length > 1 && value === value.toUpperCase() && !/^[.!?,;:'"()\-\u00a1\u00bf\u2026\d]/.test(value)) {
+                    // Word suggestion from mix mode
                     const cw = SmartKeyboard.getCurrentWord(currentText);
                     if (cw) currentText = currentText.slice(0, -cw.length);
                     currentText += autoCase(value.toLowerCase()) + ' ';
+                    SmartKeyboard.recordUserWord(value);  // Track user word
                 } else if (value === ' ') {
+                    // Record the completed word before adding space
+                    const completedWord = SmartKeyboard.getCurrentWord(currentText);
+                    if (completedWord) {
+                        SmartKeyboard.recordUserWord(completedWord);
+                    }
                     currentText += ' ';
+                } else if (/^\d$/.test(value)) {
+                    // Number
+                    currentText += value;
                 } else {
                     currentText += autoCase(value.toLowerCase());
                 }
@@ -274,46 +295,9 @@
         updateCurrentWord();
         WS.sendText(currentText);
 
-        // In smart/wild mode, re-render for new frequency order
+        // In smart/mix mode, re-render for new frequency order
         if (Keyboard.getMode() !== 'abc') {
             renderAndStart();
-        }
-    }
-
-    // =========================================================================
-    // TOOLBAR SELECTION HANDLER (action buttons outside keyboard)
-    // =========================================================================
-    function onToolbarSelected(value) {
-        switch (value) {
-            case 'TOOLBAR_BACK':
-                inputMode = 'keyboard';
-                renderAndStart();
-                return;
-            case 'KB_MODE':
-                cycleKeyboardMode();
-                updateModeBadge();
-                inputMode = 'keyboard';
-                renderAndStart();
-                return;
-            case 'PHRASES':
-                inputMode = 'phrases';
-                renderAndStart();
-                return;
-            case 'PUNCT':
-                inputMode = 'punctuation';
-                renderAndStart();
-                return;
-            case 'SPEAK':
-                speak();
-                inputMode = 'keyboard';
-                renderAndStart();
-                return;
-            case 'CLEAR':
-                clearText();
-                return; // clearText resets to keyboard
-            case 'PAUSE':
-                enterPause();
-                return;
         }
     }
 
@@ -411,7 +395,7 @@
     // KEYBOARD MODE CYCLING
     // =========================================================================
     function cycleKeyboardMode() {
-        const modes = ['abc', 'smart', 'wild'];
+        const modes = ['abc', 'smart', 'mix'];
         const idx = modes.indexOf(Keyboard.getMode());
         const next = modes[(idx + 1) % modes.length];
         Keyboard.setMode(next);
@@ -421,17 +405,282 @@
     function updateModeBadge() {
         const mode = Keyboard.getMode();
         if (modeLabel) modeLabel.textContent = mode;
-        if (toolbarModeLabel) toolbarModeLabel.textContent = mode;
     }
 
     // =========================================================================
-    // CLEAR TEXT
+    // CLEAR TEXT (with options)
     // =========================================================================
+    let deleteMode = false;
+
+    function showDeleteOptions() {
+        deleteMode = true;
+        inputMode = 'delete';
+        const container = keyboardContainer;
+        container.innerHTML = '';
+        const allKeys = [];
+
+        const options = [
+            { label: I18N.t('delete_word') || 'Wort', value: 'DELETE_WORD' },
+            { label: I18N.t('delete_sentence') || 'Satz', value: 'DELETE_SENTENCE' },
+            { label: I18N.t('delete_paragraph') || 'Absatz', value: 'DELETE_PARAGRAPH' },
+            { label: I18N.t('delete_all') || 'Alles', value: 'DELETE_ALL' },
+        ];
+
+        const row = document.createElement('div');
+        row.className = 'keyboard-row';
+        for (const opt of options) {
+            const el = document.createElement('div');
+            el.className = 'key action-key wide';
+            el.textContent = opt.label;
+            el.dataset.value = opt.value;
+            row.appendChild(el);
+            allKeys.push(el);
+        }
+        container.appendChild(row);
+
+        // Back button
+        const backRow = document.createElement('div');
+        backRow.className = 'keyboard-row';
+        const backEl = document.createElement('div');
+        backEl.className = 'key action-key extra-wide';
+        backEl.textContent = '\u2b05 ' + I18N.t('back');
+        backEl.dataset.value = 'BACK';
+        backRow.appendChild(backEl);
+        allKeys.push(backEl);
+        container.appendChild(backRow);
+
+        keys = allKeys;
+        Runner.start(keys, getAdaptiveSpeed(), onDeleteOptionSelected);
+    }
+
+    function onDeleteOptionSelected(value) {
+        deleteMode = false;
+        switch (value) {
+            case 'DELETE_WORD':
+                deleteLastWord();
+                break;
+            case 'DELETE_SENTENCE':
+                deleteLastSentence();
+                break;
+            case 'DELETE_PARAGRAPH':
+                deleteLastParagraph();
+                break;
+            case 'DELETE_ALL':
+                clearText();
+                return;
+            case 'BACK':
+                break;
+        }
+        inputMode = 'keyboard';
+        renderAndStart();
+        updateTextDisplay();
+        updateCurrentWord();
+        WS.sendText(currentText);
+    }
+
+    function deleteLastWord() {
+        // Remove last word (including trailing space)
+        currentText = currentText.trimEnd();
+        const match = currentText.match(/\s+\S*$/);
+        if (match) {
+            currentText = currentText.slice(0, match.index);
+        } else {
+            currentText = '';  // Only one word, clear all
+        }
+    }
+
+    function deleteLastSentence() {
+        // Remove last sentence (up to and including .!?)
+        currentText = currentText.trimEnd();
+        const match = currentText.match(/[.!?]\s*[^.!?]*$/);
+        if (match && match.index > 0) {
+            currentText = currentText.slice(0, match.index + 1);
+        } else {
+            currentText = '';
+        }
+    }
+
+    function deleteLastParagraph() {
+        // Remove last paragraph (up to newline)
+        const newlineIdx = currentText.lastIndexOf('\n');
+        if (newlineIdx > 0) {
+            currentText = currentText.slice(0, newlineIdx);
+        } else {
+            currentText = '';
+        }
+    }
+
     function clearText() {
         currentText = '';
         updateTextDisplay();
         updateCurrentWord();
         WS.sendClear();
+        inputMode = 'keyboard';
+        renderAndStart();
+    }
+
+    // =========================================================================
+    // TOOLBAR SCAN MODE (separate from keyboard)
+    // =========================================================================
+
+    function showToolbarScan() {
+        Runner.stop();
+        inputMode = 'toolbar';
+
+        // Render toolbar buttons in keyboard container
+        keys = Keyboard.renderToolbar(keyboardContainer);
+        const speed = getAdaptiveSpeed();
+
+        Runner.start(keys, speed, onToolbarSelected);
+    }
+
+    function onToolbarSelected(value) {
+        switch (value) {
+            case 'KB_MODE':
+                cycleKeyboardMode();
+                updateModeBadge();
+                showToolbarScan();  // Stay in toolbar
+                return;
+            case 'PHRASES':
+                inputMode = 'phrases';
+                renderAndStart();
+                return;
+            case 'PUNCT':
+                inputMode = 'punctuation';
+                renderAndStart();
+                return;
+            case 'SPEAK':
+                speak();
+                showToolbarScan();  // Stay in toolbar
+                return;
+            case 'CLEAR':
+                showDeleteOptions();
+                return;
+            case 'PAUSE':
+                enterPause();
+                return;
+            case 'SHARE':
+                showShareScan();
+                return;
+            case 'SETTINGS':
+                showSettingsScan();
+                return;
+            case 'HELP':
+                showHelpScan();
+                return;
+            case 'BACK':
+                inputMode = 'keyboard';
+                renderAndStart();
+                return;
+        }
+    }
+
+    // =========================================================================
+    // MODAL SCAN MODES (Settings, Share, Help)
+    // =========================================================================
+
+    function showSettingsScan() {
+        Runner.stop();
+        settingsPanel.classList.remove('hidden');
+        inputMode = 'settings';
+
+        const scanArea = $('settingsScanArea');
+        const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
+        const speed = getAdaptiveSpeed();
+
+        Runner.start(scanBtns, speed, onSettingsScanSelected);
+    }
+
+    function onSettingsScanSelected(value) {
+        switch (value) {
+            case 'SPEED_UP':
+                // Decrease interval = faster
+                baseSpeed = Math.max(200, baseSpeed - 100);
+                localStorage.setItem('okc-speed', baseSpeed);
+                speedSlider.value = baseSpeed;
+                Runner.setSpeed(baseSpeed);
+                // Stay in settings mode, restart scan
+                showSettingsScan();
+                return;
+            case 'SPEED_DOWN':
+                // Increase interval = slower
+                baseSpeed = Math.min(2000, baseSpeed + 100);
+                localStorage.setItem('okc-speed', baseSpeed);
+                speedSlider.value = baseSpeed;
+                Runner.setSpeed(baseSpeed);
+                showSettingsScan();
+                return;
+            case 'TOGGLE_DARK':
+                const darkToggle = $('darkModeToggle');
+                darkToggle.checked = !darkToggle.checked;
+                document.documentElement.dataset.theme = darkToggle.checked ? 'dark' : 'light';
+                localStorage.setItem('okc-dark-mode', darkToggle.checked);
+                showSettingsScan();
+                return;
+            case 'TOGGLE_NUMBERS':
+                const numToggle = $('numbersToggle');
+                numToggle.checked = !numToggle.checked;
+                Keyboard.setShowNumbers(numToggle.checked);
+                localStorage.setItem('okc-show-numbers', numToggle.checked);
+                showSettingsScan();
+                return;
+            case 'BACK':
+                break;
+        }
+        // Return to keyboard
+        settingsPanel.classList.add('hidden');
+        inputMode = 'keyboard';
+        renderAndStart();
+    }
+
+    function showShareScan() {
+        Runner.stop();
+        openShareModal();
+        inputMode = 'share';
+
+        const scanArea = $('shareScanArea');
+        const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
+        const speed = getAdaptiveSpeed();
+
+        Runner.start(scanBtns, speed, onShareScanSelected);
+    }
+
+    function onShareScanSelected(value) {
+        switch (value) {
+            case 'COPY_LINK':
+                const url = getReadURL();
+                navigator.clipboard.writeText(url).then(() => {
+                    const copyBtn = $('btnCopyURL');
+                    const oldText = copyBtn.textContent;
+                    copyBtn.textContent = I18N.t('copied') || 'Kopiert!';
+                    setTimeout(() => { copyBtn.textContent = oldText; }, 1500);
+                });
+                showShareScan();  // Stay in share mode
+                return;
+            case 'BACK':
+                break;
+        }
+        // Close modal and return to keyboard
+        shareModal.classList.add('hidden');
+        inputMode = 'keyboard';
+        renderAndStart();
+    }
+
+    function showHelpScan() {
+        Runner.stop();
+        $('helpModal').classList.remove('hidden');
+        inputMode = 'help';
+
+        const scanArea = $('helpScanArea');
+        const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
+        const speed = getAdaptiveSpeed();
+
+        Runner.start(scanBtns, speed, onHelpScanSelected);
+    }
+
+    function onHelpScanSelected(value) {
+        // Only BACK option
+        $('helpModal').classList.add('hidden');
         inputMode = 'keyboard';
         renderAndStart();
     }
@@ -505,11 +754,18 @@
     // =========================================================================
     function setupSidebar() {
         if (!roomId) return;
-        const readURL = location.origin + '/app/#/read/' + roomId;
+        const readURL = getReadURL();
 
         if (sidebarQR) QRCode.draw(sidebarQR, readURL, 180);
         if (sidebarURL) sidebarURL.textContent = readURL;
         if (sidebarRoomId) sidebarRoomId.textContent = roomId;
+        
+        // Update PIN display
+        const pinDisplay = $('sidebarPIN');
+        if (pinDisplay && roomPIN) {
+            pinDisplay.textContent = roomPIN;
+            pinDisplay.parentElement.classList.remove('hidden');
+        }
     }
 
     // =========================================================================
@@ -518,7 +774,48 @@
     function onWriterMessage(msg) {
         if (msg.type === 'readers') {
             updateReaderInfo(msg.data);
+        } else if (msg.type === 'text') {
+            // Server sends existing text on connect (e.g., after page refresh)
+            // Only restore if our local text is empty
+            if (currentText === '' && msg.data) {
+                currentText = msg.data;
+                textDisplay.textContent = currentText;
+                textDisplay.classList.remove('empty');
+                WS.sendText(currentText); // Ensure sync
+            }
+        } else if (msg.type === 'pin') {
+            // Server sends room PIN on connect
+            roomPIN = msg.data;
+            updatePINDisplay();
+            setupSidebar(); // Re-render sidebar with updated PIN
         }
+    }
+
+    // Update PIN display in UI
+    function updatePINDisplay() {
+        const sidebarPINSection = $('sidebarPINSection');
+        const sidebarPIN = $('sidebarPIN');
+        const sharePINSection = $('sharePINSection');
+        const sharePIN = $('sharePIN');
+        
+        if (sidebarPINSection && sidebarPIN && roomPIN) {
+            sidebarPIN.textContent = roomPIN;
+            sidebarPINSection.style.display = '';
+        }
+        if (sharePINSection && sharePIN && roomPIN) {
+            sharePIN.textContent = roomPIN;
+            sharePINSection.style.display = '';
+        }
+    }
+
+    // Build read URL with PIN
+    function getReadURL() {
+        if (!roomId) return '';
+        let url = location.origin + '/app/#/read/' + roomId;
+        if (roomPIN) {
+            url += '?pin=' + roomPIN;
+        }
+        return url;
     }
 
     // =========================================================================
@@ -526,16 +823,24 @@
     // =========================================================================
     function openShareModal() {
         if (!roomId) return;
-        const readURL = location.origin + '/app/#/read/' + roomId;
+        const readURL = getReadURL();
         shareURL.textContent = readURL;
         QRCode.draw(qrCanvas, readURL, 200);
+        
+        // Show PIN prominently
+        const sharePinDisplay = $('sharePIN');
+        if (sharePinDisplay && roomPIN) {
+            sharePinDisplay.textContent = roomPIN;
+            sharePinDisplay.parentElement.classList.remove('hidden');
+        }
+        
         shareModal.classList.remove('hidden');
     }
 
     // =========================================================================
     // READER VIEW — Smart text display
     // =========================================================================
-    function showReadView(id) {
+    function showReadView(id, pin = null) {
         currentView = 'read';
         roomId = id;
         views.read.classList.remove('hidden');
@@ -571,7 +876,7 @@
             applyReaderViewMode();
         }
 
-        WS.connect(id, 'read', onReaderMessage, onReaderConnectionStatus);
+        WS.connect(id, 'read', onReaderMessage, onReaderConnectionStatus, pin);
 
         // Send saved name
         const savedName = localStorage.getItem('okc-reader-name');
@@ -663,14 +968,46 @@
         }
     }
 
-    function onReaderConnectionStatus(status) {
+    function onReaderConnectionStatus(status, errorData) {
         const dot = $('readerStatusDot');
         const text = $('readerStatusText');
+        const fullEl = $('readerFullText');
+        
         dot.className = 'status-dot';
         switch (status) {
-            case 'connected':    dot.classList.add('connected'); text.textContent = I18N.t('connected'); break;
-            case 'disconnected': dot.classList.add('disconnected'); text.textContent = I18N.t('disconnected'); break;
-            case 'reconnecting': text.textContent = I18N.t('reconnecting'); break;
+            case 'connected':    
+                dot.classList.add('connected'); 
+                text.textContent = I18N.t('connected'); 
+                break;
+            case 'disconnected': 
+                dot.classList.add('disconnected'); 
+                text.textContent = I18N.t('disconnected'); 
+                break;
+            case 'reconnecting': 
+                text.textContent = I18N.t('reconnecting'); 
+                break;
+            case 'error':
+                dot.classList.add('disconnected');
+                if (errorData === 'room_not_found') {
+                    text.textContent = I18N.t('error_room_not_found') || 'Raum nicht gefunden';
+                    if (fullEl) {
+                        fullEl.innerHTML = '<span class="reader-empty-text">' + 
+                            (I18N.t('error_room_not_found_desc') || 'Dieser Raum existiert nicht mehr. Bitte fordere einen neuen Link an.') + 
+                            '</span>';
+                        fullEl.classList.add('empty');
+                    }
+                } else if (errorData === 'invalid_pin') {
+                    text.textContent = I18N.t('error_invalid_pin') || 'Ungültige PIN';
+                    if (fullEl) {
+                        fullEl.innerHTML = '<span class="reader-empty-text">' + 
+                            (I18N.t('error_invalid_pin_desc') || 'Die PIN ist ungültig. Bitte prüfe den Link oder frage nach der korrekten PIN.') + 
+                            '</span>';
+                        fullEl.classList.add('empty');
+                    }
+                } else {
+                    text.textContent = I18N.t('connection_error') || 'Verbindungsfehler';
+                }
+                break;
         }
     }
 
@@ -697,10 +1034,19 @@
                 speak();
                 break;
             case 'CLEAR':
-                clearText();
+                showDeleteOptions();
                 break;
             case 'PAUSE':
                 enterPause();
+                break;
+            case 'SHARE':
+                showShareScan();
+                break;
+            case 'SETTINGS':
+                showSettingsScan();
+                break;
+            case 'HELP':
+                showHelpScan();
                 break;
         }
     }
@@ -708,8 +1054,6 @@
     // Attach click handlers to each toolbar button (for direct interaction)
     document.querySelectorAll('#toolbar .toolbar-btn').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
-            // If toolbar is being scanned by runner, let runner handle it
-            if (inputMode === 'toolbar') return;
             e.stopPropagation();
             handleToolbarAction(btn.dataset.value);
         });
@@ -923,6 +1267,68 @@
         if (e.target.closest('.toolbar')) return;
         handleGlobalInput(e);
     });
+
+    // =========================================================================
+    // HELP MODAL
+    // =========================================================================
+    const helpModal = $('helpModal');
+    const btnHelp = $('btnHelp');
+    const btnCloseHelp = $('btnCloseHelp');
+
+    if (btnHelp) {
+        btnHelp.addEventListener('click', function() {
+            Runner.stop();
+            helpModal.classList.remove('hidden');
+        });
+    }
+    if (btnCloseHelp) {
+        btnCloseHelp.addEventListener('click', function() {
+            helpModal.classList.add('hidden');
+            if (currentView === 'write' && !paused) renderAndStart();
+        });
+    }
+    if (helpModal) {
+        helpModal.addEventListener('click', function(e) {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+                if (currentView === 'write' && !paused) renderAndStart();
+            }
+        });
+    }
+
+    // =========================================================================
+    // DARK MODE
+    // =========================================================================
+    const darkModeToggle = $('darkModeToggle');
+    const savedDarkMode = localStorage.getItem('okc-dark-mode');
+    if (savedDarkMode === 'true') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (darkModeToggle) darkModeToggle.checked = true;
+    }
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', function() {
+            if (darkModeToggle.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('okc-dark-mode', 'true');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('okc-dark-mode', 'false');
+            }
+        });
+    }
+
+    // =========================================================================
+    // NUMBERS TOGGLE
+    // =========================================================================
+    const numbersToggle = $('numbersToggle');
+    if (numbersToggle) {
+        numbersToggle.checked = Keyboard.getShowNumbers();
+        numbersToggle.addEventListener('change', function() {
+            Keyboard.setShowNumbers(numbersToggle.checked);
+            localStorage.setItem('okc-show-numbers', numbersToggle.checked);
+            if (currentView === 'write' && !paused) renderAndStart();
+        });
+    }
 
     // =========================================================================
     // ROUTER

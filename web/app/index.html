@@ -30,6 +30,9 @@
                     </span>
                 </div>
                 <div class="header-right">
+                    <button class="icon-btn" id="btnHelp" title="Hilfe" aria-label="Help">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </button>
                     <button class="icon-btn" id="btnTTS" title="Vorlesen" aria-label="Read aloud">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
                     </button>
@@ -50,43 +53,13 @@
                 <span id="currentWord"></span>
             </div>
 
-            <!-- Toolbar (action buttons — always visible, scannable when ☰ selected) -->
-            <div class="toolbar" id="toolbar">
-                <div class="toolbar-btn back-btn hidden" id="toolbarBack" data-value="TOOLBAR_BACK">
-                    <span class="toolbar-icon">&#11013;</span>
-                </div>
-                <div class="toolbar-btn mode-toolbar-btn" id="toolbarMode" data-value="KB_MODE">
-                    <span class="toolbar-icon">&#128292;</span>
-                    <span class="toolbar-label" id="toolbarModeLabel">smart</span>
-                </div>
-                <div class="toolbar-btn" id="toolbarPhrases" data-value="PHRASES">
-                    <span class="toolbar-icon">&#128172;</span>
-                    <span class="toolbar-label" data-i18n="mode_phrases">S&#228;tze</span>
-                </div>
-                <div class="toolbar-btn" id="toolbarPunct" data-value="PUNCT">
-                    <span class="toolbar-icon">#?!</span>
-                </div>
-                <div class="toolbar-btn" id="toolbarSpeak" data-value="SPEAK">
-                    <span class="toolbar-icon">&#128266;</span>
-                    <span class="toolbar-label" data-i18n="speak">Vorlesen</span>
-                </div>
-                <div class="toolbar-btn" id="toolbarClear" data-value="CLEAR">
-                    <span class="toolbar-icon">&#128465;</span>
-                    <span class="toolbar-label" data-i18n="clear">L&#246;schen</span>
-                </div>
-                <div class="toolbar-btn pause-toolbar-btn" id="toolbarPause" data-value="PAUSE">
-                    <span class="toolbar-icon">&#9208;</span>
-                    <span class="toolbar-label" data-i18n="pause">Pause</span>
-                </div>
-            </div>
-
             <!-- Inline share hint (shown briefly on first load) -->
             <div class="share-hint hidden" id="shareHint">
                 <span data-i18n="share_hint">Tippe auf das QR-Symbol, damit andere mitlesen.</span>
                 <button class="share-hint-close" id="btnDismissHint">&times;</button>
             </div>
 
-            <!-- Keyboard area (letters + space + backspace + ☰ more) -->
+            <!-- Keyboard area (letters + space + backspace) -->
             <div id="keyboardContainer" class="keyboard"></div>
             <div id="phrasesContainer" class="quick-phrases hidden"></div>
         </main>
@@ -104,6 +77,10 @@
             <div class="sidebar-section sidebar-room-info">
                 <div class="sidebar-label">Room</div>
                 <div class="sidebar-room-id" id="sidebarRoomId"></div>
+            </div>
+            <div class="sidebar-section sidebar-pin-info" id="sidebarPINSection" style="display:none;">
+                <div class="sidebar-label">PIN</div>
+                <div class="sidebar-pin" id="sidebarPIN"></div>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-label" data-i18n="readers_label">Mitleser</div>
@@ -195,6 +172,18 @@
                 <span data-i18n="slow">Langsam</span>
             </div>
 
+            <label class="setting-label" data-i18n="show_numbers">Zahlen anzeigen</label>
+            <div class="setting-toggle">
+                <input type="checkbox" id="numbersToggle" class="toggle-input">
+                <label for="numbersToggle" class="toggle-label"></label>
+            </div>
+
+            <label class="setting-label" data-i18n="dark_mode">Dark Mode</label>
+            <div class="setting-toggle">
+                <input type="checkbox" id="darkModeToggle" class="toggle-input">
+                <label for="darkModeToggle" class="toggle-label"></label>
+            </div>
+
             <label class="setting-label" data-i18n="new_room">Neuen Raum</label>
             <button class="btn btn-outline btn-block" id="btnNewRoom" data-i18n="new_room_btn">Neuen Raum erstellen</button>
 
@@ -202,6 +191,29 @@
             <div class="setting-row">
                 <input type="text" id="joinRoomInput" class="setting-input" placeholder="abc123">
                 <button class="btn btn-primary btn-small" id="btnJoinRoom" data-i18n="join">OK</button>
+            </div>
+        </div>
+        <!-- Scannable settings buttons for runner users -->
+        <div class="settings-scan-area" id="settingsScanArea">
+            <div class="scan-btn" data-value="SPEED_UP">
+                <span class="scan-icon">▲</span>
+                <span class="scan-label" data-i18n="speed_faster">Schneller</span>
+            </div>
+            <div class="scan-btn" data-value="SPEED_DOWN">
+                <span class="scan-icon">▼</span>
+                <span class="scan-label" data-i18n="speed_slower">Langsamer</span>
+            </div>
+            <div class="scan-btn" data-value="TOGGLE_DARK">
+                <span class="scan-icon">◐</span>
+                <span class="scan-label" data-i18n="dark_mode">Dark Mode</span>
+            </div>
+            <div class="scan-btn" data-value="TOGGLE_NUMBERS">
+                <span class="scan-icon">123</span>
+                <span class="scan-label" data-i18n="show_numbers">Zahlen</span>
+            </div>
+            <div class="scan-btn scan-btn-back" data-value="BACK">
+                <span class="scan-icon">←</span>
+                <span class="scan-label" data-i18n="back">Zurück</span>
             </div>
         </div>
     </div>
@@ -214,12 +226,56 @@
         <p data-i18n="share_text">QR-Code scannen oder Link &#246;ffnen, um mitzulesen.</p>
         <canvas id="qrCanvas" width="200" height="200"></canvas>
         <div class="url-box" id="shareURL"></div>
+        <div class="pin-box" id="sharePINSection" style="display:none;"><strong>PIN:</strong> <span id="sharePIN"></span></div>
         <div class="modal-actions">
             <button class="btn btn-primary" id="btnCopyURL" data-i18n="copy_link">Link kopieren</button>
             <button class="btn btn-ghost" id="btnCloseModal" data-i18n="close">Schlie&#223;en</button>
         </div>
+        <!-- Scannable area for runner -->
+        <div class="modal-scan-area" id="shareScanArea">
+            <div class="scan-btn" data-value="COPY_LINK">
+                <span class="scan-icon">📋</span>
+                <span class="scan-label" data-i18n="copy_link">Link kopieren</span>
+            </div>
+            <div class="scan-btn scan-btn-back" data-value="BACK">
+                <span class="scan-icon">←</span>
+                <span class="scan-label" data-i18n="back">Zurück</span>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- ===== Help Modal ===== -->
+<div id="helpModal" class="modal-overlay hidden">
+    <div class="modal help-modal">
+        <h2 data-i18n="help_title">Wie funktioniert OKC?</h2>
+        <div class="help-content">
+            <p data-i18n="help_intro">One-Key-Communicator ermöglicht Kommunikation mit nur einer Taste:</p>
+            <ol>
+                <li data-i18n="help_step1">Der Marker wandert automatisch über die Buchstaben</li>
+                <li data-i18n="help_step2">Drücke eine beliebige Taste (oder tippe/klicke), um den markierten Buchstaben auszuwählen</li>
+                <li data-i18n="help_step3">Der Runner scannt auch die Toolbar-Buttons (Sätze, Vorlesen, Teilen, etc.)</li>
+                <li data-i18n="help_step4">Teile den QR-Code, damit andere mitlesen können</li>
+            </ol>
+            <p class="help-tip" data-i18n="help_tip">Tipp: Die Geschwindigkeit kann in den Einstellungen angepasst werden.</p>
+        </div>
+        <!-- Scannable area for runner -->
+        <div class="modal-scan-area" id="helpScanArea">
+            <div class="scan-btn scan-btn-back" data-value="BACK">
+                <span class="scan-icon">←</span>
+                <span class="scan-label" data-i18n="back">Zurück</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Footer ===== -->
+<footer class="app-footer">
+    <span>by Dominik Hattrup</span>
+    <a href="https://github.com/httrp/one-key-communicator" target="_blank" rel="noopener noreferrer" class="footer-github" title="GitHub">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+    </a>
+</footer>
 
 <script src="js/i18n.js"></script>
 <script src="js/qrcode.js"></script>

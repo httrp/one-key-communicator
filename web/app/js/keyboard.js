@@ -16,6 +16,10 @@
 const Keyboard = {
 
     _mode: 'smart',  // Default to smart
+    _showNumbers: false,  // Toggle for numbers row
+
+    /** Number row */
+    numbers: '1234567890'.split(''),
 
     /** Language-specific letter layouts (alphabetical) */
     layouts: {
@@ -43,6 +47,8 @@ const Keyboard = {
 
     setMode(mode) { this._mode = mode; },
     getMode() { return this._mode; },
+    setShowNumbers(show) { this._showNumbers = show; },
+    getShowNumbers() { return this._showNumbers; },
 
     /**
      * Render main keyboard (letters + space + backspace + ☰).
@@ -56,7 +62,7 @@ const Keyboard = {
         const lastChar = currentWord ? currentWord[currentWord.length - 1] : '';
 
         // --- Determine letter order ---
-        if (this._mode === 'smart' || this._mode === 'wild') {
+        if (this._mode === 'smart' || this._mode === 'mix') {
             const ordered = SmartKeyboard.getOrderedLetters(lang, lastChar);
             const langLetters = new Set(this.layouts[lang] || this.layouts.en);
             letters = [];
@@ -71,8 +77,8 @@ const Keyboard = {
             letters = [...(this.layouts[lang] || this.layouts.en)];
         }
 
-        // --- Word suggestions row (wild mode) ---
-        if (this._mode === 'wild') {
+        // --- Word suggestions row (mix mode) ---
+        if (this._mode === 'mix') {
             const words = SmartKeyboard.getWordSuggestions(lang, currentWord);
             if (words.length > 0) {
                 const row = document.createElement('div');
@@ -84,6 +90,18 @@ const Keyboard = {
                 }
                 container.appendChild(row);
             }
+        }
+
+        // --- Numbers row (if enabled) ---
+        if (this._showNumbers) {
+            const numRow = document.createElement('div');
+            numRow.className = 'keyboard-row';
+            for (const n of this.numbers) {
+                const el = this._createKey(n, n, 'key number-key');
+                numRow.appendChild(el);
+                allKeys.push(el);
+            }
+            container.appendChild(numRow);
         }
 
         // --- Space positioning ---
@@ -124,7 +142,7 @@ const Keyboard = {
             container.appendChild(spaceRow);
         }
 
-        // --- Bottom row: Backspace + ☰ More ---
+        // --- Bottom row: Backspace + Menu ---
         const bottomRow = document.createElement('div');
         bottomRow.className = 'keyboard-row';
 
@@ -132,9 +150,9 @@ const Keyboard = {
         bottomRow.appendChild(bsEl);
         allKeys.push(bsEl);
 
-        const moreEl = this._createKey('\u2630 ' + I18N.t('more'), 'MORE', 'key action-key wide');
-        bottomRow.appendChild(moreEl);
-        allKeys.push(moreEl);
+        const menuEl = this._createKey('\u2630 Menü', 'MENU', 'key action-key wide');
+        bottomRow.appendChild(menuEl);
+        allKeys.push(menuEl);
 
         container.appendChild(bottomRow);
 
@@ -142,13 +160,50 @@ const Keyboard = {
     },
 
     /**
-     * Get the toolbar DOM elements for scanning.
-     * Returns array in the order: Back, Mode, Phrases, Punct, Speak, Clear, Pause
+     * Render toolbar as scannable buttons (separate mode).
+     * Returns flat array of toolbar elements + back button.
      */
-    getToolbarKeys() {
-        const toolbar = document.getElementById('toolbar');
-        if (!toolbar) return [];
-        return Array.from(toolbar.querySelectorAll('.toolbar-btn'));
+    renderToolbar(container) {
+        container.innerHTML = '';
+        const allKeys = [];
+
+        const toolbarBtns = [
+            { icon: '🔠', label: 'Mode', value: 'KB_MODE' },
+            { icon: '💬', label: 'Sätze', value: 'PHRASES' },
+            { icon: '#?!', label: '', value: 'PUNCT' },
+            { icon: '🔊', label: 'Vorlesen', value: 'SPEAK' },
+            { icon: '🗑', label: 'Löschen', value: 'CLEAR' },
+            { icon: '⏸', label: 'Pause', value: 'PAUSE' },
+            { icon: '🔗', label: 'Teilen', value: 'SHARE' },
+            { icon: '⚙', label: 'Tempo', value: 'SETTINGS' },
+            { icon: '?', label: 'Hilfe', value: 'HELP' },
+        ];
+
+        // Create rows of 3 buttons each
+        for (let i = 0; i < toolbarBtns.length; i += 3) {
+            const row = document.createElement('div');
+            row.className = 'keyboard-row';
+            for (const btn of toolbarBtns.slice(i, i + 3)) {
+                const el = document.createElement('div');
+                el.className = 'key action-key wide toolbar-scan-btn';
+                el.innerHTML = `<span class="toolbar-scan-icon">${btn.icon}</span>` +
+                               (btn.label ? `<span class="toolbar-scan-label">${btn.label}</span>` : '');
+                el.dataset.value = btn.value;
+                row.appendChild(el);
+                allKeys.push(el);
+            }
+            container.appendChild(row);
+        }
+
+        // Back button
+        const backRow = document.createElement('div');
+        backRow.className = 'keyboard-row';
+        const backEl = this._createKey('\u2b05 Zurück', 'BACK', 'key action-key extra-wide');
+        backRow.appendChild(backEl);
+        allKeys.push(backEl);
+        container.appendChild(backRow);
+
+        return allKeys;
     },
 
     /**

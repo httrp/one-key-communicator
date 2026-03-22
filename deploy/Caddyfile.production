@@ -1,0 +1,39 @@
+# Caddyfile for One-Key-Communicator
+# Copy this to /etc/caddy/Caddyfile on your server
+# Replace YOUR_DOMAIN.de with your actual domain
+#
+# After editing: sudo systemctl reload caddy
+
+YOUR_DOMAIN.de {
+    # Reverse proxy to OKC app
+    reverse_proxy localhost:8090
+
+    # WebSocket support (automatic in Caddy, but explicit for clarity)
+    @websocket {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @websocket localhost:8090
+
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        -Server
+    }
+
+    # Gzip compression
+    encode gzip
+
+    # Logging
+    log {
+        output file /var/log/caddy/okc-access.log
+        format console
+    }
+}
+
+# Redirect www to non-www
+www.YOUR_DOMAIN.de {
+    redir https://YOUR_DOMAIN.de{uri} permanent
+}

@@ -28,11 +28,26 @@
     --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 
     /* Responsive key sizes — overridden by media queries */
-    --key-min: 34px;
-    --key-h: 44px;
-    --key-font: 1rem;
-    --key-wide-min: 56px;
+    --key-min: 38px;
+    --key-h: 48px;
+    --key-font: 1.05rem;
+    --key-wide-min: 60px;
     --keys-per-row: 9;
+}
+
+/* === Dark Mode === */
+[data-theme="dark"] {
+    --text: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --bg: #0f172a;
+    --bg-soft: #1e293b;
+    --bg-elevated: #1e293b;
+    --border: #334155;
+    --border-strong: #475569;
+    --accent-light: #312e81;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
 }
 
 /* === Reset === */
@@ -583,6 +598,30 @@ button {
     background: var(--bg-soft);
     border-radius: 6px;
 }
+.sidebar-pin {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    padding: 6px 14px;
+    background: var(--bg-soft);
+    border-radius: 6px;
+}
+.pin-box {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 1.1rem;
+    color: var(--text);
+    padding: 8px 12px;
+    background: var(--bg-soft);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.pin-box strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
 #sidebarQR {
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -931,4 +970,290 @@ button {
         --keys-per-row: 14;
     }
     .writer-sidebar { width: 280px; }
+}
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.app-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+.footer-github {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    transition: color 0.15s;
+}
+.footer-github:hover {
+    color: var(--accent);
+}
+
+/* ==========================================================================
+   Help Modal
+   ========================================================================== */
+.help-modal {
+    max-width: 420px;
+    text-align: left;
+}
+.help-modal h2 {
+    text-align: center;
+    margin-bottom: 16px;
+}
+.help-content {
+    margin-bottom: 20px;
+}
+.help-content p {
+    margin-bottom: 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+.help-content ol {
+    margin: 12px 0 16px 20px;
+    color: var(--text);
+    font-size: 0.88rem;
+}
+.help-content ol li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+.help-tip {
+    font-style: italic;
+    color: var(--text-secondary) !important;
+    font-size: 0.82rem !important;
+    padding: 10px;
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    margin-top: 12px;
+}
+
+/* ==========================================================================
+   Toggle Switches
+   ========================================================================== */
+.setting-toggle {
+    display: flex;
+    align-items: center;
+}
+.toggle-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-label {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    background: var(--border-strong);
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.toggle-label::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+.toggle-input:checked + .toggle-label {
+    background: var(--accent);
+}
+.toggle-input:checked + .toggle-label::after {
+    transform: translateX(22px);
+}
+.toggle-input:focus + .toggle-label {
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ==========================================================================
+   Number Keys
+   ========================================================================== */
+.key.number-key {
+    background: #fef3c7;
+    color: #d97706;
+    border-color: #f59e0b;
+    font-weight: 700;
+}
+.key.number-key.active {
+    background: #f59e0b;
+    color: white;
+    border-color: #d97706;
+}
+[data-theme="dark"] .key.number-key {
+    background: #451a03;
+    color: #fbbf24;
+    border-color: #b45309;
+}
+[data-theme="dark"] .key.number-key.active {
+    background: #f59e0b;
+    color: #451a03;
+}
+
+/* ==========================================================================
+   Auto-sizing Keyboard Keys
+   ========================================================================== */
+.keyboard {
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    background: var(--bg-soft);
+    flex-shrink: 0;
+    flex-grow: 1;
+    max-height: 55dvh;
+}
+.keyboard-row {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    margin-bottom: 3px;
+    flex: 1;
+    min-height: 0;
+}
+.key {
+    min-width: var(--key-min);
+    height: auto;
+    min-height: var(--key-h);
+    flex: 1 1 var(--key-min);
+    max-width: calc(var(--key-min) * 2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: var(--key-font);
+    font-weight: 600;
+    background: var(--bg-elevated);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    transition: all 0.06s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .key.word-key {
+    background: #064e3b;
+    color: #6ee7b7;
+    border-color: #059669;
+}
+[data-theme="dark"] .key.word-key.active {
+    background: #059669;
+    color: white;
+}
+
+/* =========================================================================
+   SCANNABLE MODAL/SETTINGS BUTTONS
+   ========================================================================= */
+
+.settings-scan-area,
+.modal-scan-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+}
+
+.scan-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    min-height: 70px;
+    flex: 1 1 80px;
+    max-width: 120px;
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    user-select: none;
+}
+
+.scan-btn:hover {
+    border-color: var(--primary);
+    background: var(--bg-elevated);
+}
+
+.scan-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.scan-btn-back {
+    background: var(--bg-subtle);
+}
+
+.scan-btn-back.active {
+    background: var(--warning);
+    border-color: var(--warning);
+}
+
+.scan-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.scan-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Toolbar scan buttons (when in toolbar mode) */
+.toolbar-scan-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 60px;
+}
+
+.toolbar-scan-icon {
+    font-size: 20px;
+}
+
+.toolbar-scan-label {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Dark mode for scan buttons */
+[data-theme="dark"] .scan-btn {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+[data-theme="dark"] .scan-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .scan-btn-back.active {
+    background: var(--warning);
 }
