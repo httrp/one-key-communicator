@@ -1,5 +1,5 @@
 /**
- * i18n — Internationalization for One-Key-Communicator.
+ * i18n — Internationalization for One-Key Communicator.
  * Translations are keyed by data-i18n attributes in HTML.
  */
 const I18N = {

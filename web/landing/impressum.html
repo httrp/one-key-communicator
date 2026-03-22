@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impressum — One-Key-Communicator</title>
+    <title>Impressum — One-Key Communicator</title>
     <meta name="robots" content="noindex">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -109,7 +109,7 @@
 
 <header>
     <div class="container">
-        <a href="/" class="logo">One-Key-<span>Communicator</span></a>
+        <a href="/" class="logo">One-Key <span>Communicator</span></a>
         <nav>
             <a href="/" data-i18n="nav_home">Home</a>
             <select id="langSwitch" onchange="switchLang(this.value)" style="margin-left: 16px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;">
@@ -151,18 +151,19 @@
         <p>Der vollständige Quellcode ist auf <a href="https://github.com/httrp/one-key-communicator" target="_blank">GitHub</a> verfügbar.</p>
 
         <h2>Datenschutz</h2>
-        <p>One-Key-Communicator erhebt und speichert nur die absolut notwendigen Daten für die Funktionalität:</p>
+        <p>One-Key erhebt und speichert nur die absolut notwendigen Daten für die Funktionalität:</p>
         <ul>
             <li><strong>Räume:</strong> Raum-ID, 6-stellige PIN, Erstellungszeit, letzter Aktivitätszeitpunkt, aktueller Text</li>
-            <li><strong>Automatische Löschung:</strong> Räume werden nach 24 Stunden Inaktivität automatisch gelöscht</li>
+            <li><strong>Text-Löschung:</strong> Geschriebene Texte werden nach <strong>24 Stunden</strong> Inaktivität automatisch gelöscht</li>
+            <li><strong>Raum-Löschung:</strong> Räume werden nach 24 Stunden Inaktivität vollständig gelöscht</li>
             <li><strong>Keine Benutzerkonten:</strong> Es werden keine Benutzerkonten erstellt oder verwaltet</li>
             <li><strong>Keine Tracking-Cookies:</strong> Es werden keine Tracking-Cookies gesetzt</li>
             <li><strong>Keine Weitergabe:</strong> Es werden keine Daten an Dritte weitergegeben</li>
         </ul>
-        <p>Die Kommunikation zwischen Geräten erfolgt über WebSocket-Verbindungen. Der Textinhalt wird temporär auf dem Server gespeichert, um die Synchronisation zwischen Schreiber und Lesern zu ermöglichen.</p>
+        <p><strong>Hinweis:</strong> One-Key ist für ad-hoc Kommunikation gedacht, nicht für dauerhafte Dokumentation. Texte werden unverschlüsselt auf dem Server gespeichert, um die Synchronisation zu ermöglichen. Bei sensiblen Inhalten empfehlen wir, eine eigene Instanz zu betreiben.</p>
 
         <h2 data-i18n="imp_opensource">Open Source</h2>
-        <p data-i18n="imp_opensource_text">One-Key-Communicator ist ein nicht-kommerzielles Open-Source-Projekt. Es ist und bleibt kostenlos. Es gibt keine Premium-Features, keine Abonnements und keine versteckten Kosten.</p>
+        <p data-i18n="imp_opensource_text">One-Key Communicator ist ein nicht-kommerzielles Open-Source-Projekt. Es ist und bleibt kostenlos. Es gibt keine Premium-Features, keine Abonnements und keine versteckten Kosten.</p>
         <p data-i18n="imp_inspect">Jeder kann den Quellcode einsehen, verändern und eine eigene Instanz betreiben.</p>
     </div>
 </main>
@@ -181,7 +182,7 @@ const translations = {
         imp_title: "Imprint",
         imp_info: "Legal Information",
         imp_opensource: "Open Source",
-        imp_opensource_text: "One-Key-Communicator is a non-commercial open source project. It is and will remain free. No premium features, no subscriptions, no hidden costs.",
+        imp_opensource_text: "One-Key Communicator is a non-commercial open source project. It is and will remain free. No premium features, no subscriptions, no hidden costs.",
         imp_inspect: "Everyone can view the source code, modify it, and run their own instance."
     },
     fr: {
@@ -189,7 +190,7 @@ const translations = {
         imp_title: "Mentions légales",
         imp_info: "Informations légales",
         imp_opensource: "Open Source",
-        imp_opensource_text: "One-Key-Communicator est un projet open source non commercial. Il est et restera gratuit. Pas de fonctionnalités premium, pas d'abonnement, pas de coûts cachés.",
+        imp_opensource_text: "One-Key Communicator est un projet open source non commercial. Il est et restera gratuit. Pas de fonctionnalités premium, pas d'abonnement, pas de coûts cachés.",
         imp_inspect: "Tout le monde peut voir le code source, le modifier et exécuter sa propre instance."
     },
     es: {
@@ -197,7 +198,7 @@ const translations = {
         imp_title: "Aviso legal",
         imp_info: "Información legal",
         imp_opensource: "Open Source",
-        imp_opensource_text: "One-Key-Communicator es un proyecto de código abierto no comercial. Es y seguirá siendo gratuito. Sin funciones premium, sin suscripciones, sin costes ocultos.",
+        imp_opensource_text: "One-Key Communicator es un proyecto de código abierto no comercial. Es y seguirá siendo gratuito. Sin funciones premium, sin suscripciones, sin costes ocultos.",
         imp_inspect: "Cualquiera puede ver el código fuente, modificarlo y ejecutar su propia instancia."
     }
 };

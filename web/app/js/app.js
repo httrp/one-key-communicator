@@ -1,5 +1,5 @@
 /**
- * One-Key-Communicator — Main application controller.
+ * One-Key Communicator — Main application controller.
  *
  * The entire app is controllable with ONE key:
  *   1. Runner scans through keyboard keys (letters + space + backspace + ☰)

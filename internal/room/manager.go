@@ -119,7 +119,16 @@ func (m *Manager) Cleanup(maxAge time.Duration) {
 	}
 
 	if m.db != nil {
-		n, err := m.db.DeleteStaleRooms(maxAge)
+		// First, clear text from rooms inactive for 24+ hours (privacy)
+		n, err := m.db.ClearStaleText(24 * time.Hour)
+		if err != nil {
+			log.Printf("cleanup text: %v", err)
+		} else if n > 0 {
+			log.Printf("cleared text from %d inactive rooms", n)
+		}
+
+		// Then, delete rooms inactive for 24+ hours
+		n, err = m.db.DeleteStaleRooms(maxAge)
 		if err != nil {
 			log.Printf("cleanup DB: %v", err)
 		} else if n > 0 {

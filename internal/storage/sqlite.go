@@ -123,6 +123,17 @@ func (db *DB) DeleteStaleRooms(maxAge time.Duration) (int64, error) {
 	return res.RowsAffected()
 }
 
+// ClearStaleText clears text_state for rooms inactive longer than the given duration.
+// The room itself is kept, only the text content is deleted for privacy.
+func (db *DB) ClearStaleText(maxAge time.Duration) (int64, error) {
+	cutoff := time.Now().Add(-maxAge)
+	res, err := db.conn.Exec(`UPDATE rooms SET text_state = '' WHERE last_active < ? AND text_state != ''`, cutoff)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
 // IncrementTotalRooms increments the total rooms created counter.
 func (db *DB) IncrementTotalRooms() error {
 	_, err := db.conn.Exec(`UPDATE stats SET value = value + 1 WHERE key = 'total_rooms_created'`)
