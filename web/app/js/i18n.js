@@ -90,6 +90,20 @@ const I18N = {
             error_room_not_found_desc: "Der Raum existiert nicht oder wurde beendet.",
             error_invalid_pin: "Falscher PIN",
             error_invalid_pin_desc: "Der eingegebene PIN ist nicht korrekt.",
+            // Room duration settings
+            room_duration: "Raum speichern",
+            duration_session: "Diese Sitzung",
+            duration_1h: "1 Stunde",
+            duration_12h: "12 Stunden",
+            duration_24h: "24 Stunden",
+            // Reader info
+            reader_local: "Lokal",
+            reader_remote: "Extern",
+            // Room time
+            just_now: "Gerade eben erstellt",
+            created_minutes_ago: "Vor {n} Min. erstellt",
+            created_hours_ago: "Vor {n} Std. erstellt",
+            created_at: "Erstellt am",
         },
         en: {
             app_title: "What would you like to say?",
@@ -162,6 +176,20 @@ const I18N = {
             error_room_not_found_desc: "This room does not exist or has ended.",
             error_invalid_pin: "Invalid PIN",
             error_invalid_pin_desc: "The PIN you entered is incorrect.",
+            // Room duration settings
+            room_duration: "Remember room",
+            duration_session: "This session",
+            duration_1h: "1 hour",
+            duration_12h: "12 hours",
+            duration_24h: "24 hours",
+            // Reader info
+            reader_local: "Local",
+            reader_remote: "Remote",
+            // Room time
+            just_now: "Just created",
+            created_minutes_ago: "Created {n} min ago",
+            created_hours_ago: "Created {n}h ago",
+            created_at: "Created on",
         },
         fr: {
             app_title: "Que voulez-vous dire ?",
@@ -210,6 +238,20 @@ const I18N = {
             ph_pain: "J'ai mal", ph_tired: "Je suis fatigu\u00e9", ph_love: "Je t'aime",
             ph_cold: "J'ai froid", ph_hot: "J'ai chaud", ph_bathroom: "Je dois aller aux toilettes",
             ph_tv: "T\u00e9l\u00e9vision s'il vous pla\u00eet", ph_light_on: "Lumi\u00e8re allum\u00e9e", ph_light_off: "Lumi\u00e8re \u00e9teinte",
+            // Room duration settings
+            room_duration: "M\u00e9moriser la salle",
+            duration_session: "Cette session",
+            duration_1h: "1 heure",
+            duration_12h: "12 heures",
+            duration_24h: "24 heures",
+            // Reader info
+            reader_local: "Local",
+            reader_remote: "Distant",
+            // Room time
+            just_now: "Cr\u00e9\u00e9 \u00e0 l'instant",
+            created_minutes_ago: "Cr\u00e9\u00e9 il y a {n} min",
+            created_hours_ago: "Cr\u00e9\u00e9 il y a {n}h",
+            created_at: "Cr\u00e9\u00e9 le",
         },
         es: {
             app_title: "\u00bfQu\u00e9 quieres decir?",
@@ -258,6 +300,20 @@ const I18N = {
             ph_pain: "Tengo dolor", ph_tired: "Estoy cansado", ph_love: "Te quiero",
             ph_cold: "Tengo fr\u00edo", ph_hot: "Tengo calor", ph_bathroom: "Necesito el ba\u00f1o",
             ph_tv: "Televisi\u00f3n por favor", ph_light_on: "Luz encendida", ph_light_off: "Luz apagada",
+            // Room duration settings
+            room_duration: "Recordar sala",
+            duration_session: "Esta sesi\u00f3n",
+            duration_1h: "1 hora",
+            duration_12h: "12 horas",
+            duration_24h: "24 horas",
+            // Reader info
+            reader_local: "Local",
+            reader_remote: "Remoto",
+            // Room time
+            just_now: "Reci\u00e9n creado",
+            created_minutes_ago: "Creado hace {n} min",
+            created_hours_ago: "Creado hace {n}h",
+            created_at: "Creado el",
         },
         it: {
             app_title: "Cosa vuoi dire?",
@@ -306,6 +362,20 @@ const I18N = {
             ph_pain: "Ho dolore", ph_tired: "Sono stanco", ph_love: "Ti amo",
             ph_cold: "Ho freddo", ph_hot: "Ho caldo", ph_bathroom: "Devo andare in bagno",
             ph_tv: "Televisione per favore", ph_light_on: "Luce accesa", ph_light_off: "Luce spenta",
+            // Room duration settings
+            room_duration: "Ricorda stanza",
+            duration_session: "Questa sessione",
+            duration_1h: "1 ora",
+            duration_12h: "12 ore",
+            duration_24h: "24 ore",
+            // Reader info
+            reader_local: "Locale",
+            reader_remote: "Remoto",
+            // Room time
+            just_now: "Appena creato",
+            created_minutes_ago: "Creato {n} min fa",
+            created_hours_ago: "Creato {n}h fa",
+            created_at: "Creato il",
         },
         nl: {
             app_title: "Wat wil je zeggen?",
@@ -354,6 +424,20 @@ const I18N = {
             ph_pain: "Ik heb pijn", ph_tired: "Ik ben moe", ph_love: "Ik hou van je",
             ph_cold: "Ik heb het koud", ph_hot: "Ik heb het warm", ph_bathroom: "Ik moet naar het toilet",
             ph_tv: "Televisie alsjeblieft", ph_light_on: "Licht aan", ph_light_off: "Licht uit",
+            // Room duration settings
+            room_duration: "Kamer onthouden",
+            duration_session: "Deze sessie",
+            duration_1h: "1 uur",
+            duration_12h: "12 uur",
+            duration_24h: "24 uur",
+            // Reader info
+            reader_local: "Lokaal",
+            reader_remote: "Extern",
+            // Room time
+            just_now: "Net aangemaakt",
+            created_minutes_ago: "{n} min geleden aangemaakt",
+            created_hours_ago: "{n}u geleden aangemaakt",
+            created_at: "Aangemaakt op",
         },
         pl: {
             app_title: "Co chcesz powiedzie\u0107?",
@@ -402,6 +486,20 @@ const I18N = {
             ph_pain: "Mam b\u00f3l", ph_tired: "Jestem zm\u0119czony", ph_love: "Kocham ci\u0119",
             ph_cold: "Jest mi zimno", ph_hot: "Jest mi gor\u0105co", ph_bathroom: "Musz\u0119 do toalety",
             ph_tv: "Telewizor prosz\u0119", ph_light_on: "\u015awiat\u0142o w\u0142\u0105cz", ph_light_off: "\u015awiat\u0142o wy\u0142\u0105cz",
+            // Room duration settings
+            room_duration: "Zapami\u0119taj pok\u00f3j",
+            duration_session: "Ta sesja",
+            duration_1h: "1 godzina",
+            duration_12h: "12 godzin",
+            duration_24h: "24 godziny",
+            // Reader info
+            reader_local: "Lokalny",
+            reader_remote: "Zdalny",
+            // Room time
+            just_now: "W\u0142a\u015bnie utworzono",
+            created_minutes_ago: "Utworzono {n} min temu",
+            created_hours_ago: "Utworzono {n}h temu",
+            created_at: "Utworzono",
         },
         tr: {
             app_title: "Ne s\u00f6ylemek istiyorsun?",
@@ -450,6 +548,20 @@ const I18N = {
             ph_pain: "A\u011fr\u0131m var", ph_tired: "Yorgunum", ph_love: "Seni seviyorum",
             ph_cold: "\u00dc\u015f\u00fcy\u00f6r\u00fcm", ph_hot: "S\u0131cak", ph_bathroom: "Tuvalete gitmem laz\u0131m",
             ph_tv: "Televizyon l\u00fctfen", ph_light_on: "I\u015f\u0131k a\u00e7", ph_light_off: "I\u015f\u0131k kapat",
+            // Room duration settings
+            room_duration: "Oday\u0131 hat\u0131rla",
+            duration_session: "Bu oturum",
+            duration_1h: "1 saat",
+            duration_12h: "12 saat",
+            duration_24h: "24 saat",
+            // Reader info
+            reader_local: "Yerel",
+            reader_remote: "Uzak",
+            // Room time
+            just_now: "Az \u00f6nce olu\u015fturuldu",
+            created_minutes_ago: "{n} dk \u00f6nce olu\u015fturuldu",
+            created_hours_ago: "{n}s \u00f6nce olu\u015fturuldu",
+            created_at: "Olu\u015fturulma",
         },
     },
 

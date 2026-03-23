@@ -104,6 +104,13 @@
         speedSlider.value = baseSpeed;
     }
 
+    // Restore room duration setting (default: 12 hours)
+    const savedRoomDuration = localStorage.getItem('okc-room-duration');
+    const roomDurationSelect = $('roomDuration');
+    if (roomDurationSelect) {
+        roomDurationSelect.value = savedRoomDuration || '12';
+    }
+
     // Set reader name input placeholder
     const nameInput = $('readerNameInput');
     if (nameInput) nameInput.placeholder = I18N.t('your_name');
@@ -152,34 +159,47 @@
     async function autoCreateRoom() {
         showView('loading');
 
-        const stored = localStorage.getItem('okc-room');
-        if (stored) {
-            try {
-                const info = JSON.parse(stored);
-                // Check if stored room ID is still fresh (< 12 hours)
-                if (Date.now() - info.ts < 12 * 60 * 60 * 1000) {
-                    // Verify room still exists on server before using it
-                    const checkResp = await fetch('/api/rooms/' + info.id);
-                    if (checkResp.ok) {
-                        location.hash = '/room/' + info.id;
-                        return;
-                    } else {
-                        // Room was deleted on server, clear localStorage
-                        console.log('Stored room no longer exists, creating new one');
-                        localStorage.removeItem('okc-room');
+        // Get room duration setting (0 = session only, otherwise hours)
+        const durationHours = parseInt(localStorage.getItem('okc-room-duration') || '12', 10);
+        
+        // Only check stored room if duration > 0 (not "this session")
+        if (durationHours > 0) {
+            const stored = localStorage.getItem('okc-room');
+            if (stored) {
+                try {
+                    const info = JSON.parse(stored);
+                    const maxAge = durationHours * 60 * 60 * 1000;
+                    // Check if stored room ID is still fresh
+                    if (Date.now() - info.ts < maxAge) {
+                        // Verify room still exists on server before using it
+                        const checkResp = await fetch('/api/rooms/' + info.id);
+                        if (checkResp.ok) {
+                            location.hash = '/room/' + info.id;
+                            return;
+                        } else {
+                            // Room was deleted on server, clear localStorage
+                            console.log('Stored room no longer exists, creating new one');
+                            localStorage.removeItem('okc-room');
+                        }
                     }
+                } catch (e) {
+                    // Parsing error or network issue, clear and create new
+                    localStorage.removeItem('okc-room');
                 }
-            } catch (e) {
-                // Parsing error or network issue, clear and create new
-                localStorage.removeItem('okc-room');
             }
+        } else {
+            // Session only - clear any stored room
+            localStorage.removeItem('okc-room');
         }
 
         try {
             const resp = await fetch('/api/rooms?lang=' + I18N.getLang(), { method: 'POST' });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
-            localStorage.setItem('okc-room', JSON.stringify({ id: data.id, ts: Date.now() }));
+            // Only store if duration > 0
+            if (durationHours > 0) {
+                localStorage.setItem('okc-room', JSON.stringify({ id: data.id, ts: Date.now() }));
+            }
             location.hash = '/room/' + data.id;
         } catch (err) {
             console.error('Failed to create room:', err);
@@ -732,20 +752,51 @@
     function updateReaderInfo(data) {
         readerCount = data.count || 0;
         readerNames = data.names || [];
+        const readers = data.readers || [];
 
         if (readerCountEl) readerCountEl.textContent = readerCount;
         if (sidebarReaderCount) sidebarReaderCount.textContent = readerCount;
         if (readerBadge) readerBadge.style.display = readerCount > 0 ? '' : 'none';
 
-        // Update reader list in sidebar
+        // Update reader list in sidebar with extended info
         if (sidebarReaderList) {
             sidebarReaderList.innerHTML = '';
-            for (const name of readerNames) {
+            for (const reader of readers) {
                 const li = document.createElement('li');
-                li.className = 'reader-list-item';
-                li.innerHTML = '<span class="reader-list-dot"></span>' + (name || I18N.t('anonymous'));
+                const isLocal = reader.isLocal;
+                li.className = 'reader-list-item' + (isLocal ? '' : ' reader-remote');
+                
+                // Device icon
+                const deviceIcon = getDeviceIcon(reader.deviceType);
+                
+                // Network status
+                const networkLabel = isLocal ? I18N.t('reader_local') : I18N.t('reader_remote');
+                
+                li.innerHTML = 
+                    '<span class="reader-list-dot' + (isLocal ? '' : ' remote') + '"></span>' +
+                    '<span class="reader-name">' + (reader.name || I18N.t('anonymous')) + '</span>' +
+                    '<span class="reader-meta">' + deviceIcon + ' · ' + networkLabel + '</span>';
                 sidebarReaderList.appendChild(li);
             }
+            // Fallback for old data format (just names)
+            if (readers.length === 0 && readerNames.length > 0) {
+                for (const name of readerNames) {
+                    const li = document.createElement('li');
+                    li.className = 'reader-list-item';
+                    li.innerHTML = '<span class="reader-list-dot"></span>' + (name || I18N.t('anonymous'));
+                    sidebarReaderList.appendChild(li);
+                }
+            }
+        }
+    }
+
+    // Get device icon based on device type
+    function getDeviceIcon(deviceType) {
+        switch (deviceType) {
+            case 'desktop': return '💻';
+            case 'tablet': return '📱';
+            case 'mobile': return '📱';
+            default: return '📟';
         }
     }
 
@@ -788,6 +839,34 @@
             roomPIN = msg.data;
             updatePINDisplay();
             setupSidebar(); // Re-render sidebar with updated PIN
+        } else if (msg.type === 'room_info') {
+            // Server sends room creation time
+            updateRoomInfo(msg.data);
+        }
+    }
+
+    // Update room creation time display
+    function updateRoomInfo(info) {
+        const sidebarRoomTime = $('sidebarRoomTime');
+        if (sidebarRoomTime && info.createdAt) {
+            const created = new Date(info.createdAt * 1000);
+            const now = new Date();
+            const diff = now - created;
+            
+            // Format relative time
+            let timeText;
+            if (diff < 60000) { // < 1 minute
+                timeText = I18N.t('just_now');
+            } else if (diff < 3600000) { // < 1 hour
+                const mins = Math.floor(diff / 60000);
+                timeText = I18N.t('created_minutes_ago').replace('{n}', mins);
+            } else if (diff < 86400000) { // < 1 day
+                const hours = Math.floor(diff / 3600000);
+                timeText = I18N.t('created_hours_ago').replace('{n}', hours);
+            } else {
+                timeText = I18N.t('created_at') + ' ' + created.toLocaleDateString();
+            }
+            sidebarRoomTime.textContent = timeText;
         }
     }
 
@@ -1090,6 +1169,11 @@
         localStorage.setItem('okc-speed', baseSpeed);
         adaptiveHistory.length = 0;
         Runner.setSpeed(baseSpeed);
+    });
+
+    // Room duration
+    $('roomDuration').addEventListener('change', function(e) {
+        localStorage.setItem('okc-room-duration', e.target.value);
     });
 
     // New room

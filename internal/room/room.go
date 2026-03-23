@@ -2,6 +2,8 @@ package room
 
 import (
 	"encoding/json"
+	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -29,9 +31,13 @@ func (r *Room) ValidatePIN(pin string) bool {
 
 // Client represents a connected WebSocket client.
 type Client struct {
-	Send     chan []byte
-	IsWriter bool
-	Name     string
+	Send       chan []byte
+	IsWriter   bool
+	Name       string
+	IP         string // Client IP address
+	UserAgent  string // User-Agent header
+	DeviceType string // Parsed: "desktop", "tablet", "mobile", "unknown"
+	IsLocal    bool   // True if same /24 subnet as writer
 }
 
 // Message types sent over WebSocket.
@@ -143,15 +149,41 @@ func (r *Room) readerNames() []string {
 	return names
 }
 
-// sendReaderInfo notifies the writer of the current reader count and names.
+// ReaderInfo contains extended information about a reader
+type ReaderInfo struct {
+	Name       string `json:"name"`
+	DeviceType string `json:"deviceType"`
+	IsLocal    bool   `json:"isLocal"`
+}
+
+// readerInfoList returns extended info for all readers. Must be called with r.mu held.
+func (r *Room) readerInfoList() []ReaderInfo {
+	list := make([]ReaderInfo, 0, len(r.readers))
+	for c := range r.readers {
+		list = append(list, ReaderInfo{
+			Name:       c.Name,
+			DeviceType: c.DeviceType,
+			IsLocal:    c.IsLocal,
+		})
+	}
+	return list
+}
+
+// sendReaderInfo notifies the writer of the current reader count and details.
 func (r *Room) sendReaderInfo(w *Client, count int, names []string) {
 	if w == nil {
 		return
 	}
+	// Get extended reader info
+	r.mu.RLock()
+	readers := r.readerInfoList()
+	r.mu.RUnlock()
+
 	info := struct {
-		Count int      `json:"count"`
-		Names []string `json:"names"`
-	}{count, names}
+		Count   int          `json:"count"`
+		Names   []string     `json:"names"`
+		Readers []ReaderInfo `json:"readers"`
+	}{count, names, readers}
 	infoBytes, _ := json.Marshal(info)
 	msg := []byte(`{"type":"readers","data":` + string(infoBytes) + `}`)
 	select {
@@ -163,4 +195,67 @@ func (r *Room) sendReaderInfo(w *Client, count int, names []string) {
 func jsonEscapeStr(s string) string {
 	b, _ := json.Marshal(s)
 	return string(b)
+}
+
+// DetectDeviceType parses User-Agent to determine device type
+func DetectDeviceType(ua string) string {
+	ua = strings.ToLower(ua)
+	if strings.Contains(ua, "mobile") || strings.Contains(ua, "android") && !strings.Contains(ua, "tablet") {
+		if strings.Contains(ua, "ipad") || strings.Contains(ua, "tablet") {
+			return "tablet"
+		}
+		return "mobile"
+	}
+	if strings.Contains(ua, "ipad") || strings.Contains(ua, "tablet") {
+		return "tablet"
+	}
+	if strings.Contains(ua, "windows") || strings.Contains(ua, "macintosh") || strings.Contains(ua, "linux") && !strings.Contains(ua, "android") {
+		return "desktop"
+	}
+	return "unknown"
+}
+
+// IsSameSubnet checks if two IPs are in the same /24 subnet (local network)
+func IsSameSubnet(ip1, ip2 string) bool {
+	// Parse IPs (handle port if present)
+	ip1 = extractIP(ip1)
+	ip2 = extractIP(ip2)
+
+	parsedIP1 := net.ParseIP(ip1)
+	parsedIP2 := net.ParseIP(ip2)
+
+	if parsedIP1 == nil || parsedIP2 == nil {
+		return false
+	}
+
+	// Convert to IPv4 if needed
+	parsedIP1 = parsedIP1.To4()
+	parsedIP2 = parsedIP2.To4()
+
+	if parsedIP1 == nil || parsedIP2 == nil {
+		return false
+	}
+
+	// Compare first 3 octets (/24 subnet)
+	return parsedIP1[0] == parsedIP2[0] &&
+		parsedIP1[1] == parsedIP2[1] &&
+		parsedIP1[2] == parsedIP2[2]
+}
+
+// extractIP removes port from IP:port string
+func extractIP(addr string) string {
+	if host, _, err := net.SplitHostPort(addr); err == nil {
+		return host
+	}
+	return addr
+}
+
+// GetWriterIP returns the writer's IP address
+func (r *Room) GetWriterIP() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.writer != nil {
+		return r.writer.IP
+	}
+	return ""
 }

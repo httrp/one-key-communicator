@@ -77,6 +77,7 @@
             <div class="sidebar-section sidebar-room-info">
                 <div class="sidebar-label">Room</div>
                 <div class="sidebar-room-id" id="sidebarRoomId"></div>
+                <div class="sidebar-room-time" id="sidebarRoomTime"></div>
             </div>
             <div class="sidebar-section sidebar-pin-info" id="sidebarPINSection" style="display:none;">
                 <div class="sidebar-label">PIN</div>
@@ -183,6 +184,14 @@
                 <input type="checkbox" id="darkModeToggle" class="toggle-input">
                 <label for="darkModeToggle" class="toggle-label"></label>
             </div>
+
+            <label class="setting-label" data-i18n="room_duration">Raum speichern</label>
+            <select id="roomDuration" class="setting-select">
+                <option value="0" data-i18n="duration_session">Diese Sitzung</option>
+                <option value="1" data-i18n="duration_1h">1 Stunde</option>
+                <option value="12" data-i18n="duration_12h" selected>12 Stunden</option>
+                <option value="24" data-i18n="duration_24h">24 Stunden</option>
+            </select>
 
             <label class="setting-label" data-i18n="new_room">Neuen Raum</label>
             <button class="btn btn-outline btn-block" id="btnNewRoom" data-i18n="new_room_btn">Neuen Raum erstellen</button>

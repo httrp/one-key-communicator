@@ -598,6 +598,12 @@ button {
     background: var(--bg-soft);
     border-radius: 6px;
 }
+.sidebar-room-time {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    opacity: 0.7;
+}
 .sidebar-pin {
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-size: 1.2rem;
@@ -645,6 +651,10 @@ button {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
+}
+.reader-list-item.reader-remote {
+    background: rgba(255, 152, 0, 0.1);
 }
 .reader-list-dot {
     width: 6px;
@@ -652,6 +662,21 @@ button {
     border-radius: 50%;
     background: var(--green);
     flex-shrink: 0;
+}
+.reader-list-dot.remote {
+    background: #ff9800;
+}
+.reader-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.reader-meta {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    opacity: 0.7;
 }
 
 /* ==========================================================================

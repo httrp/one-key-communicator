@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -21,19 +22,23 @@ import (
 
 // Server is the main HTTP/WebSocket server.
 type Server struct {
-	cfg     *config.Config
-	rooms   *room.Manager
-	mux     *http.ServeMux
-	landing fs.FS
-	app     fs.FS
+	cfg           *config.Config
+	rooms         *room.Manager
+	mux           *http.ServeMux
+	landing       fs.FS
+	app           fs.FS
+	pinLimiter    *RateLimiter // Strict limiter for PIN verification (anti brute-force)
+	createLimiter *RateLimiter // Limiter for room creation
 }
 
 // New creates a new server with all routes configured.
 func New(cfg *config.Config, db *storage.DB, landingFS, appFS embed.FS) *Server {
 	s := &Server{
-		cfg:   cfg,
-		rooms: room.NewManager(db),
-		mux:   http.NewServeMux(),
+		cfg:           cfg,
+		rooms:         room.NewManager(db),
+		mux:           http.NewServeMux(),
+		pinLimiter:    NewRateLimiter(10, time.Minute),  // 10 PIN attempts per minute per IP
+		createLimiter: NewRateLimiter(30, time.Minute), // 30 room creations per minute per IP
 	}
 
 	var err error
@@ -55,9 +60,9 @@ func New(cfg *config.Config, db *storage.DB, landingFS, appFS embed.FS) *Server 
 }
 
 func (s *Server) routes() {
-	s.mux.HandleFunc("/api/rooms", s.handleCreateRoom)
+	s.mux.HandleFunc("/api/rooms", s.createLimiter.RateLimitMiddleware(s.handleCreateRoom))
 	s.mux.HandleFunc("/api/rooms/", s.handleRoomInfo)
-	s.mux.HandleFunc("/api/verify-pin", s.handleVerifyPIN)
+	s.mux.HandleFunc("/api/verify-pin", s.pinLimiter.RateLimitMiddleware(s.handleVerifyPIN))
 	s.mux.HandleFunc("/api/stats", s.handleStats)
 	s.mux.Handle("/ws/", websocket.Handler(s.handleWebSocket))
 	s.mux.HandleFunc("/app/", s.handleApp)
@@ -212,8 +217,16 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 	s.rooms.TrackConnection(country)
 	defer s.rooms.DecrementConnections()
 
+	// Extract client info
+	clientIP := getClientIP(ws.Request())
+	userAgent := ws.Request().Header.Get("User-Agent")
+	deviceType := room.DetectDeviceType(userAgent)
+
 	client := &room.Client{
-		Send: make(chan []byte, 64),
+		Send:       make(chan []byte, 64),
+		IP:         clientIP,
+		UserAgent:  userAgent,
+		DeviceType: deviceType,
 	}
 
 	switch role {
@@ -230,7 +243,20 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 			b, _ := json.Marshal(map[string]string{"type": "pin", "data": rm.PIN})
 			client.Send <- b
 		}
+		// Send room info (creation time)
+		roomInfo := map[string]interface{}{
+			"type": "room_info",
+			"data": map[string]interface{}{
+				"createdAt": rm.CreatedAt.Unix(),
+			},
+		}
+		if b, err := json.Marshal(roomInfo); err == nil {
+			client.Send <- b
+		}
 	case "read":
+		// Check if reader is on same network as writer
+		writerIP := rm.GetWriterIP()
+		client.IsLocal = room.IsSameSubnet(clientIP, writerIP)
 		rm.AddReader(client)
 		text := rm.GetText()
 		if text != "" {
@@ -370,6 +396,28 @@ func (s *Server) handleImpressumPage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 	io.Copy(w, f.(io.Reader))
+}
+
+// getClientIP extracts the real client IP from request headers or RemoteAddr.
+// Checks X-Forwarded-For and X-Real-IP headers first (for reverse proxy setups).
+func getClientIP(r *http.Request) string {
+	// Check X-Forwarded-For header (may contain comma-separated list)
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		if len(parts) > 0 {
+			return strings.TrimSpace(parts[0])
+		}
+	}
+	// Check X-Real-IP header
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return strings.TrimSpace(xri)
+	}
+	// Fall back to RemoteAddr (strip port if present)
+	addr := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(addr); err == nil {
+		return host
+	}
+	return addr
 }
 
 // extractCountry extracts country code from Accept-Language header.
