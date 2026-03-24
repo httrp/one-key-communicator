@@ -259,6 +259,16 @@
         if (contextBanner) contextBanner.classList.remove('visible');
     }
 
+    /** Brief floating toast message (e.g. for TTS errors). Auto-dismisses after 3s. */
+    function showToast(msg) {
+        const existing = document.querySelector('.okc-toast');
+        if (existing) existing.remove();
+        const el = document.createElement('div');
+        el.className = 'okc-toast';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
     // =========================================================================
     // RENDERING — starts Runner on the appropriate set of elements
     // =========================================================================
@@ -836,7 +846,10 @@
     // =========================================================================
     function speak() {
         if (!currentText.trim()) return;
-        if (!('speechSynthesis' in window)) return;
+        if (!('speechSynthesis' in window)) {
+            showToast(I18N.t('tts_unsupported') || 'Sprachausgabe nicht verfügbar');
+            return;
+        }
 
         window.speechSynthesis.cancel();
         const utt = new SpeechSynthesisUtterance(currentText);
@@ -846,6 +859,21 @@
         };
         utt.lang = langMap[I18N.getLang()] || 'de-DE';
         utt.rate = 0.9;
+
+        // Chrome bug: speechSynthesis stops after ~15s unless periodically resumed
+        const resumeHack = setInterval(() => {
+            if (!window.speechSynthesis.speaking) { clearInterval(resumeHack); return; }
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+        }, 10000);
+        utt.onend = () => clearInterval(resumeHack);
+        utt.onerror = (e) => {
+            clearInterval(resumeHack);
+            if (e.error !== 'interrupted') {
+                showToast(I18N.t('tts_error') || 'Sprachausgabe fehlgeschlagen');
+            }
+        };
+
         window.speechSynthesis.speak(utt);
     }
 

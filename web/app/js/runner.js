@@ -84,13 +84,9 @@ const Runner = {
         const key = this._keys[this._index];
         const value = key.dataset.value;
 
-        // Flash effect
-        key.style.transition = 'none';
-        key.style.transform = 'scale(1.25)';
-        setTimeout(() => {
-            key.style.transition = 'all 0.12s';
-            key.style.transform = '';
-        }, 120);
+        // Keypress flash — brief zoom+glow animation
+        key.classList.add('key-flash');
+        key.addEventListener('animationend', () => key.classList.remove('key-flash'), { once: true });
 
         // Reset to first key after selection
         if (this._resetAfterSelect) {

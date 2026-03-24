@@ -116,6 +116,9 @@ const Keyboard = {
             const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
             spaceRow.appendChild(spaceEl);
             allKeys.push(spaceEl);
+            const bsPromoted = this._createKey('\u232b', 'BACKSPACE', 'key action-key wide');
+            spaceRow.appendChild(bsPromoted);
+            allKeys.push(bsPromoted);
             container.appendChild(spaceRow);
         }
 
@@ -175,6 +178,7 @@ const Keyboard = {
             { icon: '🗑️', label: 'Löschen',    value: 'CLEAR'   },
             { icon: '🔠', label: 'Tastatur',   value: 'KB_MODE' },
             { icon: '💬', label: 'Sätze',      value: 'PHRASES' },
+            { icon: '#?!', label: 'Zeichen',   value: 'PUNCT'   },
             { icon: '⚙️', label: 'Mehr …',     value: 'MORE'    },
         ];
 
@@ -257,7 +261,6 @@ const Keyboard = {
         const allKeys = [];
 
         const moreButtons = [
-            { icon: '#?!', label: 'Zeichen',   value: 'PUNCT'    },
             { icon: '⏸️', label: 'Pause',     value: 'PAUSE'    },
             { icon: '⏱️', label: 'Tempo',     value: 'SETTINGS' },
             { icon: '🔗', label: 'Teilen',    value: 'SHARE'    },
