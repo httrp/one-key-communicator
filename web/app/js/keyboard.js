@@ -160,84 +160,38 @@ const Keyboard = {
     },
 
     /**
-     * Render toolbar as scannable buttons (separate mode).
-     * Returns flat array of toolbar elements + back button.
+     * Render primary toolbar (max 6 scannable items).
+     * Only the most-used actions appear here; less-used ones are behind MORE.
+     * Returns flat array with BACK at position 0 (first scanned = instant exit).
      */
     renderToolbar(container) {
         container.innerHTML = '';
         const allKeys = [];
 
-        // Grouped sections for better visual organization
-        const toolbarSections = [
-            {
-                label: '✏️ Eingabe',
-                buttons: [
-                    { icon: '🔠', label: 'Mode', value: 'KB_MODE' },
-                    { icon: '💬', label: 'Sätze', value: 'PHRASES' },
-                    { icon: '#?!', label: 'Zeichen', value: 'PUNCT' },
-                ]
-            },
-            {
-                label: '📤 Aktionen',
-                buttons: [
-                    { icon: '🔊', label: 'Vorlesen', value: 'SPEAK' },
-                    { icon: '🗑️', label: 'Löschen', value: 'CLEAR' },
-                    { icon: '⏸️', label: 'Pause', value: 'PAUSE' },
-                ]
-            },
-            {
-                label: '⚙️ Mehr',
-                buttons: [
-                    { icon: '🔗', label: 'Teilen', value: 'SHARE' },
-                    { icon: '⏱️', label: 'Tempo', value: 'SETTINGS' },
-                    { icon: '❓', label: 'Hilfe', value: 'HELP' },
-                ]
-            }
+        // Primary toolbar: only the 5 most-used actions + MORE for the rest.
+        // Kept intentionally flat (no section headers) to reduce visual noise.
+        const primaryButtons = [
+            { icon: '🔊', label: 'Vorlesen',   value: 'SPEAK'   },
+            { icon: '🗑️', label: 'Löschen',    value: 'CLEAR'   },
+            { icon: '🔠', label: 'Tastatur',   value: 'KB_MODE' },
+            { icon: '💬', label: 'Sätze',      value: 'PHRASES' },
+            { icon: '⚙️', label: 'Mehr …',     value: 'MORE'    },
         ];
 
-        // Create sections with visual grouping
-        for (const section of toolbarSections) {
-            const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'toolbar-section';
-            
-            const labelDiv = document.createElement('div');
-            labelDiv.className = 'toolbar-section-label';
-            labelDiv.textContent = section.label;
-            sectionDiv.appendChild(labelDiv);
-
-            const row = document.createElement('div');
-            row.className = 'keyboard-row toolbar-row';
-            for (const btn of section.buttons) {
-                const el = document.createElement('div');
-                el.className = 'key action-key wide toolbar-scan-btn';
-                el.innerHTML = `<span class="toolbar-scan-icon">${btn.icon}</span>` +
-                               (btn.label ? `<span class="toolbar-scan-label">${btn.label}</span>` : '');
-                el.dataset.value = btn.value;
-                row.appendChild(el);
-                allKeys.push(el);
-            }
-            sectionDiv.appendChild(row);
-            container.appendChild(sectionDiv);
+        const row = document.createElement('div');
+        row.className = 'keyboard-row toolbar-row';
+        for (const btn of primaryButtons) {
+            const el = document.createElement('div');
+            el.className = 'key action-key wide toolbar-scan-btn';
+            el.innerHTML = `<span class="toolbar-scan-icon">${btn.icon}</span>` +
+                           `<span class="toolbar-scan-label">${btn.label}</span>`;
+            el.dataset.value = btn.value;
+            row.appendChild(el);
+            allKeys.push(el);
         }
+        container.appendChild(row);
 
-        // Exit button (separate, styled as danger)
-        const exitSection = document.createElement('div');
-        exitSection.className = 'toolbar-section toolbar-exit-section';
-        const exitRow = document.createElement('div');
-        exitRow.className = 'keyboard-row';
-        const exitEl = document.createElement('div');
-        exitEl.className = 'key action-key toolbar-scan-btn toolbar-exit-btn';
-        exitEl.innerHTML = '<span class="toolbar-scan-icon">🚪</span><span class="toolbar-scan-label">Beenden</span>';
-        exitEl.dataset.value = 'EXIT';
-        exitRow.appendChild(exitEl);
-        allKeys.push(exitEl);
-        exitSection.appendChild(exitRow);
-        container.appendChild(exitSection);
-
-        // Back button — rendered at bottom of the menu for visual clarity,
-        // but prepended to allKeys so it is ALWAYS the FIRST scanned item.
-        // This means: one keypress immediately exits the menu, regardless of
-        // where the scanner is. Critical for users with limited motor control.
+        // Back button — always first scanned (unshift), rendered at bottom for visual clarity.
         const backRow = document.createElement('div');
         backRow.className = 'keyboard-row';
         const backEl = document.createElement('div');
@@ -245,7 +199,53 @@ const Keyboard = {
         backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
         backEl.dataset.value = 'BACK';
         backRow.appendChild(backEl);
-        allKeys.unshift(backEl);  // ← position 0: scanned first, safe exit always available
+        allKeys.unshift(backEl);  // position 0: one press exits the menu immediately
+        container.appendChild(backRow);
+
+        return allKeys;
+    },
+
+    /**
+     * Render secondary toolbar ("Mehr") with less-used actions.
+     * EXIT lives here to prevent accidental session termination.
+     * BACK returns to the primary toolbar (not directly to keyboard).
+     */
+    renderToolbarMore(container) {
+        container.innerHTML = '';
+        const allKeys = [];
+
+        const moreButtons = [
+            { icon: '#?!', label: 'Zeichen',   value: 'PUNCT'    },
+            { icon: '⏸️', label: 'Pause',     value: 'PAUSE'    },
+            { icon: '⏱️', label: 'Tempo',     value: 'SETTINGS' },
+            { icon: '🔗', label: 'Teilen',    value: 'SHARE'    },
+            { icon: '❓', label: 'Hilfe',     value: 'HELP'     },
+            { icon: '🚪', label: 'Beenden',   value: 'EXIT'     },
+        ];
+
+        const row = document.createElement('div');
+        row.className = 'keyboard-row toolbar-row';
+        for (const btn of moreButtons) {
+            const el = document.createElement('div');
+            el.className = 'key action-key wide toolbar-scan-btn' +
+                           (btn.value === 'EXIT' ? ' toolbar-exit-btn' : '');
+            el.innerHTML = `<span class="toolbar-scan-icon">${btn.icon}</span>` +
+                           `<span class="toolbar-scan-label">${btn.label}</span>`;
+            el.dataset.value = btn.value;
+            row.appendChild(el);
+            allKeys.push(el);
+        }
+        container.appendChild(row);
+
+        // BACK — returns to primary toolbar, always first scanned
+        const backRow = document.createElement('div');
+        backRow.className = 'keyboard-row';
+        const backEl = document.createElement('div');
+        backEl.className = 'key action-key extra-wide toolbar-back-btn';
+        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
+        backEl.dataset.value = 'BACK';
+        backRow.appendChild(backEl);
+        allKeys.unshift(backEl);
         container.appendChild(backRow);
 
         return allKeys;

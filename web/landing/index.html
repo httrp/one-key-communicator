@@ -362,42 +362,59 @@
 
         /* Hardware CTA */
         .hardware-cta {
-            padding: 100px 0;
+            padding: 80px 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
         .hardware-card {
-            background: var(--gradient);
-            border-radius: var(--radius);
-            padding: 60px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: center;
+            background: white;
+            border-left: 4px solid var(--primary);
+            border-radius: 0 var(--radius) var(--radius) 0;
+            padding: 40px 48px;
+            display: flex;
+            align-items: flex-start;
+            gap: 48px;
+        }
+        .hardware-content {
+            flex: 1;
         }
         .hardware-content h2 {
-            font-size: 2rem;
-            color: white;
-            margin-bottom: 16px;
+            font-size: 1.5rem;
+            color: var(--text);
+            margin-bottom: 12px;
         }
         .hardware-content p {
-            color: rgba(255,255,255,0.85);
-            font-size: 1.1rem;
-            margin-bottom: 24px;
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
         }
         .hardware-content .btn {
-            background: white;
-            color: var(--primary);
+            background: var(--primary);
+            color: white;
         }
-        .hardware-icons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+        .hardware-devices {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 200px;
         }
-        .hardware-icon {
-            background: rgba(255,255,255,0.15);
-            border-radius: var(--radius);
-            padding: 24px;
-            text-align: center;
-            font-size: 2.5rem;
+        .hardware-device-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .hardware-device-item::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
         }
 
         /* Footer */
@@ -460,8 +477,7 @@
         @media (max-width: 900px) {
             .steps-grid { grid-template-columns: repeat(2, 1fr); }
             .features-grid { grid-template-columns: repeat(2, 1fr); }
-            .hardware-card { grid-template-columns: 1fr; }
-            .hardware-icons { grid-template-columns: repeat(6, 1fr); }
+            .hardware-card { flex-direction: column; gap: 24px; }
             .flow-animation { gap: 16px !important; }
         }
         @media (max-width: 600px) {
@@ -480,9 +496,7 @@
             .stats-bar .container { gap: 24px; }
             .stat-value { font-size: 1.5rem; }
             .stat-label { font-size: 0.8rem; }
-            .hardware-card { padding: 24px; }
-            .hardware-icons { grid-template-columns: repeat(3, 1fr); }
-            .hardware-icon { padding: 16px; font-size: 2rem; }
+            .hardware-card { padding: 24px 28px; padding-left: 24px; }
             .section-header h2 { font-size: 1.6rem; }
             .section-header p { font-size: 0.95rem; }
             .flow-animation { flex-direction: column; gap: 20px !important; }
@@ -728,13 +742,13 @@
                 <p data-i18n="hw_text">Bluetooth-Taster ab 5€, Fußschalter, Big Buttons, Touch-Sensoren — unser Hardware-Guide zeigt alle Optionen und wie du sie verbindest.</p>
                 <a href="/hardware" class="btn" data-i18n="hw_cta">Hardware-Guide öffnen →</a>
             </div>
-            <div class="hardware-icons">
-                <div class="hardware-icon">📱</div>
-                <div class="hardware-icon">🔘</div>
-                <div class="hardware-icon">⌨️</div>
-                <div class="hardware-icon">🖱️</div>
-                <div class="hardware-icon">👆</div>
-                <div class="hardware-icon">🦶</div>
+            <div class="hardware-devices" aria-hidden="true">
+                <div class="hardware-device-item">Bluetooth-Taster</div>
+                <div class="hardware-device-item">Fußschalter</div>
+                <div class="hardware-device-item">Big Button</div>
+                <div class="hardware-device-item">Touch-Sensor</div>
+                <div class="hardware-device-item">Joystick / Trackball</div>
+                <div class="hardware-device-item">Maus (Ein-Tasten-Mode)</div>
             </div>
         </div>
     </div>

@@ -579,31 +579,52 @@
             case 'KB_MODE':
                 cycleKeyboardMode();
                 updateModeBadge();
-                showToolbarScan();  // Stay in toolbar
+                showToolbarScan();
                 return;
             case 'PHRASES':
                 inputMode = 'phrases';
                 renderAndStart();
                 return;
-            case 'PUNCT':
-                inputMode = 'punctuation';
-                renderAndStart();
-                return;
             case 'SPEAK':
                 speak();
-                showToolbarScan();  // Stay in toolbar
+                showToolbarScan();
                 return;
             case 'CLEAR':
                 showDeleteOptions();
                 return;
+            case 'MORE':
+                showToolbarMoreScan();
+                return;
+            case 'BACK':
+                inputMode = 'keyboard';
+                renderAndStart();
+                return;
+        }
+    }
+
+    function showToolbarMoreScan() {
+        Runner.stop();
+        inputMode = 'toolbar-more';
+        showContextBanner('\u2630 Mehr');
+        keys = Keyboard.renderToolbarMore(keyboardContainer);
+        const speed = getAdaptiveSpeed();
+        Runner.start(keys, speed, onToolbarMoreSelected, speed * 1.5);
+    }
+
+    function onToolbarMoreSelected(value) {
+        switch (value) {
+            case 'PUNCT':
+                inputMode = 'punctuation';
+                renderAndStart();
+                return;
             case 'PAUSE':
                 enterPause();
                 return;
-            case 'SHARE':
-                showShareScan();
-                return;
             case 'SETTINGS':
                 showSettingsScan();
+                return;
+            case 'SHARE':
+                showShareScan();
                 return;
             case 'HELP':
                 showHelpScan();
@@ -612,8 +633,7 @@
                 showExitConfirm();
                 return;
             case 'BACK':
-                inputMode = 'keyboard';
-                renderAndStart();
+                showToolbarScan();  // back to primary toolbar, not keyboard
                 return;
         }
     }
@@ -653,6 +673,7 @@
         Runner.stop();
         settingsPanel.classList.remove('hidden');
         inputMode = 'settings';
+        showContextBanner('\u2699\ufe0f Einstellungen');
 
         updateSettingsIndicators();
 
@@ -701,16 +722,16 @@
             case 'BACK':
                 break;
         }
-        // Return to keyboard
+        // Return to toolbar-more submenu (settings is only accessible from there)
         settingsPanel.classList.add('hidden');
-        inputMode = 'keyboard';
-        renderAndStart();
+        showToolbarMoreScan();
     }
 
     function showShareScan() {
         Runner.stop();
         openShareModal();
         inputMode = 'share';
+        showContextBanner('\U0001f517 Teilen');
 
         const scanArea = $('shareScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
@@ -734,16 +755,16 @@
             case 'BACK':
                 break;
         }
-        // Close modal and return to keyboard
+        // Close modal and return to toolbar-more submenu
         shareModal.classList.add('hidden');
-        inputMode = 'keyboard';
-        renderAndStart();
+        showToolbarMoreScan();
     }
 
     function showHelpScan() {
         Runner.stop();
         $('helpModal').classList.remove('hidden');
         inputMode = 'help';
+        showContextBanner('\u2753 Hilfe');
 
         const scanArea = $('helpScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
@@ -755,8 +776,7 @@
     function onHelpScanSelected(value) {
         // Only BACK option
         $('helpModal').classList.add('hidden');
-        inputMode = 'keyboard';
-        renderAndStart();
+        showToolbarMoreScan();
     }
 
     // =========================================================================
@@ -766,6 +786,7 @@
         Runner.stop();
         $('exitModal').classList.remove('hidden');
         inputMode = 'exit';
+        showContextBanner('\u26a0\ufe0f Beenden?');
 
         const scanArea = $('exitScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
@@ -789,8 +810,7 @@
             localStorage.removeItem('okc-pin');
             window.location.reload();
         } else {
-            inputMode = 'keyboard';
-            renderAndStart();
+            showToolbarMoreScan();  // BACK from exit confirm returns to toolbar-more
         }
     }
 
