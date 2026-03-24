@@ -1143,6 +1143,10 @@ fetch('/api/version').then(r => r.json()).then(d => {
         scanInterval = setInterval(step, 420);
     }
 
+    renderOutput();
+    setTimeout(startScan, 800);
+})();
+
 // ── Hallo button/cable/device demo ───────────────────────────────────────────
 (function() {
     const btn      = document.getElementById('hdBtn');
