@@ -28,7 +28,15 @@ const Runner = {
      * @param {number} speed - ms per step
      * @param {function} onSelect - callback(keyValue)
      */
-    start(keys, speed, onSelect) {
+    /**
+     * @param {HTMLElement[]} keys
+     * @param {number} speed - ms per step
+     * @param {function} onSelect - callback(keyValue)
+     * @param {number} [inputGraceMs] - override the default input grace period (ms).
+     *   Pass a larger value (e.g. speed * 1.5) when transitioning into modal/menu
+     *   contexts so the user has time to read the new screen before input is accepted.
+     */
+    start(keys, speed, onSelect, inputGraceMs) {
         this.stop();
         this._keys = keys;
         this._speed = speed;
@@ -40,8 +48,10 @@ const Runner = {
         this._highlight();
         this._timer = setInterval(() => this._advance(), this._speed);
         this._attachInteraction();
-        // Enable input after grace period to prevent accidental selection
-        setTimeout(() => { this._inputEnabled = true; }, this._inputDelayMs);
+        // Enable input after grace period — overridable per-context to prevent
+        // accidental selections when switching between keyboard/menu/modal modes.
+        const grace = inputGraceMs !== undefined ? inputGraceMs : this._inputDelayMs;
+        setTimeout(() => { this._inputEnabled = true; }, grace);
     },
 
     /** Stop the runner and clean up */

@@ -77,6 +77,7 @@
     const sidebarReaderList = $('sidebarReaderList');
     const modeBadge         = $('modeBadge');
     const modeLabel         = $('modeLabel');
+    const contextBanner     = $('toolbarContextBanner');
 
     // =========================================================================
     // INIT
@@ -244,9 +245,25 @@
     }
 
     // =========================================================================
+    // CONTEXT BANNER — shown when in menu/toolbar/modal scan modes so the user
+    // always knows which "layer" they are in.
+    // =========================================================================
+    function showContextBanner(text) {
+        if (contextBanner) {
+            contextBanner.textContent = text;
+            contextBanner.classList.add('visible');
+        }
+    }
+
+    function hideContextBanner() {
+        if (contextBanner) contextBanner.classList.remove('visible');
+    }
+
+    // =========================================================================
     // RENDERING — starts Runner on the appropriate set of elements
     // =========================================================================
     function renderAndStart() {
+        hideContextBanner();  // always clear banner when returning to keyboard
         Runner.stop();
         const speed = getAdaptiveSpeed();
 
@@ -546,12 +563,15 @@
     function showToolbarScan() {
         Runner.stop();
         inputMode = 'toolbar';
+        showContextBanner('\u2630 Men\u00fc');
 
         // Render toolbar buttons in keyboard container
         keys = Keyboard.renderToolbar(keyboardContainer);
         const speed = getAdaptiveSpeed();
 
-        Runner.start(keys, speed, onToolbarSelected);
+        // Grace delay = 1.5× scan speed: user has time to read the menu
+        // before any keypress is accepted. Critical for accidental input prevention.
+        Runner.start(keys, speed, onToolbarSelected, speed * 1.5);
     }
 
     function onToolbarSelected(value) {
@@ -640,7 +660,9 @@
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
         const speed = getAdaptiveSpeed();
 
-        Runner.start(scanBtns, speed, onSettingsScanSelected);
+        // Grace delay prevents immediately acting on the first scan-btn
+        // (BACK) when the user accidentally opened settings.
+        Runner.start(scanBtns, speed, onSettingsScanSelected, speed * 1.5);
     }
 
     function onSettingsScanSelected(value) {
@@ -694,7 +716,7 @@
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
         const speed = getAdaptiveSpeed();
 
-        Runner.start(scanBtns, speed, onShareScanSelected);
+        Runner.start(scanBtns, speed, onShareScanSelected, speed * 1.5);
     }
 
     function onShareScanSelected(value) {
@@ -727,7 +749,7 @@
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
         const speed = getAdaptiveSpeed();
 
-        Runner.start(scanBtns, speed, onHelpScanSelected);
+        Runner.start(scanBtns, speed, onHelpScanSelected, speed * 1.5);
     }
 
     function onHelpScanSelected(value) {
@@ -749,7 +771,10 @@
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
         const speed = getAdaptiveSpeed();
 
-        Runner.start(scanBtns, speed, onExitScanSelected);
+        // Extra long grace for destructive action: 2× scan speed.
+        // BACK is scan position 0 (first highlighted), CONFIRM_EXIT is second.
+        // User must consciously wait past the grace period AND past BACK.
+        Runner.start(scanBtns, speed, onExitScanSelected, speed * 2);
     }
 
     function onExitScanSelected(value) {

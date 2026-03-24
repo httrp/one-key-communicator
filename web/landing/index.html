@@ -10,19 +10,22 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --primary-light: #818cf8;
+            --primary: #1a56b0;
+            --primary-dark: #1447a0;
+            --primary-light: #5b8dd9;
             --text: #1e293b;
             --text-light: #64748b;
             --bg: #ffffff;
             --bg-soft: #f8fafc;
             --border: #e2e8f0;
-            --radius: 16px;
-            --radius-sm: 8px;
-            --success: #10b981;
-            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            --gradient-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            --radius: 8px;
+            --radius-sm: 4px;
+            --success: #16a34a;
+            /* --gradient is a solid color, not a gradient.
+               This is intentional: no gradient backgrounds anywhere.
+               All var(--gradient) usages become a solid professional blue. */
+            --gradient: var(--primary);
+            --gradient-soft: rgba(26, 86, 176, 0.08);
         }
 
         body {
@@ -139,10 +142,7 @@
             font-weight: 800;
             line-height: 1.1;
             margin-bottom: 24px;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text);
             animation: fadeInUp 0.6s ease-out 0.1s both;
         }
         .hero p {
@@ -170,13 +170,14 @@
             transition: all 0.2s;
         }
         .btn-primary {
-            background: var(--gradient);
+            background: var(--primary);
             color: white;
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 14px rgba(26, 86, 176, 0.25);
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+            background: var(--primary-dark);
+            box-shadow: 0 8px 20px rgba(26, 86, 176, 0.35);
         }
         .btn-secondary {
             background: var(--bg);
@@ -194,12 +195,12 @@
             animation: fadeInUp 0.6s ease-out 0.4s both;
         }
         .demo-mockup {
-            background: var(--gradient);
+            background: var(--primary);
             border-radius: var(--radius);
-            padding: 8px;
+            padding: 6px;
             max-width: 600px;
             margin: 0 auto;
-            box-shadow: 0 24px 64px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 16px 48px rgba(26, 86, 176, 0.15);
         }
         .demo-screen {
             background: #1a1a2e;
@@ -344,7 +345,7 @@
         }
         .feature:hover {
             border-color: var(--primary-light);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 4px 16px rgba(26, 86, 176, 0.08);
         }
         .feature-icon {
             font-size: 2.5rem;
@@ -507,12 +508,21 @@
             .logo { font-size: 1rem; }
             .nav-cta { padding: 6px 12px !important; font-size: 0.85rem; }
         }
+        /* Respect reduced motion for all users — especially important for
+           an assistive technology product. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
 
 <!-- Beta Banner -->
-<div class="beta-banner" style="background: linear-gradient(90deg, #f59e0b, #d97706); color: white; text-align: center; padding: 10px 16px; font-size: 0.9rem;">
+<div class="beta-banner" style="background: #b45309; color: white; text-align: center; padding: 10px 16px; font-size: 0.9rem;">
     <strong>⚠️ Beta-Version</strong> — <span data-i18n="beta_warning">One-Key befindet sich noch in der Entwicklung. Bitte nutze es mit Bedacht und melde Probleme.</span>
     <a href="https://github.com/httrp/one-key-communicator/issues" target="_blank" style="color: white; margin-left: 8px; text-decoration: underline;">Feedback geben →</a>
 </div>
@@ -544,7 +554,7 @@
     <div class="container">
         <div class="hero-content">
             <div class="hero-badge">
-                <span>✨</span>
+
                 <span data-i18n="hero_badge">Kostenlos & Open Source</span>
             </div>
             <h1 data-i18n="hero_title">Kommunizieren mit nur einer Taste</h1>
@@ -610,32 +620,32 @@
         </div>
         <div class="features-grid">
             <div class="feature">
-                <div class="feature-icon">🎯</div>
+                <div class="feature-icon" aria-hidden="true">🎯</div>
                 <h3 data-i18n="f1_title">Eine Taste reicht</h3>
                 <p data-i18n="f1_text">Alles funktioniert mit einem einzigen Tastendruck — jede Taste, Maus-Klick, Touch oder Sensor.</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">📱</div>
+                <div class="feature-icon" aria-hidden="true">📱</div>
                 <h3 data-i18n="f2_title">Läuft überall</h3>
                 <p data-i18n="f2_text">Handy, Tablet, Laptop, Smart TV — jedes Gerät mit Browser funktioniert.</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">🔒</div>
+                <div class="feature-icon" aria-hidden="true">🔒</div>
                 <h3 data-i18n="f3_title">Privat & Sicher</h3>
                 <p data-i18n="f3_text">Kein Account, kein Tracking. Räume haben einen PIN und werden nach 24h Inaktivität automatisch gelöscht.</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">🌍</div>
+                <div class="feature-icon" aria-hidden="true">🌍</div>
                 <h3 data-i18n="f4_title">8 Sprachen</h3>
                 <p data-i18n="f4_text">Deutsch, Englisch, Französisch, Spanisch, Italienisch, Polnisch und mehr.</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">💬</div>
+                <div class="feature-icon" aria-hidden="true">💬</div>
                 <h3 data-i18n="f5_title">Schnell-Sätze</h3>
                 <p data-i18n="f5_text">Vordefinierte Sätze für häufige Situationen: Schmerzen, Durst, Hilfe rufen.</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">🔊</div>
+                <div class="feature-icon" aria-hidden="true">🔊</div>
                 <h3 data-i18n="f6_title">Sprachausgabe</h3>
                 <p data-i18n="f6_text">Der geschriebene Text kann laut vorgelesen werden.</p>
             </div>
@@ -653,7 +663,7 @@
         <div class="flow-animation" style="display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 40px;">
             <!-- Button -->
             <div class="flow-device" style="text-align: center;">
-                <div class="flow-button" style="width: 80px; height: 80px; background: linear-gradient(145deg, #ef4444, #dc2626); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3); cursor: pointer; transition: transform 0.1s;" id="flowBtn">🔘</div>
+                <div class="flow-button" style="width: 80px; height: 80px; background: #b91c1c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 6px 18px rgba(185, 28, 28, 0.3); cursor: pointer; transition: transform 0.1s;" id="flowBtn" role="button" tabindex="0" aria-label="Demo: Taster drücken">🔘</div>
                 <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-light);" data-i18n="flow_button">Taster</p>
             </div>
             
@@ -730,14 +740,14 @@
     </div>
 </section>
 
-<section class="opensource-promise" style="padding: 80px 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center;">
+<section class="opensource-promise" style="padding: 80px 0; background: #0f172a; color: white; text-align: center;">
     <div class="container">
         <h2 style="font-size: 2rem; margin-bottom: 16px;">💚 Open Source</h2>
         <p style="font-size: 1.2rem; max-width: 700px; margin: 0 auto 24px; opacity: 0.95;" data-i18n="oss_text">
             One-Key ist ein nicht-kommerzielles Projekt. Der Quellcode ist unter GPLv3 öffentlich — jeder kann ihn prüfen, anpassen und selbst betreiben. Feedback und Beiträge sind willkommen.
         </p>
         <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
-            <a href="https://github.com/httrp/one-key-communicator" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; color: #059669; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">📂 Quellcode auf GitHub</a>
+            <a href="https://github.com/httrp/one-key-communicator" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; color: #1a56b0; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">📂 Quellcode auf GitHub</a>
             <a href="https://github.com/httrp/one-key-communicator/blob/main/LICENSE" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">📜 GPLv3 Lizenz</a>
         </div>
     </div>

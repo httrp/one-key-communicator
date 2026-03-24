@@ -45,6 +45,9 @@
                 </div>
             </header>
 
+            <!-- Toolbar context banner: visible when in menu/toolbar scan mode -->
+            <div class="toolbar-context-banner" id="toolbarContextBanner" role="status" aria-live="polite"></div>
+
             <!-- Text output area -->
             <div class="text-area" id="textDisplay"><span class="cursor"></span></div>
 
@@ -157,7 +160,7 @@
             <!-- Section: Display -->
             <div class="settings-section">
                 <div class="settings-section-header">
-                    <span class="settings-section-icon">🌐</span>
+                    <span class="settings-section-icon" aria-hidden="true">🌐</span>
                     <span data-i18n="settings_display">Anzeige</span>
                 </div>
                 <label class="setting-label" data-i18n="language">Sprache</label>
@@ -190,7 +193,7 @@
             <!-- Section: Scanner -->
             <div class="settings-section">
                 <div class="settings-section-header">
-                    <span class="settings-section-icon">⏱️</span>
+                    <span class="settings-section-icon" aria-hidden="true">⏱️</span>
                     <span data-i18n="settings_scanner">Scanner</span>
                 </div>
                 <label class="setting-label" data-i18n="speed">Geschwindigkeit</label>
@@ -204,7 +207,7 @@
             <!-- Section: Room -->
             <div class="settings-section">
                 <div class="settings-section-header">
-                    <span class="settings-section-icon">📡</span>
+                    <span class="settings-section-icon" aria-hidden="true">📡</span>
                     <span data-i18n="settings_room">Raum</span>
                 </div>
                 <label class="setting-label" data-i18n="room_duration">Raum speichern</label>
@@ -326,13 +329,14 @@
             <p data-i18n="exit_text">Der Raum wird gelöscht und alle Verbindungen getrennt. Der Text ist dann unwiderruflich weg.</p>
         </div>
         <div class="modal-scan-area" id="exitScanArea">
-            <div class="scan-btn scan-btn-danger" data-value="CONFIRM_EXIT">
-                <span class="scan-icon">✗</span>
-                <span class="scan-label" data-i18n="exit_confirm">Ja, beenden</span>
-            </div>
+            <!-- BACK is first in DOM = first scanned. Prevents accidental room deletion. -->
             <div class="scan-btn scan-btn-back" data-value="BACK">
                 <span class="scan-icon">←</span>
                 <span class="scan-label" data-i18n="back">Zurück</span>
+            </div>
+            <div class="scan-btn scan-btn-danger" data-value="CONFIRM_EXIT">
+                <span class="scan-icon">✗</span>
+                <span class="scan-label" data-i18n="exit_confirm">Ja, beenden</span>
             </div>
         </div>
     </div>

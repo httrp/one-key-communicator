@@ -27,6 +27,13 @@
     --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
     --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 
+    /* Aliases — several legacy sections reference these names.
+       Centralised here so there is one place to change the palette. */
+    --primary: var(--accent);
+    --warning: var(--amber);
+    --bg-subtle: var(--bg-soft);
+    --text-muted: var(--text-secondary);
+
     /* Responsive key sizes — overridden by media queries */
     --key-min: 38px;
     --key-h: 48px;
@@ -48,6 +55,9 @@
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
     --shadow: 0 4px 12px rgba(0,0,0,0.4);
     --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+    /* Re-declare aliases so dark-mode overrides are reflected */
+    --bg-subtle: var(--bg-soft);
+    --text-muted: var(--text-secondary);
 }
 
 /* === Reset === */
@@ -1341,11 +1351,12 @@ button {
 }
 
 .scan-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
+    background: var(--accent);
+    border-color: var(--accent);
     color: white;
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    /* High-contrast ring so the active state is visible from distance */
+    box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow);
 }
 
 .scan-btn-back {
@@ -1353,8 +1364,8 @@ button {
 }
 
 .scan-btn-back.active {
-    background: var(--warning);
-    border-color: var(--warning);
+    background: var(--amber);
+    border-color: var(--amber);
 }
 
 .scan-btn-danger {
@@ -1417,16 +1428,17 @@ button {
 }
 
 .toolbar-scan-btn:hover {
-    background: var(--bg-subtle) !important;
-    border-color: var(--primary) !important;
+    background: var(--bg-soft) !important;
+    border-color: var(--accent) !important;
 }
 
 .toolbar-scan-btn.active {
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
     color: white;
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    /* Same high-contrast ring as scan-btn.active for visual consistency */
+    box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow);
 }
 
 .toolbar-scan-icon {
@@ -1474,8 +1486,8 @@ button {
 }
 
 .toolbar-back-btn.active {
-    background: var(--warning) !important;
-    border-color: var(--warning) !important;
+    background: var(--amber) !important;
+    border-color: var(--amber) !important;
     color: white;
 }
 
@@ -1502,10 +1514,44 @@ button {
 }
 
 [data-theme="dark"] .scan-btn.active {
-    background: var(--primary);
+    background: var(--accent);
     color: white;
 }
 
 [data-theme="dark"] .scan-btn-back.active {
-    background: var(--warning);
+    background: var(--amber);
+}
+
+/* ==========================================================================
+   Toolbar Context Banner
+   Shows which "layer" the user is in (menu, settings, etc.) so they are
+   never disoriented. Visible only when inputMode !== 'keyboard'.
+   ========================================================================== */
+.toolbar-context-banner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 16px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+.toolbar-context-banner.visible {
+    display: flex;
+}
+
+/* ==========================================================================
+   Respect reduced motion — especially important for our target users who
+   may have vestibular disorders or other motion sensitivities.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

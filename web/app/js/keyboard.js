@@ -234,7 +234,10 @@ const Keyboard = {
         exitSection.appendChild(exitRow);
         container.appendChild(exitSection);
 
-        // Back button
+        // Back button — rendered at bottom of the menu for visual clarity,
+        // but prepended to allKeys so it is ALWAYS the FIRST scanned item.
+        // This means: one keypress immediately exits the menu, regardless of
+        // where the scanner is. Critical for users with limited motor control.
         const backRow = document.createElement('div');
         backRow.className = 'keyboard-row';
         const backEl = document.createElement('div');
@@ -242,7 +245,7 @@ const Keyboard = {
         backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
         backEl.dataset.value = 'BACK';
         backRow.appendChild(backEl);
-        allKeys.push(backEl);
+        allKeys.unshift(backEl);  // ← position 0: scanned first, safe exit always available
         container.appendChild(backRow);
 
         return allKeys;
