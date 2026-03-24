@@ -1,7 +1,9 @@
 package server
 
 import (
+	"crypto/rand"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,8 +12,10 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dominikhattrup/one-key-communicator/internal/config"
@@ -29,6 +33,13 @@ type Server struct {
 	app           fs.FS
 	pinLimiter    *RateLimiter // Strict limiter for PIN verification (anti brute-force)
 	createLimiter *RateLimiter // Limiter for room creation
+	readTokens    map[string]readAccessToken
+	readTokenMu   sync.Mutex
+}
+
+type readAccessToken struct {
+	RoomID    string
+	ExpiresAt time.Time
 }
 
 // New creates a new server with all routes configured.
@@ -39,6 +50,7 @@ func New(cfg *config.Config, db *storage.DB, landingFS, appFS embed.FS) *Server 
 		mux:           http.NewServeMux(),
 		pinLimiter:    NewRateLimiter(10, time.Minute),  // 10 PIN attempts per minute per IP
 		createLimiter: NewRateLimiter(30, time.Minute), // 30 room creations per minute per IP
+		readTokens:    make(map[string]readAccessToken),
 	}
 
 	var err error
@@ -87,6 +99,10 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+		w.Header().Set("Cross-Origin-Resource-Policy", "same-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		w.Header().Set("Content-Security-Policy",
 			"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "+
 				"img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'")
@@ -121,10 +137,11 @@ func (s *Server) handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"id":       rm.ID,
-		"pin":      rm.PIN,
-		"writeURL": fmt.Sprintf("%s/app#/room/%s", s.cfg.BaseURL, rm.ID),
-		"readURL":  fmt.Sprintf("%s/app#/read/%s?pin=%s", s.cfg.BaseURL, rm.ID, rm.PIN),
+		"id":          rm.ID,
+		"pin":         rm.PIN,
+		"writerToken": rm.WriterToken,
+		"writeURL":    fmt.Sprintf("%s/app#/room/%s", s.cfg.BaseURL, rm.ID),
+		"readURL":     fmt.Sprintf("%s/app#/read/%s", s.cfg.BaseURL, rm.ID),
 	})
 }
 
@@ -137,6 +154,21 @@ func (s *Server) handleRoomInfo(w http.ResponseWriter, r *http.Request) {
 
 	// DELETE - delete room
 	if r.Method == http.MethodDelete {
+		token := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+		if token == "" {
+			token = strings.TrimSpace(r.Header.Get("X-Writer-Token"))
+		}
+
+		rm := s.rooms.Get(id)
+		if rm == nil {
+			http.Error(w, "Room not found", http.StatusNotFound)
+			return
+		}
+		if token == "" || token != rm.WriterToken {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
 		s.rooms.Delete(id)
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -185,14 +217,23 @@ func (s *Server) handleVerifyPIN(w http.ResponseWriter, r *http.Request) {
 	}
 
 	valid := rm.ValidatePIN(req.PIN)
+	resp := map[string]interface{}{"valid": valid}
+	if valid {
+		resp["readToken"] = s.issueReadToken(req.RoomID, 2*time.Minute)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"valid": valid,
-	})
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (s *Server) handleWebSocket(ws *websocket.Conn) {
 	defer ws.Close()
+
+	if !s.validateWebSocketOrigin(ws.Request()) {
+		log.Printf("WS: blocked origin %q", ws.Request().Header.Get("Origin"))
+		ws.Write([]byte(`{"type":"error","data":"invalid_origin"}`))
+		time.Sleep(100 * time.Millisecond)
+		return
+	}
 
 	parts := strings.Split(strings.Trim(ws.Request().URL.Path, "/"), "/")
 	if len(parts) < 3 {
@@ -213,9 +254,9 @@ func (s *Server) handleWebSocket(ws *websocket.Conn) {
 
 	// Validate PIN for readers
 	if role == "read" && rm.PIN != "" {
-		pin := ws.Request().URL.Query().Get("pin")
-		if !rm.ValidatePIN(pin) {
-			log.Printf("WS: invalid PIN for room %s", roomID)
+		readToken := ws.Request().URL.Query().Get("token")
+		if !s.consumeReadToken(readToken, roomID) {
+			log.Printf("WS: invalid read token for room %s", roomID)
 			ws.Write([]byte(`{"type":"error","data":"invalid_pin"}`))
 			time.Sleep(100 * time.Millisecond) // Give client time to receive
 			return
@@ -369,13 +410,12 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Protect with token if configured
+	// Protect with bearer token if configured.
+	// Query parameters are intentionally not supported to avoid token leakage in logs.
 	if s.cfg.StatsToken != "" {
-		token := r.URL.Query().Get("token")
-		if token == "" {
-			if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
-				token = strings.TrimPrefix(auth, "Bearer ")
-			}
+		token := ""
+		if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+			token = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
 		}
 		if token != s.cfg.StatsToken {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -426,6 +466,15 @@ func (s *Server) handleImpressumPage(w http.ResponseWriter, r *http.Request) {
 // getClientIP extracts the real client IP from request headers or RemoteAddr.
 // Checks X-Forwarded-For and X-Real-IP headers first (for reverse proxy setups).
 func getClientIP(r *http.Request) string {
+	// Only trust forwarding headers from local/private proxies.
+	if !isTrustedProxyRemoteAddr(r.RemoteAddr) {
+		addr := r.RemoteAddr
+		if host, _, err := net.SplitHostPort(addr); err == nil {
+			return host
+		}
+		return addr
+	}
+
 	// Check X-Forwarded-For header (may contain comma-separated list)
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
@@ -443,6 +492,80 @@ func getClientIP(r *http.Request) string {
 		return host
 	}
 	return addr
+}
+
+func isTrustedProxyRemoteAddr(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	ip := net.ParseIP(strings.TrimSpace(host))
+	if ip == nil {
+		return false
+	}
+	if ip.IsLoopback() || ip.IsPrivate() {
+		return true
+	}
+	return false
+}
+
+func (s *Server) issueReadToken(roomID string, ttl time.Duration) string {
+	token := newSecureToken(24)
+	s.readTokenMu.Lock()
+	s.readTokens[token] = readAccessToken{RoomID: roomID, ExpiresAt: time.Now().Add(ttl)}
+	s.readTokenMu.Unlock()
+	return token
+}
+
+func (s *Server) consumeReadToken(token, roomID string) bool {
+	if token == "" {
+		return false
+	}
+
+	now := time.Now()
+	s.readTokenMu.Lock()
+	defer s.readTokenMu.Unlock()
+
+	for k, v := range s.readTokens {
+		if now.After(v.ExpiresAt) {
+			delete(s.readTokens, k)
+		}
+	}
+
+	entry, ok := s.readTokens[token]
+	if !ok {
+		return false
+	}
+	delete(s.readTokens, token)
+	if now.After(entry.ExpiresAt) {
+		return false
+	}
+	return entry.RoomID == roomID
+}
+
+func newSecureToken(numBytes int) string {
+	b := make([]byte, numBytes)
+	if _, err := rand.Read(b); err != nil {
+		panic("crypto/rand failed: " + err.Error())
+	}
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+func (s *Server) validateWebSocketOrigin(r *http.Request) bool {
+	base, err := url.Parse(s.cfg.BaseURL)
+	if err != nil {
+		return false
+	}
+	origin := strings.TrimSpace(r.Header.Get("Origin"))
+	if origin == "" {
+		// Non-browser clients may omit Origin.
+		return true
+	}
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	return strings.EqualFold(originURL.Scheme, base.Scheme) && strings.EqualFold(originURL.Host, base.Host)
 }
 
 // extractCountry extracts country code from Accept-Language header.

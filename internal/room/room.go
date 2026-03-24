@@ -12,6 +12,7 @@ import (
 type Room struct {
 	ID        string
 	PIN       string // 6-digit access PIN for readers
+	WriterToken string // room-owner token for privileged actions (e.g. delete)
 	CreatedAt time.Time
 	Language  string
 	Text      string

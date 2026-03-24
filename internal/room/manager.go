@@ -33,10 +33,12 @@ func NewManager(db *storage.DB) *Manager {
 func (m *Manager) Create(language string) *Room {
 	id := generateID()
 	pin := generatePIN()
+	writerToken := generateToken(24)
 
 	r := &Room{
 		ID:        id,
 		PIN:       pin,
+		WriterToken: writerToken,
 		CreatedAt: time.Now(),
 		Language:  language,
 		Text:      "",
@@ -202,6 +204,14 @@ func generatePIN() string {
 		panic("crypto/rand failed: " + err.Error())
 	}
 	return fmt.Sprintf("%06d", n.Int64())
+}
+
+func generateToken(numBytes int) string {
+	b := make([]byte, numBytes)
+	if _, err := rand.Read(b); err != nil {
+		panic("crypto/rand failed: " + err.Error())
+	}
+	return hex.EncodeToString(b)
 }
 
 // Stats represents current system statistics.

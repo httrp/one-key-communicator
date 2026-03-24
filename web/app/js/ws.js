@@ -6,7 +6,7 @@ const WS = {
     _ws: null,
     _roomId: null,
     _role: null,
-    _pin: null,
+    _readToken: null,
     _onMessage: null,
     _onStatus: null,
     _reconnectTimer: null,
@@ -19,12 +19,12 @@ const WS = {
      * @param {string} role - "write" or "read"
      * @param {function} onMessage - callback({type, data})
      * @param {function} onStatus - callback("connected"|"disconnected"|"reconnecting"|"error")
-     * @param {string} [pin] - optional PIN for readers
+     * @param {string} [readToken] - optional short-lived read token for readers
      */
-    connect(roomId, role, onMessage, onStatus, pin = null) {
+    connect(roomId, role, onMessage, onStatus, readToken = null) {
         this._roomId = roomId;
         this._role = role;
-        this._pin = pin;
+        this._readToken = readToken;
         this._onMessage = onMessage;
         this._onStatus = onStatus;
         this._permanentError = false;
@@ -41,8 +41,8 @@ const WS = {
 
         const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         let url = `${proto}//${location.host}/ws/${this._roomId}/${this._role}`;
-        if (this._pin) {
-            url += `?pin=${encodeURIComponent(this._pin)}`;
+        if (this._readToken) {
+            url += `?token=${encodeURIComponent(this._readToken)}`;
         }
 
         this._ws = new WebSocket(url);

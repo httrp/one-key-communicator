@@ -183,6 +183,45 @@
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
+        .auth-panel {
+            display: none;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin: 0 auto 24px;
+            max-width: 520px;
+            text-align: left;
+        }
+        .auth-panel.visible { display: block; }
+        .auth-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .auth-input {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+        .auth-btn {
+            border: 0;
+            border-radius: var(--radius);
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+        .auth-msg {
+            margin-top: 8px;
+            color: #b91c1c;
+            font-size: 0.85rem;
+            min-height: 1.1em;
+        }
+
         /* Info section */
         .info-section {
             background: var(--bg);
@@ -272,6 +311,15 @@
             </div>
         </div>
 
+        <div id="statsAuthPanel" class="auth-panel" aria-live="polite">
+            <strong id="statsAuthTitle">Geschützt: Bitte Stats-Token eingeben</strong>
+            <div class="auth-row">
+                <input id="statsTokenInput" class="auth-input" type="password" placeholder="Bearer token" autocomplete="off">
+                <button id="statsTokenBtn" class="auth-btn">Speichern</button>
+            </div>
+            <div id="statsAuthMsg" class="auth-msg"></div>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card highlight">
                 <div class="stat-value" id="activeConnections">-</div>
@@ -332,10 +380,43 @@ const countryFlags = {
     'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'CZ': '🇨🇿', 'GR': '🇬🇷', 'HU': '🇭🇺'
 };
 
+const statsAuthPanel = document.getElementById('statsAuthPanel');
+const statsTokenInput = document.getElementById('statsTokenInput');
+const statsTokenBtn = document.getElementById('statsTokenBtn');
+const statsAuthMsg = document.getElementById('statsAuthMsg');
+const statsAuthTitle = document.getElementById('statsAuthTitle');
+
+let statsToken = sessionStorage.getItem('okc-stats-token') || '';
+
+function showAuthPanel(message) {
+    statsAuthPanel.classList.add('visible');
+    if (message) statsAuthMsg.textContent = message;
+}
+
+function hideAuthPanel() {
+    statsAuthPanel.classList.remove('visible');
+    statsAuthMsg.textContent = '';
+}
+
+function getStatsHeaders() {
+    if (!statsToken) return {};
+    return { Authorization: `Bearer ${statsToken}` };
+}
+
 async function loadStats() {
     try {
-        const res = await fetch('/api/stats');
+        const res = await fetch('/api/stats', {
+            headers: getStatsHeaders(),
+        });
+
+        if (res.status === 401) {
+            showAuthPanel('Ungültiger oder fehlender Token.');
+            return;
+        }
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
         const stats = await res.json();
+        hideAuthPanel();
         
         document.getElementById('activeConnections').textContent = stats.activeConnections.toLocaleString('de-DE');
         document.getElementById('totalConnections').textContent = stats.totalConnections.toLocaleString('de-DE');
@@ -360,7 +441,32 @@ async function loadStats() {
         }
     } catch (e) {
         console.error('Failed to load stats:', e);
+        showAuthPanel('Fehler beim Laden der Stats.');
     }
+}
+
+if (statsTokenBtn) {
+    statsTokenBtn.addEventListener('click', () => {
+        const value = (statsTokenInput.value || '').trim();
+        statsToken = value;
+        if (statsToken) {
+            sessionStorage.setItem('okc-stats-token', statsToken);
+            statsAuthMsg.textContent = '';
+            loadStats();
+            return;
+        }
+        sessionStorage.removeItem('okc-stats-token');
+        showAuthPanel('Bitte Token eingeben.');
+    });
+}
+
+if (statsTokenInput) {
+    statsTokenInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            statsTokenBtn.click();
+        }
+    });
 }
 
 // Load immediately and then every 10 seconds
@@ -433,6 +539,17 @@ function switchLang(lang) {
         const key = el.getAttribute('data-i18n');
         if (dict[key]) el.textContent = dict[key];
     });
+    if (statsAuthTitle) {
+        statsAuthTitle.textContent = lang === 'en'
+            ? 'Protected: enter stats token'
+            : 'Geschützt: Bitte Stats-Token eingeben';
+    }
+    if (statsTokenBtn) {
+        statsTokenBtn.textContent = lang === 'en' ? 'Save' : 'Speichern';
+    }
+    if (statsTokenInput) {
+        statsTokenInput.placeholder = lang === 'en' ? 'Bearer token' : 'Bearer-Token';
+    }
     document.documentElement.lang = lang;
     localStorage.setItem('okc-lang', lang);
 }

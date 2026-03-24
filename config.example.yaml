@@ -14,7 +14,7 @@ port: 8090
 data_dir: data
 
 # Token to protect the /api/stats endpoint
-# If set, requests must supply it as ?token=... or Authorization: Bearer ...
+# If set, requests must supply it as Authorization: Bearer ...
 # Leave empty (or unset) to allow public access
 # Can also be set via OKC_STATS_TOKEN or --stats-token flag
 # stats_token: my-secret-stats-token

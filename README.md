@@ -131,10 +131,12 @@ OKC is designed so that sensitive communication data stays private, even if some
 | **Random IDs & PINs** | Room IDs (12 hex chars) and PINs (6 digits) are generated with `crypto/rand` — no `math/rand`. |
 | **Auto-delete** | Room text is cleared after 24 h of inactivity; the room record is deleted shortly after. |
 | **Brute-force protection** | PIN verification: 10 attempts/min/IP. Room creation: 30/min/IP. |
+| **PIN handling** | Reader links contain no PIN. PIN is entered in-app and exchanged for a short-lived read token. |
+| **Owner-only destructive actions** | Room deletion requires a writer token issued on room creation (not shared with readers). |
 | **Security headers** | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, full `Content-Security-Policy`. |
 | **CORS** | `Access-Control-Allow-Origin` is set to your configured `base-url`, not `*`. |
 | **Transport** | TLS is handled by Caddy (in the recommended setup) — all traffic runs over HTTPS/WSS. |
-| **Stats endpoint** | `/api/stats` can be protected with a bearer token via `OKC_STATS_TOKEN`. |
+| **Stats endpoint** | `/api/stats` can be protected with a bearer token via `OKC_STATS_TOKEN` (Authorization header only). |
 | **No accounts / no tracking** | No user data is collected. No cookies. No analytics. |
 
 ### Important caveat on data-at-rest

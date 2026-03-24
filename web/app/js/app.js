@@ -28,6 +28,7 @@
     let currentText = '';
     let roomId = null;
     let roomPIN = null; // PIN for reader access
+    let writerToken = null;
     let inputMode = 'keyboard';  // 'keyboard' | 'toolbar' | 'phrases' | 'punctuation'
     let paused = false;
     let keys = [];
@@ -121,7 +122,7 @@
     // =========================================================================
     function navigate() {
         const hash = location.hash.slice(1) || '/';
-        // Extract query string from hash (e.g., #/read/abc123?pin=1234)
+        // Extract query string from hash (legacy support for old links that still contain pin)
         const [hashPath, hashQuery] = hash.split('?');
         const parts = hashPath.split('/').filter(Boolean);
         const params = new URLSearchParams(hashQuery || '');
@@ -135,6 +136,10 @@
 
         if (parts[0] === 'read' && parts[1]) {
             const pin = params.get('pin');
+            // Clean up legacy links containing PIN in URL immediately.
+            if (pin) {
+                history.replaceState(null, '', location.pathname + location.search + '#/read/' + parts[1]);
+            }
             showReadView(parts[1], pin);
         } else if (parts[0] === 'room' && parts[1]) {
             showWriteView(parts[1]);
@@ -192,14 +197,23 @@
             // Session only - clear any stored room
             localStorage.removeItem('okc-room');
         }
+        sessionStorage.removeItem('okc-room-session');
 
         try {
             const resp = await fetch('/api/rooms?lang=' + I18N.getLang(), { method: 'POST' });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
-            // Only store if duration > 0
             if (durationHours > 0) {
-                localStorage.setItem('okc-room', JSON.stringify({ id: data.id, ts: Date.now() }));
+                localStorage.setItem('okc-room', JSON.stringify({
+                    id: data.id,
+                    writerToken: data.writerToken || '',
+                    ts: Date.now()
+                }));
+            } else {
+                sessionStorage.setItem('okc-room-session', JSON.stringify({
+                    id: data.id,
+                    writerToken: data.writerToken || ''
+                }));
             }
             location.hash = '/room/' + data.id;
         } catch (err) {
@@ -215,6 +229,7 @@
         currentView = 'write';
         roomId = id;
         currentText = '';
+        writerToken = '';
         paused = false;
         inputMode = 'keyboard';
         readerCount = 0;
@@ -233,6 +248,28 @@
         updateModeBadge();
         setupSidebar();
         renderAndStart();
+
+        try {
+            const stored = localStorage.getItem('okc-room');
+            if (stored) {
+                const info = JSON.parse(stored);
+                if (info && info.id === id && info.writerToken) {
+                    writerToken = info.writerToken;
+                }
+            }
+
+            if (!writerToken) {
+                const session = sessionStorage.getItem('okc-room-session');
+                if (session) {
+                    const info = JSON.parse(session);
+                    if (info && info.id === id && info.writerToken) {
+                        writerToken = info.writerToken;
+                    }
+                }
+            }
+        } catch (e) {
+            // Ignore broken local state; app continues without delete privilege.
+        }
 
         WS.connect(id, 'write', onWriterMessage, onConnectionStatus);
 
@@ -830,11 +867,15 @@
         if (value === 'CONFIRM_EXIT') {
             // Same logic as btnEndSession click
             if (roomId) {
-                fetch('/api/rooms/' + roomId, { method: 'DELETE' }).catch(() => {});
+                const headers = {};
+                if (writerToken) {
+                    headers['Authorization'] = 'Bearer ' + writerToken;
+                }
+                fetch('/api/rooms/' + roomId, { method: 'DELETE', headers }).catch(() => {});
             }
             WS.disconnect();
-            localStorage.removeItem('okc-room-id');
-            localStorage.removeItem('okc-pin');
+            localStorage.removeItem('okc-room');
+            sessionStorage.removeItem('okc-room-session');
             window.location.reload();
         } else {
             showToolbarMoreScan();  // BACK from exit confirm returns to toolbar-more
@@ -1041,14 +1082,10 @@
         }
     }
 
-    // Build read URL with PIN
+    // Build read URL (PIN is intentionally NOT included in URL)
     function getReadURL() {
         if (!roomId) return '';
-        let url = location.origin + '/app/#/read/' + roomId;
-        if (roomPIN) {
-            url += '?pin=' + roomPIN;
-        }
-        return url;
+        return location.origin + '/app/#/read/' + roomId;
     }
 
     // =========================================================================
@@ -1109,7 +1146,11 @@
             applyReaderViewMode();
         }
 
-        WS.connect(id, 'read', onReaderMessage, onReaderConnectionStatus, pin);
+        if (pin) {
+            connectReaderWithPIN(id, pin);
+        } else {
+            showReaderPinPrompt(id);
+        }
 
         // Send saved name
         const savedName = localStorage.getItem('okc-reader-name');
@@ -1118,6 +1159,83 @@
             nameInput.value = savedName;
             // Send name after connection is established (slight delay)
             setTimeout(() => WS.sendName(savedName), 500);
+        }
+    }
+
+    function showReaderPinPrompt(id) {
+        const modal = $('readerPinModal');
+        const input = $('readerPinInput');
+        const errorEl = $('readerPinError');
+
+        if (!modal || !input) {
+            onReaderConnectionStatus('error', 'invalid_pin');
+            return;
+        }
+
+        if (errorEl) errorEl.textContent = '';
+        input.value = '';
+        modal.classList.remove('hidden');
+        setTimeout(() => input.focus(), 50);
+
+        const submit = async () => {
+            const pin = input.value.trim();
+            if (!/^\d{4,8}$/.test(pin)) {
+                if (errorEl) errorEl.textContent = I18N.t('error_invalid_pin_desc') || 'PIN ungültig';
+                return;
+            }
+            await connectReaderWithPIN(id, pin);
+        };
+
+        const onKeyDown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submit();
+            }
+        };
+
+        const btnJoin = $('btnReaderPinJoin');
+        const btnClose = $('btnReaderPinClose');
+
+        if (btnJoin) {
+            btnJoin.onclick = submit;
+        }
+        if (btnClose) {
+            btnClose.onclick = () => {
+                modal.classList.add('hidden');
+                location.hash = '/';
+            };
+        }
+
+        input.onkeydown = onKeyDown;
+    }
+
+    async function connectReaderWithPIN(id, pin) {
+        const modal = $('readerPinModal');
+        const errorEl = $('readerPinError');
+        try {
+            const resp = await fetch('/api/verify-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId: id, pin: pin })
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+            const data = await resp.json();
+            if (!data.valid || !data.readToken) {
+                if (errorEl) {
+                    errorEl.textContent = I18N.t('error_invalid_pin_desc') || 'PIN ungültig';
+                }
+                onReaderConnectionStatus('error', 'invalid_pin');
+                return;
+            }
+
+            if (modal) modal.classList.add('hidden');
+            WS.connect(id, 'read', onReaderMessage, onReaderConnectionStatus, data.readToken);
+        } catch (err) {
+            if (errorEl) {
+                errorEl.textContent = I18N.t('connection_error') || 'Verbindungsfehler';
+            }
+            onReaderConnectionStatus('error', 'connection_error');
         }
     }
 
@@ -1332,6 +1450,7 @@
     $('btnNewRoom').addEventListener('click', function() {
         settingsPanel.classList.add('hidden');
         localStorage.removeItem('okc-room');
+        sessionStorage.removeItem('okc-room-session');
         location.hash = '/';
     });
 
@@ -1348,13 +1467,19 @@
     $('btnEndSession').addEventListener('click', function() {
         if (!roomId) return;
         if (!confirm(I18N.t('end_session_confirm'))) return;
+
+        const headers = {};
+        if (writerToken) {
+            headers['Authorization'] = 'Bearer ' + writerToken;
+        }
         
         // Delete room on server
-        fetch('/api/rooms/' + roomId, { method: 'DELETE' })
+        fetch('/api/rooms/' + roomId, { method: 'DELETE', headers })
             .catch(() => {});  // Ignore errors
         
         // Clear local state
         localStorage.removeItem('okc-room');
+        sessionStorage.removeItem('okc-room-session');
         WS.disconnect();
         
         settingsPanel.classList.add('hidden');
