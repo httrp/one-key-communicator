@@ -458,6 +458,32 @@
             .footer-content { flex-direction: column; align-items: flex-start; }
             .features-table td:first-child { width: 140px; }
         }
+
+        /* ── Responsive: animations ──────────────── */
+        @media (max-width: 640px) {
+            /* Hallo demo: horizontal row → vertical stack */
+            .hallo-demo {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+                padding: 24px 16px;
+            }
+            .hd-cable { display: none; }
+            .hd-arrow { transform: rotate(90deg); }
+            .hd-output-wrap { align-items: center; text-align: center; }
+            .hd-out-devices { justify-content: center; }
+            .hd-output-text { font-size: 1.4rem; }
+
+            /* Schematic: tighter padding on narrow screens */
+            .schematic { padding: 20px 14px; }
+            .schematic-flow { gap: 4px; }
+            .schematic-box { font-size: 0.65rem; padding: 8px 3px; }
+            .schematic-spec dd { font-size: 0.75rem; }
+
+            /* Scan demo: slightly smaller keys to fit more per row */
+            .sdk { width: 30px; height: 30px; font-size: 0.72rem; }
+            .scan-demo { padding: 20px 16px; }
+        }
         /* ── Schematic cycling nodes ─────────────── */
         .schematic-cycle {
             position: relative;
