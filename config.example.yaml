@@ -12,3 +12,9 @@ port: 8090
 # Directory for SQLite database (default: data/)
 # Can also be set via OKC_DATA_DIR or --data-dir flag
 data_dir: data
+
+# Token to protect the /api/stats endpoint
+# If set, requests must supply it as ?token=... or Authorization: Bearer ...
+# Leave empty (or unset) to allow public access
+# Can also be set via OKC_STATS_TOKEN or --stats-token flag
+# stats_token: my-secret-stats-token

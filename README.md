@@ -119,6 +119,28 @@ For simple single-domain setups, everything runs on one domain:
 4. **Quick Phrases:** Pre-configured sentences for common needs: "I'm thirsty", "I need help", "Yes", "No", "I love you". One press each.
 5. **Situation Boards:** Themed phrase sets — Meals, Hygiene, Pain, Emotions, General.
 
+## Security
+
+OKC is designed so that sensitive communication data stays private, even if someone gains access to the database file.
+
+| Measure | Details |
+|---|---|
+| **Content encryption** | Message text is encrypted with AES-256-GCM before being stored in SQLite. The key is derived per-room (`HMAC-SHA256(serverSecret, roomID)`). |
+| **PIN encryption** | Room PINs are encrypted with AES-256-GCM using the server secret. |
+| **Server secret** | 32-byte random key, generated on first run, stored at `data/.secret` (mode 0600). |
+| **Random IDs & PINs** | Room IDs (12 hex chars) and PINs (6 digits) are generated with `crypto/rand` — no `math/rand`. |
+| **Auto-delete** | Room text is cleared after 24 h of inactivity; the room record is deleted shortly after. |
+| **Brute-force protection** | PIN verification: 10 attempts/min/IP. Room creation: 30/min/IP. |
+| **Security headers** | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, full `Content-Security-Policy`. |
+| **CORS** | `Access-Control-Allow-Origin` is set to your configured `base-url`, not `*`. |
+| **Transport** | TLS is handled by Caddy (in the recommended setup) — all traffic runs over HTTPS/WSS. |
+| **Stats endpoint** | `/api/stats` can be protected with a bearer token via `OKC_STATS_TOKEN`. |
+| **No accounts / no tracking** | No user data is collected. No cookies. No analytics. |
+
+### Important caveat on data-at-rest
+
+Encryption protects against someone reading the raw SQLite file but **not** against a compromised server process — the decryption key lives in memory. OKC is designed for synchronous, ephemeral communication; treat it accordingly. Do not store sensitive long-term information.
+
 ## Tech Stack
 
 - **Backend:** Go standard library + 2 dependencies (WebSocket, SQLite)

@@ -1,8 +1,10 @@
-// Package crypto provides simple XOR-based text obfuscation.
-// This is NOT cryptographically secure, but prevents plaintext storage.
+// Package crypto provides encryption utilities for One-Key-Communicator text content.
 package crypto
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
 )
 
@@ -48,21 +50,55 @@ func Decrypt(encoded, key string) string {
 	return string(result)
 }
 
-// EncryptText encrypts text using the server secret and room ID.
-// Uses XOR with a derived key (32 bytes from HMAC).
+// EncryptText encrypts text using AES-GCM with a room-derived key.
 func EncryptText(text, roomID string) string {
 	if text == "" {
 		return text
 	}
 	key := DeriveKey(roomID)
-	return Encrypt(text, string(key))
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return text
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return text
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return text
+	}
+	ciphertext := gcm.Seal(nonce, nonce, []byte(text), nil)
+	return base64.StdEncoding.EncodeToString(ciphertext)
 }
 
 // DecryptText decrypts text that was encrypted with EncryptText.
+// Returns "" on failure (e.g. legacy XOR-encoded data) so the writer can simply re-enter the text.
 func DecryptText(encoded, roomID string) string {
 	if encoded == "" {
 		return encoded
 	}
 	key := DeriveKey(roomID)
-	return Decrypt(encoded, string(key))
+	data, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "" // legacy or corrupt — return empty
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return ""
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return ""
+	}
+	if len(data) < gcm.NonceSize() {
+		return "" // too short — legacy or corrupt
+	}
+	nonce := data[:gcm.NonceSize()]
+	ciphertext := data[gcm.NonceSize():]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "" // decryption failed — likely old XOR data
+	}
+	return string(plaintext)
 }

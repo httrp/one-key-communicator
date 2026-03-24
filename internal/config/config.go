@@ -9,9 +9,10 @@ import (
 
 // Config holds all application configuration.
 type Config struct {
-	Port    int
-	BaseURL string
-	DataDir string
+	Port       int
+	BaseURL    string
+	DataDir    string
+	StatsToken string
 }
 
 // Load reads configuration from flags and environment variables.
@@ -21,6 +22,7 @@ func Load() *Config {
 	flag.IntVar(&cfg.Port, "port", envInt("OKC_PORT", 8090), "Port to listen on")
 	flag.StringVar(&cfg.BaseURL, "base-url", envStr("OKC_BASE_URL", ""), "Public base URL")
 	flag.StringVar(&cfg.DataDir, "data-dir", envStr("OKC_DATA_DIR", "data"), "Directory for SQLite database")
+	flag.StringVar(&cfg.StatsToken, "stats-token", envStr("OKC_STATS_TOKEN", ""), "Token to protect /api/stats (leave empty to disable protection)")
 	flag.Parse()
 
 	if cfg.BaseURL == "" {
