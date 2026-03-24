@@ -432,12 +432,106 @@
             .footer-content { flex-direction: column; align-items: flex-start; }
             .features-table td:first-child { width: 140px; }
         }
+        /* ── Schematic cycling nodes ─────────────── */
+        .schematic-cycle {
+            position: relative;
+            overflow: hidden;
+        }
+        .schematic-cycle-track {
+            display: flex;
+            flex-direction: column;
+            /* shifted by JS */
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .schematic-cycle-item {
+            padding: 10px 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            text-align: center;
+            line-height: 1;
+        }
+
+        /* ── Scan demo ───────────────────────────── */
+        .scan-demo {
+            margin-top: 40px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-soft);
+            padding: 24px 28px;
+        }
+        .scan-demo-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+        .scan-demo-keyboard {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .sdk {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-light);
+            background: white;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .sdk.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eef3fc;
+        }
+        .sdk.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        .sdk.wide {
+            width: auto;
+            padding: 0 12px;
+            font-size: 0.75rem;
+        }
+        .scan-demo-output {
+            font-family: "SF Mono", "Fira Code", monospace;
+            font-size: 0.9rem;
+            color: var(--text);
+            min-height: 1.4em;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+        .scan-cursor {
+            display: inline-block;
+            width: 1px;
+            height: 0.9em;
+            background: var(--text);
+            margin-left: 1px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
+            .schematic-cycle-track { transition: none; }
         }
     </style>
 </head>
@@ -488,12 +582,28 @@
                     </div>
                     <div class="schematic-arrow">→</div>
                     <div class="schematic-node">
-                        <div class="schematic-box hi">Tablet</div>
+                        <!-- cycles: Tablet / Handy / Laptop / PC -->
+                        <div class="schematic-box hi schematic-cycle" id="nodeWriter" style="height:38px;">
+                            <div class="schematic-cycle-track" id="trackWriter">
+                                <div class="schematic-cycle-item">Tablet</div>
+                                <div class="schematic-cycle-item">Handy</div>
+                                <div class="schematic-cycle-item">Laptop</div>
+                                <div class="schematic-cycle-item">PC</div>
+                            </div>
+                        </div>
                         <div class="schematic-sub">schreibt</div>
                     </div>
-                    <div class="schematic-arrow">→</div>
+                    <div class="schematic-arrow">&rarr;</div>
                     <div class="schematic-node">
-                        <div class="schematic-box">TV / PC</div>
+                        <!-- cycles: TV / Laptop / Handy / Tablet -->
+                        <div class="schematic-box schematic-cycle" id="nodeReader" style="height:38px;">
+                            <div class="schematic-cycle-track" id="trackReader">
+                                <div class="schematic-cycle-item">TV</div>
+                                <div class="schematic-cycle-item">Laptop</div>
+                                <div class="schematic-cycle-item">Handy</div>
+                                <div class="schematic-cycle-item">Tablet</div>
+                            </div>
+                        </div>
                         <div class="schematic-sub">liest mit</div>
                     </div>
                 </div>
@@ -539,7 +649,18 @@
     </div>
 </section>
 
-<section class="features" id="features">
+<!-- Scan demo -->
+<section style="background: var(--bg-soft); border-bottom: 1px solid var(--border); padding: 48px 0;">
+    <div class="container">
+        <div class="section-label">Live-Demo</div>
+        <p style="font-size:0.875rem; color:var(--text-light); margin-bottom:20px;">So sieht die Buchstabenauswahl aus. Die Markierung wandert automatisch &mdash; ein einziger Tastendruck w&auml;hlt den aktuellen Buchstaben aus.</p>
+        <div class="scan-demo">
+            <div class="scan-demo-label">Tastatur (Scan-Modus)</div>
+            <div class="scan-demo-keyboard" id="demoKeyboard"></div>
+            <div class="scan-demo-output" id="demoOutput"><span class="scan-cursor"></span></div>
+        </div>
+    </div>
+</section>
     <div class="container">
         <div class="section-label">Eigenschaften</div>
         <h2 class="section-title" data-i18n="features_title">Was One-Key bietet</h2>
@@ -644,22 +765,20 @@
 </footer>
 
 <script>
+// ── Translations ────────────────────────────────────────────────────────────
 const translations = {
     de: {},
     en: {
-        hero_badge: "Free & Open Source",
         hero_title: "Communicate with just one key",
         hero_subtitle: "A simple tool for people with limited mobility. Free, open source, no installation required.",
         hero_cta: "Open app →",
         hero_hardware: "Hardware Guide",
         how_title: "How communication works",
-        how_subtitle: "No app installation, no account, no configuration. Just open and go.",
         step1_title: "Open browser", step1_text: "One-Key runs directly in the browser — phone, tablet, laptop. No app, no download.",
         step2_title: "Create room", step2_text: "A PIN-secured room is created automatically. QR code appears immediately.",
         step3_title: "Share QR code", step3_text: "Family scans the code and sees in real time what is being written.",
         step4_title: "Write", step4_text: "One press scrolls through letters, a second press selects.",
         features_title: "What One-Key offers",
-        features_subtitle: "Developed with and for people with limited mobility.",
         f1_title: "One key is enough", f1_text: "Any button, click, touch or sensor works. No special device required.",
         f2_title: "Works everywhere", f2_text: "Any device with a modern browser. No app store, no installation, no updates.",
         f3_title: "No account", f3_text: "No login, no tracking. Rooms are PIN-protected and deleted after 24h of inactivity.",
@@ -670,7 +789,6 @@ const translations = {
         hw_text: "Bluetooth buttons from €5, foot switches, big buttons, touch sensors — the hardware guide explains all tested options and how to set them up.",
         hw_cta: "Hardware Guide →",
         oss_text: "One-Key is a non-commercial project. The source code is publicly available under GPLv3 — anyone can review, adapt and self-host it. Contributions are welcome.",
-        beta_warning: "One-Key is still in development. Please use with care and report any issues."
     },
     fr: {
         hero_title: "Communiquer avec une seule touche",
@@ -688,12 +806,11 @@ const translations = {
         f3_title: "Sans compte", f3_text: "Pas de login, pas de tracking. Salles supprimées après 24h d'inactivité.",
         f4_title: "8 langues", f4_text: "Allemand, anglais, français, espagnol, italien, polonais et plus.",
         f5_title: "Phrases rapides", f5_text: "Phrases préformatées pour situations courantes.",
-        f6_title: "Synthèse vocale", f6_text: "Le texte peut être lu à voix haute par le navigateur.",
+        f6_title: "Synthèse vocale", f6_text: "Le texte peut être lu à haute voix par le navigateur.",
         hw_title: "Quels boutons fonctionnent?",
         hw_text: "Boutons Bluetooth dès 5€, pédales, gros boutons, capteurs tactiles.",
         hw_cta: "Guide matériel →",
         oss_text: "One-Key est un projet non commercial sous GPLv3. Tout le monde peut examiner, adapter et héberger le code.",
-        beta_warning: "One-Key est en développement actif. Retours bienvenus."
     },
     es: {
         hero_title: "Comunicarse con una sola tecla",
@@ -710,13 +827,12 @@ const translations = {
         f2_title: "Funciona en todas partes", f2_text: "Cualquier dispositivo con navegador moderno.",
         f3_title: "Sin cuenta", f3_text: "Sin login, sin tracking. Salas eliminadas tras 24h de inactividad.",
         f4_title: "8 idiomas", f4_text: "Alemán, inglés, francés, español, italiano, polaco y más.",
-        f5_title: "Frases rápidas", f5_text: "Frases preformateadas para situaciones comunes.",
+        f5_title: "Frases rápidas", f5_text: "Frases preformatadas para situaciones comunes.",
         f6_title: "Texto a voz", f6_text: "El texto escrito puede leerse en voz alta.",
         hw_title: "¿Qué botones funcionan?",
         hw_text: "Botones Bluetooth desde 5€, pedales, botones grandes, sensores táctiles.",
         hw_cta: "Guía de hardware →",
         oss_text: "One-Key es un proyecto sin ánimo de lucro bajo GPLv3. Cualquiera puede revisar, adaptar y alojar el código.",
-        beta_warning: "One-Key está en desarrollo activo."
     }
 };
 
@@ -730,7 +846,6 @@ function switchLang(lang) {
     localStorage.setItem('okc-lang', lang);
 }
 
-// Restore saved language
 const savedLang = localStorage.getItem('okc-lang');
 if (savedLang && savedLang !== 'de') {
     const sel = document.getElementById('langSwitch');
@@ -738,11 +853,141 @@ if (savedLang && savedLang !== 'de') {
     switchLang(savedLang);
 }
 
-// Fetch version from server
+// ── Version ──────────────────────────────────────────────────────────────────
 fetch('/api/version').then(r => r.json()).then(d => {
     const el = document.getElementById('version-footer');
     if (el && d.version) el.textContent = 'One-Key ' + d.version;
 }).catch(() => {});
+
+// ── Schematic cycling nodes ───────────────────────────────────────────────────
+// Each node shows a list of device types, scrolling vertically on a timer.
+// The transition is a plain CSS transform — no bounce, no fade.
+(function() {
+    const itemH = 38; // px — must match .schematic-cycle height
+
+    function initCycle(trackId, interval) {
+        const track = document.getElementById(trackId);
+        if (!track) return;
+        const items = track.children;
+        const count = items.length;
+        let idx = 0;
+
+        // Clone first item to the end for seamless wrap
+        track.appendChild(items[0].cloneNode(true));
+        track.style.transform = 'translateY(0)';
+
+        setInterval(function() {
+            idx++;
+            track.style.transform = 'translateY(-' + (idx * itemH) + 'px)';
+            // After last real item, silently reset to 0
+            if (idx >= count) {
+                setTimeout(function() {
+                    track.style.transition = 'none';
+                    track.style.transform = 'translateY(0)';
+                    idx = 0;
+                    // Re-enable transition after one frame
+                    requestAnimationFrame(function() {
+                        requestAnimationFrame(function() {
+                            track.style.transition = '';
+                        });
+                    });
+                }, 380); // slightly after the CSS transition ends (350ms)
+            }
+        }, interval);
+    }
+
+    initCycle('trackWriter', 2200);
+    initCycle('trackReader', 2900); // slightly offset so they don't sync
+})();
+
+// ── Scan keyboard demo ────────────────────────────────────────────────────────
+(function() {
+    const keyboard = document.getElementById('demoKeyboard');
+    const output   = document.getElementById('demoOutput');
+    if (!keyboard || !output) return;
+
+    const rows = [
+        ['E','N','I','S','R','A','T'],
+        ['H','D','U','L','C','G','M'],
+        ['O','B','W','F','K','Z','P'],
+        ['⌫', '␣ Leerzeichen', '→ Senden'],
+    ];
+
+    // Build keys
+    const allKeys = [];
+    rows.forEach(row => {
+        row.forEach(ch => {
+            const el = document.createElement('div');
+            el.className = 'sdk' + (ch.length > 1 ? ' wide' : '');
+            el.textContent = ch;
+            keyboard.appendChild(el);
+            allKeys.push({ el, ch });
+        });
+    });
+
+    const demoWords = ['Hallo', 'Hilfe', 'Bitte', 'Danke'];
+    let wordIdx = 0;
+    let charIdx = 0; // which char we're targeting next
+    let scanPos = 0; // current highlighted key index
+    let typed   = '';
+    let scanInterval;
+    let selectTimeout;
+
+    function renderOutput() {
+        output.innerHTML = typed + '<span class="scan-cursor"></span>';
+    }
+
+    function targetKeyIndex() {
+        const target = demoWords[wordIdx][charIdx];
+        if (!target) return -1; // word done
+        // find the key that matches (case-insensitive)
+        return allKeys.findIndex(k => k.ch === target.toUpperCase());
+    }
+
+    function step() {
+        // Highlight current key
+        allKeys.forEach((k, i) => k.el.classList.toggle('active', i === scanPos));
+
+        if (scanPos === targetKeyIndex()) {
+            // "Press" the key
+            clearInterval(scanInterval);
+            allKeys[scanPos].el.classList.remove('active');
+            allKeys[scanPos].el.classList.add('selected');
+            typed += demoWords[wordIdx][charIdx];
+            renderOutput();
+            charIdx++;
+
+            selectTimeout = setTimeout(() => {
+                allKeys[scanPos].el.classList.remove('selected');
+                if (charIdx >= demoWords[wordIdx].length) {
+                    // Word complete — short pause, then clear and next word
+                    setTimeout(() => {
+                        typed = '';
+                        renderOutput();
+                        charIdx = 0;
+                        wordIdx = (wordIdx + 1) % demoWords.length;
+                        scanPos = 0;
+                        startScan();
+                    }, 1400);
+                } else {
+                    scanPos = 0;
+                    startScan();
+                }
+            }, 300);
+        } else {
+            scanPos = (scanPos + 1) % allKeys.length;
+        }
+    }
+
+    function startScan() {
+        clearInterval(scanInterval);
+        scanInterval = setInterval(step, 420);
+    }
+
+    renderOutput();
+    // Small delay before starting so the page can settle
+    setTimeout(startScan, 800);
+})();
 </script>
 
 </body>
