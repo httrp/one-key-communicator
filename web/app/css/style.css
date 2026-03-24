@@ -1466,6 +1466,13 @@ button {
     margin: 0 auto;
 }
 
+/* Active/selected mode indicator in KB_MODE submenu */
+.toolbar-active-btn {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
 .toolbar-exit-btn.active {
     background: var(--red) !important;
     color: white;

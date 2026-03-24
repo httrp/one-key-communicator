@@ -577,9 +577,7 @@
     function onToolbarSelected(value) {
         switch (value) {
             case 'KB_MODE':
-                cycleKeyboardMode();
-                updateModeBadge();
-                showToolbarScan();
+                showKbModeScan();
                 return;
             case 'PHRASES':
                 inputMode = 'phrases';
@@ -600,6 +598,25 @@
                 renderAndStart();
                 return;
         }
+    }
+
+    function showKbModeScan() {
+        Runner.stop();
+        inputMode = 'kb-mode';
+        showContextBanner('🔠 Tastatur-Modus');
+        keys = Keyboard.renderKbMode(keyboardContainer, Keyboard.getMode());
+        const speed = getAdaptiveSpeed();
+        Runner.start(keys, speed, onKbModeScanSelected, speed * 1.5);
+    }
+
+    function onKbModeScanSelected(value) {
+        if (['abc', 'smart', 'mix'].includes(value)) {
+            Keyboard.setMode(value);
+            localStorage.setItem('okc-kb-mode', value);
+            updateModeBadge();
+        }
+        // BACK or after mode selection: return to primary toolbar
+        showToolbarScan();
     }
 
     function showToolbarMoreScan() {
@@ -1206,9 +1223,7 @@
         if (currentView !== 'write') return;
         switch (value) {
             case 'KB_MODE':
-                cycleKeyboardMode();
-                updateModeBadge();
-                renderAndStart();
+                showKbModeScan();
                 break;
             case 'PHRASES':
                 inputMode = 'phrases';

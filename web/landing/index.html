@@ -435,22 +435,147 @@
         /* ── Schematic cycling nodes ─────────────── */
         .schematic-cycle {
             position: relative;
+            height: 38px;        /* clips to exactly one item */
             overflow: hidden;
+            padding: 0;          /* override base .schematic-box padding */
         }
         .schematic-cycle-track {
             display: flex;
             flex-direction: column;
-            /* shifted by JS */
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .schematic-cycle-item {
-            padding: 10px 6px;
+            height: 38px;        /* must match itemH = 38 in JS */
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.75rem;
             font-weight: 600;
             white-space: nowrap;
-            text-align: center;
-            line-height: 1;
         }
+
+        /* ── Hallo demo ──────────────────────────── */
+        .hallo-demo {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-soft);
+            padding: 28px 32px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+        .hd-button-wrap, .hd-device-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .hd-button {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--text);
+            position: relative;
+        }
+        .hd-button-top {
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            background: white;
+            border: 1.5px solid var(--text);
+            transition: background 0.12s, border-color 0.12s;
+        }
+        .hd-button.pressed .hd-button-top {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .hd-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-light);
+        }
+        .hd-cable { flex-shrink: 0; }
+        .hd-device {
+            width: 110px; height: 72px;
+            border: 2px solid var(--text);
+            border-radius: 6px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .hd-device-bar {
+            height: 8px;
+            background: var(--text);
+            display: flex; align-items: center;
+            padding: 0 6px; gap: 3px;
+        }
+        .hd-device-bar span {
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.45);
+        }
+        .hd-device-screen {
+            flex: 1;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .hd-keys { display: flex; gap: 3px; }
+        .hd-key {
+            width: 14px; height: 14px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            background: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.48rem; font-weight: 700;
+            color: var(--text-light);
+            transition: border-color 0.1s, color 0.1s, background 0.1s;
+        }
+        .hd-key.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eef3fc;
+        }
+        .hd-key.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        .hd-screen-text {
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.62rem;
+            color: var(--text);
+            min-height: 0.9em;
+        }
+        .hd-cursor {
+            display: inline-block;
+            width: 1px; height: 0.75em;
+            background: var(--text);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        .hd-arrow { color: var(--border); font-size: 1.1rem; flex-shrink: 0; }
+        .hd-output-wrap {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .hd-output-label {
+            font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--text-light);
+        }
+        .hd-output-text {
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 1.9rem; font-weight: 700;
+            letter-spacing: 0.06em;
+            color: var(--text);
+            min-height: 2.3rem;
+        }
+        .hd-output-text .hd-cursor { width: 2px; height: 1.6rem; }
 
         /* ── Scan demo ───────────────────────────── */
         .scan-demo {
@@ -615,6 +740,40 @@
                     <dt>Voraussetzung</dt>
                     <dd>Browser + Internetzugang · keine Installation</dd>
                 </dl>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section style="padding: 60px 0; border-bottom: 1px solid var(--border);">
+    <div class="container">
+        <div class="section-label">Grundprinzip</div>
+        <h2 class="section-title">So funktioniert die Tastereingabe</h2>
+        <p style="font-size:0.875rem; color:var(--text-light); margin-bottom:24px; max-width:540px;">Ein externer Taster ist per Kabel oder Bluetooth mit dem Schreibgerät verbunden. Jeder Tasterdruck wählt den gerade markierten Buchstaben aus.</p>
+        <div class="hallo-demo" id="halloDemoWrap">
+            <div class="hd-button-wrap">
+                <div class="hd-button" id="hdBtn"><div class="hd-button-top"></div></div>
+                <div class="hd-label">Taster</div>
+            </div>
+            <svg class="hd-cable" width="64" height="40" viewBox="0 0 64 40" fill="none" aria-hidden="true">
+                <path d="M0 20 C16 20 16 8 32 8 C48 8 48 32 64 32" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <circle cx="0" cy="20" r="3.5" fill="#94a3b8"/>
+                <circle cx="64" cy="32" r="3.5" fill="#94a3b8"/>
+            </svg>
+            <div class="hd-device-wrap">
+                <div class="hd-device">
+                    <div class="hd-device-bar"><span></span><span></span><span></span></div>
+                    <div class="hd-device-screen">
+                        <div class="hd-keys" id="hdKeys"></div>
+                        <div class="hd-screen-text" id="hdText"><span class="hd-cursor"></span></div>
+                    </div>
+                </div>
+                <div class="hd-label">Gerät</div>
+            </div>
+            <div class="hd-arrow">&rarr;</div>
+            <div class="hd-output-wrap">
+                <div class="hd-output-label">Ausgabe</div>
+                <div class="hd-output-text" id="hdOutput"><span class="hd-cursor"></span></div>
             </div>
         </div>
     </div>
@@ -984,9 +1143,91 @@ fetch('/api/version').then(r => r.json()).then(d => {
         scanInterval = setInterval(step, 420);
     }
 
+// ── Hallo button/cable/device demo ───────────────────────────────────────────
+(function() {
+    const btn      = document.getElementById('hdBtn');
+    const keysWrap = document.getElementById('hdKeys');
+    const hdText   = document.getElementById('hdText');
+    const hdOutput = document.getElementById('hdOutput');
+    if (!btn || !keysWrap) return;
+
+    // Small key grid: H A L O  (covers all letters in HALLO)
+    const keyLabels = ['H', 'A', 'L', 'O'];
+    keyLabels.forEach(ch => {
+        const el = document.createElement('div');
+        el.className = 'hd-key';
+        el.textContent = ch;
+        keysWrap.appendChild(el);
+    });
+    const keys = Array.from(keysWrap.querySelectorAll('.hd-key'));
+
+    const word = 'HALLO';
+    let charIdx = 0;   // which letter of HALLO we're typing next
+    let scanPos = 0;   // current scan highlight position
+    let typed   = '';
+    let timer;
+
+    function renderDevice() {
+        hdText.innerHTML = typed + '<span class="hd-cursor"></span>';
+    }
+    function renderOutput() {
+        hdOutput.innerHTML = typed + '<span class="hd-cursor"></span>';
+    }
+
+    function targetKey() {
+        return keyLabels.indexOf(word[charIdx]);
+    }
+
+    function pressButton() {
+        btn.classList.add('pressed');
+        setTimeout(() => btn.classList.remove('pressed'), 220);
+    }
+
+    function doStep() {
+        // Highlight current scan position
+        keys.forEach((k, i) => {
+            k.classList.remove('active', 'selected');
+            if (i === scanPos) k.classList.add('active');
+        });
+
+        if (scanPos === targetKey()) {
+            // Select this key
+            pressButton();
+            clearTimeout(timer);
+            keys[scanPos].classList.remove('active');
+            keys[scanPos].classList.add('selected');
+            typed += word[charIdx];
+            charIdx++;
+            renderDevice();
+            renderOutput();
+
+            timer = setTimeout(() => {
+                keys[scanPos].classList.remove('selected');
+                if (charIdx >= word.length) {
+                    // Word done — pause, then reset
+                    setTimeout(() => {
+                        typed = '';
+                        charIdx = 0;
+                        scanPos = 0;
+                        keys.forEach(k => k.classList.remove('active', 'selected'));
+                        renderDevice();
+                        renderOutput();
+                        timer = setTimeout(doStep, 600);
+                    }, 1600);
+                } else {
+                    scanPos = 0; // always restart scan from the beginning
+                    timer = setTimeout(doStep, 400);
+                }
+            }, 280);
+        } else {
+            scanPos = (scanPos + 1) % keys.length;
+            timer = setTimeout(doStep, 480);
+        }
+    }
+
+    renderDevice();
     renderOutput();
-    // Small delay before starting so the page can settle
-    setTimeout(startScan, 800);
+    timer = setTimeout(doStep, 900);
 })();
 </script>
 

@@ -206,6 +206,48 @@ const Keyboard = {
     },
 
     /**
+     * Render keyboard mode selection submenu (abc / smart / mix).
+     * BACK returns to the primary toolbar.
+     */
+    renderKbMode(container, currentMode) {
+        container.innerHTML = '';
+        const allKeys = [];
+
+        const modes = [
+            { value: 'abc',   icon: 'A–Z',  label: 'Alphabetisch' },
+            { value: 'smart', icon: '★',    label: 'Smart (häufig)' },
+            { value: 'mix',   icon: 'A★',   label: 'Mix-Modus'    },
+        ];
+
+        const row = document.createElement('div');
+        row.className = 'keyboard-row toolbar-row';
+        for (const m of modes) {
+            const el = document.createElement('div');
+            el.className = 'key action-key wide toolbar-scan-btn' +
+                           (m.value === currentMode ? ' toolbar-active-btn' : '');
+            el.innerHTML = `<span class="toolbar-scan-icon">${m.icon}</span>` +
+                           `<span class="toolbar-scan-label">${m.label}</span>`;
+            el.dataset.value = m.value;
+            row.appendChild(el);
+            allKeys.push(el);
+        }
+        container.appendChild(row);
+
+        // BACK — returns to primary toolbar, always first scanned
+        const backRow = document.createElement('div');
+        backRow.className = 'keyboard-row';
+        const backEl = document.createElement('div');
+        backEl.className = 'key action-key extra-wide toolbar-back-btn';
+        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
+        backEl.dataset.value = 'BACK';
+        backRow.appendChild(backEl);
+        allKeys.unshift(backEl);
+        container.appendChild(backRow);
+
+        return allKeys;
+    },
+
+    /**
      * Render secondary toolbar ("Mehr") with less-used actions.
      * EXIT lives here to prevent accidental session termination.
      * BACK returns to the primary toolbar (not directly to keyboard).
