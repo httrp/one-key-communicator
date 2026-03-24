@@ -3,29 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One-Key — Kommunizieren mit einer Taste</title>
-    <meta name="description" content="Kostenloses, quelloffenes Kommunikationstool für Menschen, die nur eine einzige Taste drücken können. Keine Installation, kein Account — einfach öffnen und kommunizieren.">
+    <title>One-Key Communicator — Kommunizieren mit einer Taste</title>
+    <meta name="description" content="Kostenloses, quelloffenes Kommunikationstool für Menschen mit eingeschränkter Motorik. Keine Installation, kein Account — einfach öffnen und schreiben.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --primary: #1a56b0;
-            --primary-dark: #1447a0;
-            --primary-light: #5b8dd9;
             --text: #1e293b;
             --text-light: #64748b;
             --bg: #ffffff;
             --bg-soft: #f8fafc;
             --border: #e2e8f0;
-            --radius: 8px;
-            --radius-sm: 4px;
-            --success: #16a34a;
-            /* --gradient is a solid color, not a gradient.
-               This is intentional: no gradient backgrounds anywhere.
-               All var(--gradient) usages become a solid professional blue. */
-            --gradient: var(--primary);
-            --gradient-soft: rgba(26, 86, 176, 0.08);
+            --radius: 4px;
         }
 
         body {
@@ -37,19 +28,14 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 960px;
             margin: 0 auto;
             padding: 0 24px;
         }
 
-        /* Header */
+        /* ── Header ─────────────────────────────── */
         header {
-            padding: 20px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
+            padding: 14px 0;
             border-bottom: 1px solid var(--border);
         }
         header .container {
@@ -58,472 +44,394 @@
             align-items: center;
         }
         .logo {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
-            color: var(--primary);
+            color: var(--text);
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            letter-spacing: -0.01em;
         }
-        .logo-icon {
-            font-size: 1.4rem;
-        }
-        .logo span { color: var(--text); }
+        .logo strong { color: var(--primary); }
         nav {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
         }
         nav a {
             color: var(--text-light);
             text-decoration: none;
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            transition: all 0.2s;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            border-radius: var(--radius);
         }
-        nav a:hover {
-            color: var(--primary);
-            background: var(--gradient-soft);
-        }
+        nav a:hover { color: var(--primary); }
         .nav-cta {
-            background: var(--gradient);
+            background: var(--primary);
             color: white !important;
             font-weight: 600;
         }
-        .nav-cta:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
+        .nav-cta:hover { background: #1447a0; }
 
-        /* Hero */
-        .hero {
-            padding: 100px 0 100px;
-            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 800px;
-            height: 800px;
-            background: var(--gradient);
-            opacity: 0.08;
-            border-radius: 50%;
-            filter: blur(80px);
-        }
-        .hero .container {
-            position: relative;
-        }
-        .hero-content {
-            max-width: 700px;
-            margin: 0 auto;
+        /* ── Beta notice ─────────────────────────── */
+        .beta-notice {
+            background: #fef9ec;
+            border-bottom: 1px solid #e8d5a0;
+            padding: 8px 0;
+            font-size: 0.8rem;
+            color: #6b4f0a;
             text-align: center;
         }
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--gradient-soft);
+        .beta-notice a { color: #6b4f0a; font-weight: 600; }
+
+        /* ── Shared section elements ─────────────── */
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             color: var(--primary);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 24px;
-            animation: fadeInUp 0.6s ease-out;
+            margin-bottom: 8px;
         }
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 24px;
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 36px;
             color: var(--text);
-            animation: fadeInUp 0.6s ease-out 0.1s both;
-        }
-        .hero p {
-            font-size: 1.3rem;
-            color: var(--text-light);
-            margin-bottom: 40px;
-            animation: fadeInUp 0.6s ease-out 0.2s both;
-        }
-        .hero-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            animation: fadeInUp 0.6s ease-out 0.3s both;
         }
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 16px 32px;
+            gap: 6px;
+            padding: 9px 18px;
             border-radius: var(--radius);
             text-decoration: none;
-            font-size: 1.1rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            transition: all 0.2s;
+            border: 1px solid transparent;
         }
         .btn-primary {
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 14px rgba(26, 86, 176, 0.25);
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            background: var(--primary-dark);
-            box-shadow: 0 8px 20px rgba(26, 86, 176, 0.35);
-        }
+        .btn-primary:hover { background: #1447a0; }
         .btn-secondary {
-            background: var(--bg);
             color: var(--text);
-            border: 2px solid var(--border);
-        }
-        .btn-secondary:hover {
-            border-color: var(--primary-light);
-            color: var(--primary);
-        }
-
-        /* Demo preview */
-        .demo-preview {
-            margin-top: 60px;
-            animation: fadeInUp 0.6s ease-out 0.4s both;
-        }
-        .demo-mockup {
-            background: var(--primary);
-            border-radius: var(--radius);
-            padding: 6px;
-            max-width: 600px;
-            margin: 0 auto;
-            box-shadow: 0 16px 48px rgba(26, 86, 176, 0.15);
-        }
-        .demo-screen {
-            background: #1a1a2e;
-            border-radius: 12px;
-            padding: 32px;
-            text-align: center;
-            font-family: 'SF Mono', Monaco, monospace;
-        }
-        .demo-letters {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .demo-letter {
-            width: 48px;
-            height: 48px;
-            background: #2d2d44;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: #888;
-            transition: all 0.3s;
-        }
-        .demo-letter.active {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.1);
-        }
-        .demo-text {
-            color: white;
-            font-size: 2rem;
-            margin-top: 16px;
-        }
-        .demo-cursor {
-            animation: blink 1s infinite;
-        }
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
-        /* Stats bar */
-        .stats-bar {
-            padding: 40px 0;
+            border-color: var(--border);
             background: var(--bg);
+        }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ── Hero ────────────────────────────────── */
+        .hero {
+            padding: 60px 0 72px;
             border-bottom: 1px solid var(--border);
         }
-        .stats-bar .container {
+        .hero-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: start;
+        }
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 14px;
+        }
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            line-height: 1.15;
+            margin-bottom: 18px;
+            letter-spacing: -0.025em;
+            color: var(--text);
+        }
+        .hero p {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 28px;
+            line-height: 1.7;
+        }
+        .hero-buttons {
             display: flex;
-            justify-content: center;
-            gap: 60px;
+            gap: 10px;
             flex-wrap: wrap;
         }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-light);
-        }
 
-        /* Steps */
-        .steps {
-            padding: 100px 0;
-        }
-        .section-header {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto 60px;
-        }
-        .section-header h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 16px;
-        }
-        .section-header p {
-            color: var(--text-light);
-            font-size: 1.1rem;
-        }
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 32px;
-        }
-        .step {
-            text-align: center;
-            padding: 32px 24px;
+        /* Schematic panel */
+        .schematic {
             background: var(--bg-soft);
+            border: 1px solid var(--border);
             border-radius: var(--radius);
-            transition: all 0.3s;
+            padding: 28px;
         }
-        .step:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-        }
-        .step-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 56px;
-            height: 56px;
-            background: var(--gradient);
-            color: white;
-            border-radius: 50%;
-            font-size: 1.5rem;
+        .schematic-title {
+            font-size: 0.65rem;
             font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
             margin-bottom: 20px;
         }
-        .step h3 {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
+        .schematic-flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 28px;
         }
-        .step p {
-            font-size: 0.95rem;
+        .schematic-node {
+            flex: 1;
+            text-align: center;
+        }
+        .schematic-box {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 6px;
+            background: white;
+            font-size: 0.75rem;
+            font-weight: 600;
             color: var(--text-light);
         }
+        .schematic-box.hi {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .schematic-sub {
+            margin-top: 5px;
+            font-size: 0.65rem;
+            color: var(--text-light);
+        }
+        .schematic-arrow {
+            color: var(--border);
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .schematic-spec {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+        .schematic-spec dt {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-light);
+            margin-top: 10px;
+        }
+        .schematic-spec dt:first-child { margin-top: 0; }
+        .schematic-spec dd {
+            font-size: 0.8rem;
+            color: var(--text);
+            margin-top: 2px;
+        }
 
-        /* Features */
+        /* ── How it works ────────────────────────── */
+        .how {
+            padding: 72px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .steps-list {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .step-item {
+            padding: 24px 28px;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .step-item:nth-child(2n) { border-right: none; }
+        .step-item:nth-last-child(-n+2) { border-bottom: none; }
+        .step-num {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .step-item h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .step-item p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* ── Features ────────────────────────────── */
         .features {
-            padding: 100px 0;
+            padding: 72px 0;
+            border-bottom: 1px solid var(--border);
             background: var(--bg-soft);
         }
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+        .features-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
         }
-        .feature {
-            background: var(--bg);
-            padding: 32px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            transition: all 0.3s;
+        .features-table tr { border-bottom: 1px solid var(--border); }
+        .features-table tr:last-child { border-bottom: none; }
+        .features-table td {
+            padding: 14px 0;
+            vertical-align: top;
         }
-        .feature:hover {
-            border-color: var(--primary-light);
-            box-shadow: 0 4px 16px rgba(26, 86, 176, 0.08);
+        .features-table td:first-child {
+            font-weight: 600;
+            color: var(--text);
+            width: 200px;
+            padding-right: 24px;
         }
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 16px;
-        }
-        .feature h3 {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
-        }
-        .feature p {
-            font-size: 0.95rem;
-            color: var(--text-light);
-        }
+        .features-table td:last-child { color: var(--text-light); }
 
-        /* Hardware CTA */
+        /* ── Hardware ────────────────────────────── */
         .hardware-cta {
-            padding: 80px 0;
-            background: var(--surface);
-            border-top: 1px solid var(--border);
+            padding: 72px 0;
             border-bottom: 1px solid var(--border);
         }
         .hardware-card {
-            background: white;
-            border-left: 4px solid var(--primary);
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
             border-radius: 0 var(--radius) var(--radius) 0;
-            padding: 40px 48px;
+            padding: 28px 36px;
             display: flex;
             align-items: flex-start;
             gap: 48px;
         }
-        .hardware-content {
-            flex: 1;
-        }
-        .hardware-content h2 {
-            font-size: 1.5rem;
-            color: var(--text);
-            margin-bottom: 12px;
-        }
+        .hardware-content { flex: 1; }
         .hardware-content p {
             color: var(--text-light);
-            font-size: 1rem;
-            margin-bottom: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 16px;
             line-height: 1.6;
-        }
-        .hardware-content .btn {
-            background: var(--primary);
-            color: white;
         }
         .hardware-devices {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            min-width: 200px;
+            gap: 5px;
+            min-width: 180px;
         }
         .hardware-device-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             color: var(--text-light);
+            padding-left: 14px;
+            position: relative;
         }
         .hardware-device-item::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--primary);
-            flex-shrink: 0;
+            content: '–';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
         }
 
-        /* Footer */
+        /* ── OSS ─────────────────────────────────── */
+        .oss {
+            padding: 72px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .oss-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: start;
+        }
+        .oss h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 14px;
+        }
+        .oss p {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        .oss-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .oss-spec {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .oss-spec dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 16px;
+            font-size: 0.82rem;
+        }
+        .oss-spec dt {
+            font-weight: 600;
+            color: var(--text);
+            padding-top: 1px;
+        }
+        .oss-spec dd { color: var(--text-light); }
+        .oss-spec dd a { color: var(--primary); text-decoration: none; }
+
+        /* ── Footer ──────────────────────────────── */
         footer {
-            padding: 60px 0;
-            border-top: 1px solid var(--border);
+            padding: 36px 0;
         }
         .footer-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 24px;
+            gap: 16px;
         }
-        .footer-links {
-            display: flex;
-            gap: 24px;
-        }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
         .footer-links a {
             color: var(--text-light);
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.8rem;
         }
-        .footer-links a:hover {
-            color: var(--primary);
-        }
+        .footer-links a:hover { color: var(--primary); }
         .footer-copy {
             color: var(--text-light);
-            font-size: 0.9rem;
+            font-size: 0.75rem;
         }
 
-        /* Language selector */
+        /* ── Lang select ─────────────────────────── */
         .lang-select select {
             appearance: none;
             background: transparent;
             border: 1px solid var(--border);
-            padding: 8px 32px 8px 12px;
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
+            padding: 5px 24px 5px 8px;
+            border-radius: var(--radius);
+            font-size: 0.8rem;
             color: var(--text);
             cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 10px center;
+            background-position: right 6px center;
         }
 
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .steps-grid { grid-template-columns: repeat(2, 1fr); }
-            .features-grid { grid-template-columns: repeat(2, 1fr); }
-            .hardware-card { flex-direction: column; gap: 24px; }
-            .flow-animation { gap: 16px !important; }
-        }
-        @media (max-width: 600px) {
-            .beta-banner { font-size: 0.8rem; padding: 8px 12px; }
-            .beta-banner a { display: block; margin-top: 4px; margin-left: 0 !important; }
-            .hero h1 { font-size: 2rem; }
-            .hero p { font-size: 1rem; }
-            .hero { padding: 80px 0 50px; }
-            .hero-badge { font-size: 0.8rem; padding: 6px 12px; }
-            .hero-buttons { flex-direction: column; align-items: center; }
-            .btn { width: 100%; max-width: 280px; justify-content: center; }
-            .steps-grid { grid-template-columns: 1fr; }
-            .features-grid { grid-template-columns: 1fr; }
+        /* ── Responsive ──────────────────────────── */
+        @media (max-width: 768px) {
+            .hero-layout { grid-template-columns: 1fr; gap: 36px; }
+            .hero h1 { font-size: 1.9rem; }
+            .steps-list { grid-template-columns: 1fr; }
+            .step-item { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+            .step-item:last-child { border-bottom: none !important; }
+            .oss-layout { grid-template-columns: 1fr; gap: 32px; }
+            .hardware-card { flex-direction: column; gap: 20px; }
             nav a:not(.nav-cta) { display: none; }
             .lang-select { display: none; }
-            .stats-bar .container { gap: 24px; }
-            .stat-value { font-size: 1.5rem; }
-            .stat-label { font-size: 0.8rem; }
-            .hardware-card { padding: 24px 28px; padding-left: 24px; }
-            .section-header h2 { font-size: 1.6rem; }
-            .section-header p { font-size: 0.95rem; }
-            .flow-animation { flex-direction: column; gap: 20px !important; }
-            .flow-arrow { transform: rotate(90deg); }
-            .flow-device p { margin-top: 8px !important; }
-            .footer-content { flex-direction: column; text-align: center; }
-            .footer-links { flex-wrap: wrap; justify-content: center; gap: 12px; }
-            .demo-mockup { padding: 4px; }
-            .demo-screen { padding: 20px; }
-            .demo-letter { width: 36px; height: 36px; font-size: 1.2rem; }
-            .demo-text { font-size: 1.5rem; }
-            header .container { padding: 0 12px; }
-            .logo { font-size: 1.1rem; }
+        }
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.6rem; }
+            .section-title { font-size: 1.3rem; }
             .container { padding: 0 16px; }
-            .opensource-promise { padding: 50px 0; }
-            .opensource-promise h2 { font-size: 1.5rem; }
-            .opensource-promise p { font-size: 1rem; }
-            .opensource-promise > .container > div { flex-direction: column; }
-            .opensource-promise a { margin-top: 8px; }
+            .footer-content { flex-direction: column; align-items: flex-start; }
+            .features-table td:first-child { width: 140px; }
         }
-        @media (max-width: 380px) {
-            .hero h1 { font-size: 1.7rem; }
-            .logo { font-size: 1rem; }
-            .nav-cta { padding: 6px 12px !important; font-size: 0.85rem; }
-        }
-        /* Respect reduced motion for all users — especially important for
-           an assistive technology product. */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -535,92 +443,97 @@
 </head>
 <body>
 
-<!-- Beta Banner -->
-<div class="beta-banner" style="background: #b45309; color: white; text-align: center; padding: 10px 16px; font-size: 0.9rem;">
-    <strong>⚠️ Beta-Version</strong> — <span data-i18n="beta_warning">One-Key befindet sich noch in der Entwicklung. Bitte nutze es mit Bedacht und melde Probleme.</span>
-    <a href="https://github.com/httrp/one-key-communicator/issues" target="_blank" style="color: white; margin-left: 8px; text-decoration: underline;">Feedback geben →</a>
+<div class="beta-notice">
+    Beta &ndash; One-Key befindet sich in aktiver Entwicklung. <a href="https://github.com/httrp/one-key-communicator/issues" target="_blank">Feedback &amp; Issues →</a>
 </div>
 
 <header>
     <div class="container">
-        <a href="/" class="logo">
-            <span class="logo-icon">⌨️</span>
-            One-Key
-        </a>
+        <a href="/" class="logo"><strong>One-Key</strong> Communicator</a>
         <nav>
-            <a href="#how">So funktioniert's</a>
+            <a href="#how">Ablauf</a>
             <a href="#features">Features</a>
             <a href="/hardware">Hardware</a>
             <div class="lang-select">
                 <select id="langSwitch" onchange="switchLang(this.value)">
-                    <option value="de" selected>🇩🇪 DE</option>
-                    <option value="en">🇬🇧 EN</option>
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="es">🇪🇸 ES</option>
+                    <option value="de" selected>DE</option>
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                    <option value="es">ES</option>
                 </select>
             </div>
-            <a href="/app" class="nav-cta">Jetzt starten</a>
+            <a href="/app" class="nav-cta">App starten →</a>
         </nav>
     </div>
 </header>
 
 <section class="hero">
     <div class="container">
-        <div class="hero-content">
-            <div class="hero-badge">
-
-                <span data-i18n="hero_badge">Kostenlos & Open Source</span>
-            </div>
-            <h1 data-i18n="hero_title">Kommunizieren mit nur einer Taste</h1>
-            <p data-i18n="hero_subtitle">Ein einfaches Werkzeug für Menschen mit eingeschränkter Mobilität. Kostenlos, quelloffen, ohne Installation.</p>
-            <div class="hero-buttons">
-                <a href="/app" class="btn btn-primary" data-i18n="hero_cta">→ Jetzt starten</a>
-                <a href="/hardware" class="btn btn-secondary" data-i18n="hero_hardware">🎛️ Hardware-Guide</a>
-            </div>
-        </div>
-        <div class="demo-preview">
-            <div class="demo-mockup">
-                <div class="demo-screen">
-                    <div class="demo-letters">
-                        <div class="demo-letter" id="d0">H</div>
-                        <div class="demo-letter" id="d1">A</div>
-                        <div class="demo-letter" id="d2">L</div>
-                        <div class="demo-letter" id="d3">L</div>
-                        <div class="demo-letter active" id="d4">O</div>
-                    </div>
-                    <div class="demo-text" id="demoText"><span class="demo-cursor">|</span></div>
+        <div class="hero-layout">
+            <div>
+                <div class="hero-eyebrow">Assistive Technology · Open Source · GPLv3</div>
+                <h1 data-i18n="hero_title">Kommunizieren mit nur einer Taste</h1>
+                <p data-i18n="hero_subtitle">Ein einfaches Werkzeug für Menschen mit eingeschränkter Motorik. Kostenlos, quelloffen, ohne Installation.</p>
+                <div class="hero-buttons">
+                    <a href="/app" class="btn btn-primary" data-i18n="hero_cta">App öffnen →</a>
+                    <a href="/hardware" class="btn btn-secondary" data-i18n="hero_hardware">Hardware-Guide</a>
                 </div>
+            </div>
+            <div class="schematic" aria-hidden="true">
+                <div class="schematic-title">Funktionsprinzip</div>
+                <div class="schematic-flow">
+                    <div class="schematic-node">
+                        <div class="schematic-box hi">Taster</div>
+                        <div class="schematic-sub">eine Taste</div>
+                    </div>
+                    <div class="schematic-arrow">→</div>
+                    <div class="schematic-node">
+                        <div class="schematic-box hi">Tablet</div>
+                        <div class="schematic-sub">schreibt</div>
+                    </div>
+                    <div class="schematic-arrow">→</div>
+                    <div class="schematic-node">
+                        <div class="schematic-box">TV / PC</div>
+                        <div class="schematic-sub">liest mit</div>
+                    </div>
+                </div>
+                <dl class="schematic-spec">
+                    <dt>Eingabe</dt>
+                    <dd>Taster, Klick, Touch oder externer Sensor</dd>
+                    <dt>Übertragung</dt>
+                    <dd>WebSocket, Echtzeit, kein Account erforderlich</dd>
+                    <dt>Voraussetzung</dt>
+                    <dd>Browser + Internetzugang · keine Installation</dd>
+                </dl>
             </div>
         </div>
     </div>
 </section>
 
-<section class="steps" id="how">
+<section class="how" id="how">
     <div class="container">
-        <div class="section-header">
-            <h2 data-i18n="how_title">In 4 Schritten kommunizieren</h2>
-            <p data-i18n="how_subtitle">Keine App-Installation, kein Account, keine Konfiguration. Einfach öffnen und loslegen.</p>
-        </div>
-        <div class="steps-grid">
-            <div class="step">
-                <div class="step-number">1</div>
-                <h3 data-i18n="step1_title">Öffnen</h3>
-                <p data-i18n="step1_text">Öffne One-Key Communicator im Browser auf Tablet oder Handy.</p>
+        <div class="section-label">Ablauf</div>
+        <h2 class="section-title" data-i18n="how_title">So wird kommuniziert</h2>
+        <div class="steps-list">
+            <div class="step-item">
+                <div class="step-num">Schritt 1</div>
+                <h3 data-i18n="step1_title">Browser öffnen</h3>
+                <p data-i18n="step1_text">One-Key läuft direkt im Browser — Handy, Tablet, Laptop. Keine App, kein Download.</p>
             </div>
-            <div class="step">
-                <div class="step-number">2</div>
+            <div class="step-item">
+                <div class="step-num">Schritt 2</div>
                 <h3 data-i18n="step2_title">Raum erstellen</h3>
-                <p data-i18n="step2_text">Ein Raum wird automatisch erstellt. Du bekommst einen QR-Code.</p>
+                <p data-i18n="step2_text">Ein PIN-gesicherter Raum wird automatisch angelegt. QR-Code erscheint sofort.</p>
             </div>
-            <div class="step">
-                <div class="step-number">3</div>
+            <div class="step-item">
+                <div class="step-num">Schritt 3</div>
                 <h3 data-i18n="step3_title">QR-Code teilen</h3>
-                <p data-i18n="step3_text">Familie scannt den Code — sie sehen sofort, was du schreibst.</p>
+                <p data-i18n="step3_text">Bezugspersonen scannen den Code und sehen in Echtzeit, was geschrieben wird.</p>
             </div>
-            <div class="step">
-                <div class="step-number">4</div>
-                <h3 data-i18n="step4_title">Kommunizieren</h3>
-                <p data-i18n="step4_text">Drücke deine Taste, um Buchstaben auszuwählen. Fertig!</p>
+            <div class="step-item">
+                <div class="step-num">Schritt 4</div>
+                <h3 data-i18n="step4_title">Schreiben</h3>
+                <p data-i18n="step4_text">Ein Tastendruck scrollt durch die Buchstaben, ein zweiter wählt aus.</p>
             </div>
         </div>
     </div>
@@ -628,119 +541,47 @@
 
 <section class="features" id="features">
     <div class="container">
-        <div class="section-header">
-            <h2 data-i18n="features_title">Alles was du brauchst</h2>
-            <p data-i18n="features_subtitle">Entwickelt mit und für Menschen mit eingeschränkter Mobilität.</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature">
-                <div class="feature-icon" aria-hidden="true">🎯</div>
-                <h3 data-i18n="f1_title">Eine Taste reicht</h3>
-                <p data-i18n="f1_text">Alles funktioniert mit einem einzigen Tastendruck — jede Taste, Maus-Klick, Touch oder Sensor.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon" aria-hidden="true">📱</div>
-                <h3 data-i18n="f2_title">Läuft überall</h3>
-                <p data-i18n="f2_text">Handy, Tablet, Laptop, Smart TV — jedes Gerät mit Browser funktioniert.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon" aria-hidden="true">🔒</div>
-                <h3 data-i18n="f3_title">Privat & Sicher</h3>
-                <p data-i18n="f3_text">Kein Account, kein Tracking. Räume haben einen PIN und werden nach 24h Inaktivität automatisch gelöscht.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon" aria-hidden="true">🌍</div>
-                <h3 data-i18n="f4_title">8 Sprachen</h3>
-                <p data-i18n="f4_text">Deutsch, Englisch, Französisch, Spanisch, Italienisch, Polnisch und mehr.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon" aria-hidden="true">💬</div>
-                <h3 data-i18n="f5_title">Schnell-Sätze</h3>
-                <p data-i18n="f5_text">Vordefinierte Sätze für häufige Situationen: Schmerzen, Durst, Hilfe rufen.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon" aria-hidden="true">🔊</div>
-                <h3 data-i18n="f6_title">Sprachausgabe</h3>
-                <p data-i18n="f6_text">Der geschriebene Text kann laut vorgelesen werden.</p>
-            </div>
-        </div>
+        <div class="section-label">Eigenschaften</div>
+        <h2 class="section-title" data-i18n="features_title">Was One-Key bietet</h2>
+        <table class="features-table">
+            <tbody>
+                <tr>
+                    <td data-i18n="f1_title">Eine Taste genügt</td>
+                    <td data-i18n="f1_text">Jeder Taster, Klick, Touch oder Sensor funktioniert. Kein spezielles Gerät notwendig.</td>
+                </tr>
+                <tr>
+                    <td data-i18n="f3_title">Kein Account</td>
+                    <td data-i18n="f3_text">Kein Login, kein Tracking. Räume sind PIN-geschützt und werden nach 24h Inaktivität gelöscht.</td>
+                </tr>
+                <tr>
+                    <td data-i18n="f2_title">Läuft überall</td>
+                    <td data-i18n="f2_text">Jedes Gerät mit aktuellem Browser. Kein App-Store, keine Installation, kein Update.</td>
+                </tr>
+                <tr>
+                    <td data-i18n="f4_title">8 Sprachen</td>
+                    <td data-i18n="f4_text">Deutsch, Englisch, Französisch, Spanisch, Italienisch, Polnisch und weitere.</td>
+                </tr>
+                <tr>
+                    <td data-i18n="f5_title">Schnell-Sätze</td>
+                    <td data-i18n="f5_text">Vorformulierte Sätze für häufige Situationen: Schmerz, Durst, Hilfe rufen, Ja/Nein.</td>
+                </tr>
+                <tr>
+                    <td data-i18n="f6_title">Sprachausgabe</td>
+                    <td data-i18n="f6_text">Geschriebener Text wird auf Wunsch durch die Browser-TTS-Engine vorgelesen.</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </section>
-
-<!-- Flow Animation: Button → Tablet → TV -->
-<section class="flow-demo" style="padding: 80px 0; background: var(--bg-soft);">
-    <div class="container">
-        <div class="section-header">
-            <h2 data-i18n="flow_title">So sieht es in der Praxis aus</h2>
-            <p data-i18n="flow_subtitle">Ein Tastendruck auf dem Tablet — und die Nachricht erscheint sofort auf allen verbundenen Geräten.</p>
-        </div>
-        <div class="flow-animation" style="display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 40px;">
-            <!-- Button -->
-            <div class="flow-device" style="text-align: center;">
-                <div class="flow-button" style="width: 80px; height: 80px; background: #b91c1c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 6px 18px rgba(185, 28, 28, 0.3); cursor: pointer; transition: transform 0.1s;" id="flowBtn" role="button" tabindex="0" aria-label="Demo: Taster drücken">🔘</div>
-                <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-light);" data-i18n="flow_button">Taster</p>
-            </div>
-            
-            <!-- Arrow 1 -->
-            <div class="flow-arrow" style="font-size: 2rem; color: var(--primary); animation: flowPulse 2s infinite;">→</div>
-            
-            <!-- Tablet -->
-            <div class="flow-device" style="text-align: center;">
-                <div class="flow-tablet" style="width: 160px; height: 200px; background: #1a1a2e; border-radius: 16px; padding: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15); position: relative; border: 3px solid #333;">
-                    <div style="background: #2d2d44; border-radius: 8px; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8px;">
-                        <div class="flow-tablet-letters" style="display: flex; gap: 4px; margin-bottom: 8px;">
-                            <span class="flow-letter" style="width: 24px; height: 24px; background: #3d3d54; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666;">H</span>
-                            <span class="flow-letter" style="width: 24px; height: 24px; background: #3d3d54; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666;">I</span>
-                            <span class="flow-letter active-letter" style="width: 24px; height: 24px; background: var(--primary); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: white;">L</span>
-                            <span class="flow-letter" style="width: 24px; height: 24px; background: #3d3d54; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666;">F</span>
-                            <span class="flow-letter" style="width: 24px; height: 24px; background: #3d3d54; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #666;">E</span>
-                        </div>
-                        <div class="flow-tablet-text" id="flowTabletText" style="color: white; font-size: 1.2rem; font-family: monospace;">Hil<span style="animation: blink 1s infinite;">|</span></div>
-                    </div>
-                </div>
-                <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-light);" data-i18n="flow_tablet">Tablet (Schreiber)</p>
-            </div>
-            
-            <!-- Arrow 2 with WiFi symbol -->
-            <div class="flow-arrow" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                <span style="font-size: 1.2rem; color: var(--primary); animation: flowPulse 2s infinite 0.5s;">📶</span>
-                <span style="font-size: 2rem; color: var(--primary); animation: flowPulse 2s infinite;">→</span>
-            </div>
-            
-            <!-- TV -->
-            <div class="flow-device" style="text-align: center;">
-                <div class="flow-tv" style="width: 200px; height: 130px; background: #1a1a2e; border-radius: 8px; padding: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15); position: relative; border: 4px solid #333;">
-                    <div style="background: linear-gradient(135deg, #1e3a5f, #0f172a); border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center;">
-                        <div class="flow-tv-text" id="flowTvText" style="color: white; font-size: 1.8rem; font-family: sans-serif; font-weight: bold;">Hil</div>
-                    </div>
-                    <div style="position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); width: 60px; height: 8px; background: #333; border-radius: 0 0 4px 4px;"></div>
-                </div>
-                <p style="margin-top: 24px; font-size: 0.9rem; color: var(--text-light);" data-i18n="flow_tv">Fernseher (Familie)</p>
-            </div>
-        </div>
-        <p style="text-align: center; margin-top: 32px; color: var(--text-light); font-size: 0.95rem;" data-i18n="flow_desc">Die Familie sieht in Echtzeit, was geschrieben wird — auf jedem Gerät mit Browser.</p>
-    </div>
-</section>
-
-<style>
-@keyframes flowPulse {
-    0%, 100% { opacity: 0.5; transform: translateX(0); }
-    50% { opacity: 1; transform: translateX(4px); }
-}
-@keyframes letterScan {
-    0%, 100% { background: #3d3d54; color: #666; }
-    20% { background: var(--primary); color: white; }
-}
-.flow-button:active { transform: scale(0.95); }
-</style>
 
 <section class="hardware-cta">
     <div class="container">
+        <div class="section-label">Hardware</div>
+        <h2 class="section-title" data-i18n="hw_title">Welche Taster funktionieren?</h2>
         <div class="hardware-card">
             <div class="hardware-content">
-                <h2 data-i18n="hw_title">🎛️ Welche Hardware funktioniert?</h2>
-                <p data-i18n="hw_text">Bluetooth-Taster ab 5€, Fußschalter, Big Buttons, Touch-Sensoren — unser Hardware-Guide zeigt alle Optionen und wie du sie verbindest.</p>
-                <a href="/hardware" class="btn" data-i18n="hw_cta">Hardware-Guide öffnen →</a>
+                <p data-i18n="hw_text">Bluetooth-Taster ab 5€, Fußschalter, Big Buttons, Touch-Sensoren — der Hardware-Guide erklärt alle getesteten Optionen und deren Einrichtung.</p>
+                <a href="/hardware" class="btn btn-primary" data-i18n="hw_cta">Hardware-Guide →</a>
             </div>
             <div class="hardware-devices" aria-hidden="true">
                 <div class="hardware-device-item">Bluetooth-Taster</div>
@@ -748,21 +589,40 @@
                 <div class="hardware-device-item">Big Button</div>
                 <div class="hardware-device-item">Touch-Sensor</div>
                 <div class="hardware-device-item">Joystick / Trackball</div>
-                <div class="hardware-device-item">Maus (Ein-Tasten-Mode)</div>
+                <div class="hardware-device-item">Maus (Ein-Tasten-Modus)</div>
             </div>
         </div>
     </div>
 </section>
 
-<section class="opensource-promise" style="padding: 80px 0; background: #0f172a; color: white; text-align: center;">
+<section class="oss">
     <div class="container">
-        <h2 style="font-size: 2rem; margin-bottom: 16px;">💚 Open Source</h2>
-        <p style="font-size: 1.2rem; max-width: 700px; margin: 0 auto 24px; opacity: 0.95;" data-i18n="oss_text">
-            One-Key ist ein nicht-kommerzielles Projekt. Der Quellcode ist unter GPLv3 öffentlich — jeder kann ihn prüfen, anpassen und selbst betreiben. Feedback und Beiträge sind willkommen.
-        </p>
-        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
-            <a href="https://github.com/httrp/one-key-communicator" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; color: #1a56b0; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">📂 Quellcode auf GitHub</a>
-            <a href="https://github.com/httrp/one-key-communicator/blob/main/LICENSE" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">📜 GPLv3 Lizenz</a>
+        <div class="oss-layout">
+            <div>
+                <div class="section-label">Open Source</div>
+                <h2>Freie Software für einen ernsthaften Zweck</h2>
+                <p data-i18n="oss_text">One-Key ist ein nicht-kommerzielles Projekt. Der Quellcode ist unter GPLv3 öffentlich — jeder kann ihn prüfen, anpassen und selbst hosten. Beiträge sind willkommen.</p>
+                <div class="oss-links">
+                    <a href="https://github.com/httrp/one-key-communicator" target="_blank" class="btn btn-secondary">Quellcode auf GitHub →</a>
+                    <a href="https://github.com/httrp/one-key-communicator/blob/main/LICENSE" target="_blank" class="btn btn-secondary">GPLv3 Lizenz</a>
+                </div>
+            </div>
+            <div class="oss-spec">
+                <dl>
+                    <dt>Lizenz</dt>
+                    <dd>GNU General Public License v3.0</dd>
+                    <dt>Backend</dt>
+                    <dd>Go</dd>
+                    <dt>Frontend</dt>
+                    <dd>Vanilla JS, kein Framework</dd>
+                    <dt>Hosting</dt>
+                    <dd>Deutschland · keine Drittanbieter</dd>
+                    <dt>Daten</dt>
+                    <dd>Keine Analytik · keine Cookies · keine Profile</dd>
+                    <dt>Version</dt>
+                    <dd id="version-footer">One-Key v0.9</dd>
+                </dl>
+            </div>
         </div>
     </div>
 </section>
@@ -773,186 +633,90 @@
             <div class="footer-links">
                 <a href="/app">App starten</a>
                 <a href="/hardware">Hardware</a>
-                <a href="/stats">Statistiken</a>
                 <a href="https://github.com/httrp/one-key-communicator" target="_blank">GitHub</a>
                 <a href="/impressum">Impressum</a>
             </div>
             <div class="footer-copy">
-                <span id="version-footer">One-Key v0.9</span> · Made with <span style="color: #e25555;">❤</span> by Dominik Hattrup · Hosted in 🇩🇪 · Open Source (GPLv3)
+                One-Key Communicator · Dominik Hattrup · Open Source (GPLv3)
             </div>
         </div>
     </div>
 </footer>
 
 <script>
-// Demo animation - shows "Hallo" being built letter by letter
-const demoWord = "Hallo";
-let demoStep = 0;
-const demoLetters = document.querySelectorAll('.demo-letter');
-const demoText = document.getElementById('demoText');
-
-function runDemoStep() {
-    // Scanning phase: highlight letters one by one
-    if (demoStep < 5 * 5) { // 5 letters, each scans 5 times
-        const letterIndex = Math.floor(demoStep / 5);
-        const scanIndex = demoStep % 5;
-        demoLetters.forEach((el, i) => el.classList.toggle('active', i === scanIndex));
-        if (scanIndex === letterIndex) {
-            // Select this letter
-            const currentText = demoWord.substring(0, letterIndex + 1);
-            demoText.innerHTML = currentText + '<span class="demo-cursor">|</span>';
-        }
-        demoStep++;
-    } else {
-        // Pause at "Hallo", then restart
-        demoStep++;
-        if (demoStep > 5 * 5 + 8) {
-            demoStep = 0;
-            demoText.innerHTML = '<span class="demo-cursor">|</span>';
-        }
-    }
-}
-setInterval(runDemoStep, 500);
-
-// Flow animation - shows button → tablet → TV
-const flowWord = "Hilfe";
-let flowStep = 0;
-const flowLetters = document.querySelectorAll('.flow-letter');
-const flowTabletText = document.getElementById('flowTabletText');
-const flowTvText = document.getElementById('flowTvText');
-const flowBtn = document.getElementById('flowBtn');
-
-function runFlowStep() {
-    if (flowStep < 5 * 5) {
-        const letterIndex = Math.floor(flowStep / 5);
-        const scanIndex = flowStep % 5;
-        flowLetters.forEach((el, i) => {
-            el.style.background = i === scanIndex ? 'var(--primary)' : '#3d3d54';
-            el.style.color = i === scanIndex ? 'white' : '#666';
-        });
-        if (scanIndex === letterIndex) {
-            const currentText = flowWord.substring(0, letterIndex + 1);
-            flowTabletText.innerHTML = currentText + '<span style="animation: blink 1s infinite;">|</span>';
-            flowTvText.textContent = currentText;
-            if (flowBtn) flowBtn.style.transform = 'scale(0.9)';
-            setTimeout(() => { if (flowBtn) flowBtn.style.transform = 'scale(1)'; }, 100);
-        }
-        flowStep++;
-    } else {
-        flowStep++;
-        if (flowStep > 5 * 5 + 10) {
-            flowStep = 0;
-            flowTabletText.innerHTML = '<span style="animation: blink 1s infinite;">|</span>';
-            flowTvText.textContent = '';
-        }
-    }
-}
-setInterval(runFlowStep, 600);
-
-// Translations
 const translations = {
     de: {},
     en: {
         hero_badge: "Free & Open Source",
         hero_title: "Communicate with just one key",
         hero_subtitle: "A simple tool for people with limited mobility. Free, open source, no installation required.",
-        hero_cta: "→ Get started",
-        hero_hardware: "🎛️ Hardware Guide",
-        how_title: "Communicate in 4 steps",
+        hero_cta: "Open app →",
+        hero_hardware: "Hardware Guide",
+        how_title: "How communication works",
         how_subtitle: "No app installation, no account, no configuration. Just open and go.",
-        step1_title: "Open", step1_text: "Open One-Key Communicator in any browser on tablet or phone.",
-        step2_title: "Create room", step2_text: "A room is created automatically. You get a QR code.",
-        step3_title: "Share QR code", step3_text: "Family scans the code — they instantly see what you type.",
-        step4_title: "Communicate", step4_text: "Press your key to select letters. Done!",
-        features_title: "Everything you need",
+        step1_title: "Open browser", step1_text: "One-Key runs directly in the browser — phone, tablet, laptop. No app, no download.",
+        step2_title: "Create room", step2_text: "A PIN-secured room is created automatically. QR code appears immediately.",
+        step3_title: "Share QR code", step3_text: "Family scans the code and sees in real time what is being written.",
+        step4_title: "Write", step4_text: "One press scrolls through letters, a second press selects.",
+        features_title: "What One-Key offers",
         features_subtitle: "Developed with and for people with limited mobility.",
-        f1_title: "One key is enough", f1_text: "Everything works with a single input — any key, mouse click, touch or sensor.",
-        f2_title: "Works everywhere", f2_text: "Phone, tablet, laptop, Smart TV — any device with a browser works.",
-        f3_title: "Private & Secure", f3_text: "No account, no tracking. Rooms have a PIN and auto-delete after 24h of inactivity.",
+        f1_title: "One key is enough", f1_text: "Any button, click, touch or sensor works. No special device required.",
+        f2_title: "Works everywhere", f2_text: "Any device with a modern browser. No app store, no installation, no updates.",
+        f3_title: "No account", f3_text: "No login, no tracking. Rooms are PIN-protected and deleted after 24h of inactivity.",
         f4_title: "8 Languages", f4_text: "German, English, French, Spanish, Italian, Polish and more.",
-        f5_title: "Quick phrases", f5_text: "Pre-defined sentences for common situations: pain, thirst, call for help.",
-        f6_title: "Text-to-speech", f6_text: "The written text can be read aloud.",
-        flow_title: "How it looks in practice",
-        flow_subtitle: "One button press on the tablet — and the message instantly appears on all connected devices.",
-        flow_button: "Button",
-        flow_tablet: "Tablet (Writer)",
-        flow_tv: "TV (Family)",
-        flow_desc: "Family sees in real-time what is being written — on any device with a browser.",
-        hw_title: "🎛️ Which hardware works?",
-        hw_text: "Bluetooth buttons from €5, foot switches, big buttons, touch sensors — our hardware guide shows all options and how to connect them.",
-        hw_cta: "Open hardware guide →",
-        stats_title: "📊 Live Statistics",
-        stats_text: "See in real-time how many people are communicating.",
-        stats_cta: "View statistics →",
+        f5_title: "Quick phrases", f5_text: "Pre-written sentences for common situations: pain, thirst, call for help, yes/no.",
+        f6_title: "Text-to-speech", f6_text: "Written text can be read aloud via the browser TTS engine.",
+        hw_title: "Which buttons work?",
+        hw_text: "Bluetooth buttons from €5, foot switches, big buttons, touch sensors — the hardware guide explains all tested options and how to set them up.",
+        hw_cta: "Hardware Guide →",
+        oss_text: "One-Key is a non-commercial project. The source code is publicly available under GPLv3 — anyone can review, adapt and self-host it. Contributions are welcome.",
         beta_warning: "One-Key is still in development. Please use with care and report any issues."
     },
     fr: {
-        hero_badge: "Gratuit & Open Source",
         hero_title: "Communiquer avec une seule touche",
-        hero_subtitle: "Pour les personnes qui ne peuvent plus parler — mais ont encore tout à dire. Radicalement simple, complètement gratuit.",
-        hero_cta: "→ Commencer",
-        hero_hardware: "🎛️ Guide matériel",
-        how_title: "Communiquer en 4 étapes",
-        how_subtitle: "Pas d'installation, pas de compte, pas de configuration. Ouvrir et commencer.",
-        step1_title: "Ouvrir", step1_text: "Ouvrez One-Key dans n'importe quel navigateur sur tablette ou téléphone.",
-        step2_title: "Créer une salle", step2_text: "Une salle est créée automatiquement. Vous obtenez un QR code.",
-        step3_title: "Partager le QR code", step3_text: "La famille scanne le code — elle voit instantanément ce que vous tapez.",
-        step4_title: "Communiquer", step4_text: "Appuyez sur votre touche pour sélectionner les lettres. Terminé!",
-        features_title: "Tout ce dont vous avez besoin",
-        features_subtitle: "Développé avec et pour les personnes à mobilité réduite.",
-        f1_title: "Une touche suffit", f1_text: "Tout fonctionne avec une seule entrée — touche, clic, touch ou capteur.",
-        f2_title: "Fonctionne partout", f2_text: "Téléphone, tablette, ordinateur, Smart TV — tout appareil avec navigateur.",
-        f3_title: "Privé & Sécurisé", f3_text: "Pas de compte, pas de tracking. Les salles ont un PIN et s'effacent après 24h.",
-        f4_title: "8 Langues", f4_text: "Allemand, anglais, français, espagnol, italien, polonais et plus.",
-        f5_title: "Phrases rapides", f5_text: "Phrases prédéfinies pour situations courantes: douleur, soif, appeler à l'aide.",
-        f6_title: "Synthèse vocale", f6_text: "Le texte écrit peut être lu à haute voix.",
-        flow_title: "Comment ça marche en pratique",
-        flow_subtitle: "Une pression sur la tablette — et le message apparaît sur tous les appareils connectés.",
-        flow_button: "Bouton",
-        flow_tablet: "Tablette (Écrivain)",
-        flow_tv: "TV (Famille)",
-        flow_desc: "La famille voit en temps réel ce qui est écrit — sur tout appareil avec navigateur.",
-        hw_title: "🎛️ Quel matériel fonctionne?",
-        hw_text: "Boutons Bluetooth à partir de 5€, pédales, gros boutons, capteurs tactiles.",
-        hw_cta: "Ouvrir le guide matériel →",
-        stats_title: "📊 Statistiques en direct",
-        stats_text: "Voyez en temps réel combien de personnes communiquent.",
-        stats_cta: "Voir statistiques →",
-        beta_warning: "One-Key est en développement. Usage avec précaution."
+        hero_subtitle: "Un outil simple pour les personnes à mobilité réduite. Gratuit, open source, sans installation.",
+        hero_cta: "Ouvrir l'app →",
+        hero_hardware: "Guide matériel",
+        how_title: "Comment ça marche",
+        step1_title: "Ouvrir le navigateur", step1_text: "One-Key fonctionne directement dans le navigateur. Pas d'app, pas de téléchargement.",
+        step2_title: "Créer une salle", step2_text: "Une salle sécurisée par PIN est créée. Le QR code apparaît immédiatement.",
+        step3_title: "Partager le QR code", step3_text: "La famille scanne le code et voit en temps réel ce qui est écrit.",
+        step4_title: "Écrire", step4_text: "Une pression fait défiler les lettres, une deuxième sélectionne.",
+        features_title: "Ce que propose One-Key",
+        f1_title: "Une touche suffit", f1_text: "Tout bouton, clic, touch ou capteur fonctionne.",
+        f2_title: "Fonctionne partout", f2_text: "Tout appareil avec navigateur moderne.",
+        f3_title: "Sans compte", f3_text: "Pas de login, pas de tracking. Salles supprimées après 24h d'inactivité.",
+        f4_title: "8 langues", f4_text: "Allemand, anglais, français, espagnol, italien, polonais et plus.",
+        f5_title: "Phrases rapides", f5_text: "Phrases préformatées pour situations courantes.",
+        f6_title: "Synthèse vocale", f6_text: "Le texte peut être lu à voix haute par le navigateur.",
+        hw_title: "Quels boutons fonctionnent?",
+        hw_text: "Boutons Bluetooth dès 5€, pédales, gros boutons, capteurs tactiles.",
+        hw_cta: "Guide matériel →",
+        oss_text: "One-Key est un projet non commercial sous GPLv3. Tout le monde peut examiner, adapter et héberger le code.",
+        beta_warning: "One-Key est en développement actif. Retours bienvenus."
     },
     es: {
-        hero_badge: "Gratis & Open Source",
         hero_title: "Comunicarse con una sola tecla",
-        hero_subtitle: "Para personas que ya no pueden hablar — pero aún tienen todo por decir. Radicalmente simple, completamente gratis.",
-        hero_cta: "→ Empezar",
-        hero_hardware: "🎛️ Guía de hardware",
-        how_title: "Comunicar en 4 pasos",
-        how_subtitle: "Sin instalación, sin cuenta, sin configuración. Abrir y empezar.",
-        step1_title: "Abrir", step1_text: "Abre One-Key en cualquier navegador en tableta o teléfono.",
-        step2_title: "Crear sala", step2_text: "Se crea una sala automáticamente. Obtienes un código QR.",
-        step3_title: "Compartir QR", step3_text: "La familia escanea el código — ve instantáneamente lo que escribes.",
-        step4_title: "Comunicar", step4_text: "Pulsa tu tecla para seleccionar letras. ¡Listo!",
-        features_title: "Todo lo que necesitas",
-        features_subtitle: "Desarrollado con y para personas con movilidad reducida.",
-        f1_title: "Una tecla basta", f1_text: "Todo funciona con una sola entrada — tecla, clic, touch o sensor.",
-        f2_title: "Funciona en todas partes", f2_text: "Teléfono, tableta, portátil, Smart TV — cualquier dispositivo con navegador.",
-        f3_title: "Privado & Seguro", f3_text: "Sin cuenta, sin tracking. Las salas tienen PIN y se eliminan tras 24h.",
-        f4_title: "8 Idiomas", f4_text: "Alemán, inglés, francés, español, italiano, polaco y más.",
-        f5_title: "Frases rápidas", f5_text: "Frases predefinidas para situaciones comunes: dolor, sed, pedir ayuda.",
+        hero_subtitle: "Una herramienta sencilla para personas con movilidad reducida. Gratuita, open source, sin instalación.",
+        hero_cta: "Abrir app →",
+        hero_hardware: "Guía de hardware",
+        how_title: "Cómo funciona",
+        step1_title: "Abrir navegador", step1_text: "One-Key funciona directamente en el navegador. Sin app, sin descarga.",
+        step2_title: "Crear sala", step2_text: "Se crea una sala con PIN automáticamente. El código QR aparece de inmediato.",
+        step3_title: "Compartir QR", step3_text: "La familia escanea el código y ve en tiempo real lo que se escribe.",
+        step4_title: "Escribir", step4_text: "Una pulsación desplaza las letras, una segunda selecciona.",
+        features_title: "Qué ofrece One-Key",
+        f1_title: "Una tecla basta", f1_text: "Cualquier botón, clic, touch o sensor funciona.",
+        f2_title: "Funciona en todas partes", f2_text: "Cualquier dispositivo con navegador moderno.",
+        f3_title: "Sin cuenta", f3_text: "Sin login, sin tracking. Salas eliminadas tras 24h de inactividad.",
+        f4_title: "8 idiomas", f4_text: "Alemán, inglés, francés, español, italiano, polaco y más.",
+        f5_title: "Frases rápidas", f5_text: "Frases preformateadas para situaciones comunes.",
         f6_title: "Texto a voz", f6_text: "El texto escrito puede leerse en voz alta.",
-        flow_title: "Cómo se ve en la práctica",
-        flow_subtitle: "Una pulsación en la tableta — y el mensaje aparece en todos los dispositivos conectados.",
-        flow_button: "Botón",
-        flow_tablet: "Tableta (Escritor)",
-        flow_tv: "TV (Familia)",
-        flow_desc: "La familia ve en tiempo real lo que se escribe — en cualquier dispositivo con navegador.",
-        hw_title: "🎛️ ¿Qué hardware funciona?",
+        hw_title: "¿Qué botones funcionan?",
         hw_text: "Botones Bluetooth desde 5€, pedales, botones grandes, sensores táctiles.",
-        hw_cta: "Abrir guía de hardware →",
-        stats_title: "📊 Estadísticas en vivo",
-        stats_text: "Ve en tiempo real cuántas personas se están comunicando.",
-        stats_cta: "Ver estadísticas →",
-        beta_warning: "One-Key está en desarrollo. Usar con precaución."
+        hw_cta: "Guía de hardware →",
+        oss_text: "One-Key es un proyecto sin ánimo de lucro bajo GPLv3. Cualquiera puede revisar, adaptar y alojar el código.",
+        beta_warning: "One-Key está en desarrollo activo."
     }
 };
 
@@ -966,11 +730,19 @@ function switchLang(lang) {
     localStorage.setItem('okc-lang', lang);
 }
 
+// Restore saved language
 const savedLang = localStorage.getItem('okc-lang');
 if (savedLang && savedLang !== 'de') {
-    document.getElementById('langSwitch').value = savedLang;
+    const sel = document.getElementById('langSwitch');
+    if (sel) sel.value = savedLang;
     switchLang(savedLang);
 }
+
+// Fetch version from server
+fetch('/api/version').then(r => r.json()).then(d => {
+    const el = document.getElementById('version-footer');
+    if (el && d.version) el.textContent = 'One-Key ' + d.version;
+}).catch(() => {});
 </script>
 
 </body>
