@@ -1146,11 +1146,9 @@
             applyReaderViewMode();
         }
 
-        if (pin) {
-            connectReaderWithPIN(id, pin);
-        } else {
-            showReaderPinPrompt(id);
-        }
+        // Always prompt for PIN (legacy links may include a prefilled PIN, but
+        // we do not auto-submit it to avoid immediate confusing errors).
+        showReaderPinPrompt(id, pin || '');
 
         // Send saved name
         const savedName = localStorage.getItem('okc-reader-name');
@@ -1162,7 +1160,7 @@
         }
     }
 
-    function showReaderPinPrompt(id) {
+    function showReaderPinPrompt(id, initialPin = '') {
         const modal = $('readerPinModal');
         const input = $('readerPinInput');
         const errorEl = $('readerPinError');
@@ -1173,7 +1171,7 @@
         }
 
         if (errorEl) errorEl.textContent = '';
-        input.value = '';
+        input.value = initialPin;
         modal.classList.remove('hidden');
         setTimeout(() => input.focus(), 50);
 

@@ -103,9 +103,15 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Cross-Origin-Resource-Policy", "same-origin")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
-		w.Header().Set("Content-Security-Policy",
-			"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "+
-				"img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'")
+
+		csp := "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+			"img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'"
+		if !strings.HasPrefix(r.URL.Path, "/app") && !strings.HasPrefix(r.URL.Path, "/api/") && !strings.HasPrefix(r.URL.Path, "/ws/") {
+			// Landing pages still use inline scripts for animations/i18n bootstrapping.
+			csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
+				"img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'"
+		}
+		w.Header().Set("Content-Security-Policy", csp)
 
 		if strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/ws/") {
 			origin := strings.TrimRight(s.cfg.BaseURL, "/")
