@@ -3,9 +3,756 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware & Taster — One-Key Communicator</title>
+    <title>Hardware &amp; Taster — One-Key Communicator</title>
     <meta name="description" content="Welche Geräte und Taster funktionieren mit One-Key Communicator? Alles über Hardware-Optionen und Konfiguration.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1a56b0;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #ffffff;
+            --bg-soft: #f8fafc;
+            --border: #e2e8f0;
+            --radius: 4px;
+            --success: #16a34a;
+            --warning: #b45309;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+        .logo strong { color: var(--primary); }
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            border-radius: var(--radius);
+        }
+        nav a:hover { color: var(--primary); }
+        .nav-cta {
+            background: var(--primary);
+            color: white !important;
+            font-weight: 600;
+        }
+        .nav-cta:hover { background: #1447a0; }
+        .lang-select select {
+            appearance: none;
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 5px 24px 5px 8px;
+            border-radius: var(--radius);
+            font-size: 0.8rem;
+            color: var(--text);
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 6px center;
+        }
+
+        /* Page hero — no gradient */
+        .page-hero {
+            padding: 48px 0 40px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .page-hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+        .page-hero p {
+            font-size: 1rem;
+            color: var(--text-light);
+            max-width: 560px;
+        }
+
+        /* TOC */
+        .toc {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 40px 0;
+        }
+        .toc h2 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 12px;
+        }
+        .toc ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+        }
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        .toc a:hover { text-decoration: underline; }
+
+        section {
+            padding: 56px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        section:last-of-type { border-bottom: none; }
+
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+        section h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 32px 0 12px;
+        }
+        section p {
+            margin-bottom: 16px;
+            color: var(--text);
+            font-size: 0.9375rem;
+        }
+
+        /* Card grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .card {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .card h4 {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .card p {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+        .card ul {
+            margin-left: 18px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        .card ul li { margin-bottom: 3px; }
+        .card .tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 2px;
+            margin-top: 10px;
+            letter-spacing: 0.04em;
+        }
+        .tag.recommended { background: #dcfce7; color: var(--success); }
+        .tag.budget       { background: #fef9ec; color: var(--warning); }
+        .tag.advanced     { background: #eff6ff; color: var(--primary); }
+
+        /* Callout boxes */
+        .tip {
+            border-left: 3px solid var(--primary);
+            background: #eff6ff;
+            padding: 16px 20px;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            margin: 20px 0;
+        }
+        .tip h4 { font-size: 0.875rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+        .tip p  { margin: 0; font-size: 0.875rem; color: var(--text); }
+
+        .notice {
+            border-left: 3px solid var(--border);
+            background: var(--bg-soft);
+            padding: 16px 20px;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            margin: 20px 0;
+        }
+        .notice h4 { font-size: 0.875rem; font-weight: 700; margin-bottom: 6px; }
+        .notice p  { margin: 0; font-size: 0.875rem; color: var(--text-light); }
+
+        /* Steps */
+        .steps { counter-reset: step; }
+        .step {
+            position: relative;
+            padding-left: 52px;
+            margin-bottom: 20px;
+        }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0; top: 2px;
+            width: 32px; height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        .step h4 { font-size: 0.9375rem; font-weight: 700; margin-bottom: 4px; }
+        .step p  { color: var(--text-light); font-size: 0.875rem; margin: 0; }
+
+        code {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            padding: 1px 6px;
+            border-radius: 2px;
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.875em;
+        }
+
+        /* Contribute CTA */
+        .contribute-cta {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin: 40px 0;
+        }
+        .contribute-cta h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .contribute-cta p  { color: var(--text-light); font-size: 0.875rem; margin-bottom: 16px; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #1447a0; }
+        .btn-secondary { color: var(--text); border-color: var(--border); background: var(--bg); }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+        footer { padding: 36px 0; border-top: 1px solid var(--border); }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+        .footer-links a { color: var(--text-light); text-decoration: none; font-size: 0.8rem; }
+        .footer-links a:hover { color: var(--primary); }
+        .footer-copy { color: var(--text-light); font-size: 0.75rem; }
+
+        @media (max-width: 768px) {
+            .page-hero h1 { font-size: 1.6rem; }
+            nav a:not(.nav-cta) { display: none; }
+            .lang-select { display: none; }
+            .card-grid { grid-template-columns: 1fr; }
+            .footer-content { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <a href="/" class="logo"><strong>One-Key</strong> Communicator</a>
+        <nav>
+            <a href="/" data-i18n="nav_home">Home</a>
+            <div class="lang-select">
+                <select id="langSwitch" onchange="switchLang(this.value)">
+                    <option value="de" selected>DE</option>
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                    <option value="es">ES</option>
+                </select>
+            </div>
+            <a href="/app" class="nav-cta" data-i18n="nav_start">App starten →</a>
+        </nav>
+    </div>
+</header>
+
+<div class="page-hero">
+    <div class="container">
+        <div class="page-hero-eyebrow">Hardware-Guide</div>
+        <h1 data-i18n="hw_page_title">Hardware &amp; Taster</h1>
+        <p data-i18n="hw_page_subtitle">Alles was du wissen musst, um One-Key mit deinem Gerät und Taster zu verwenden.</p>
+    </div>
+</div>
+
+<div class="container">
+    <nav class="toc">
+        <h2>Inhalt</h2>
+        <ul>
+            <li><a href="#devices" data-i18n="toc_devices">Kompatible Geräte</a></li>
+            <li><a href="#switches" data-i18n="toc_switches">Taster &amp; Schalter</a></li>
+            <li><a href="#connection" data-i18n="toc_connection">Verbindung herstellen</a></li>
+            <li><a href="#config" data-i18n="toc_config">Konfiguration</a></li>
+            <li><a href="#tips" data-i18n="toc_tips">Tipps &amp; Tricks</a></li>
+        </ul>
+    </nav>
+</div>
+
+<section id="devices">
+    <div class="container">
+        <div class="section-label">Geräte</div>
+        <h2 data-i18n="devices_title">Kompatible Geräte</h2>
+        <p data-i18n="devices_intro">One-Key Communicator läuft auf jedem Gerät mit einem modernen Webbrowser. Tablets bieten die beste Erfahrung als Schreib-Gerät.</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <h4>iPad / Android Tablet</h4>
+                <p data-i18n="device_tablet_text">Ideal als Schreib-Gerät. Der große Bildschirm zeigt die Buchstaben gut lesbar an.</p>
+                <ul>
+                    <li>iPad (ab iPad Air 2)</li>
+                    <li>Samsung Galaxy Tab</li>
+                    <li>Lenovo Tab</li>
+                    <li>Amazon Fire (Silk Browser)</li>
+                </ul>
+                <span class="tag recommended" data-i18n="tag_recommended">Empfohlen</span>
+            </div>
+            <div class="card">
+                <h4>Smartphone</h4>
+                <p data-i18n="device_phone_text">Gut als Reader-Gerät oder unterwegs. Kleinerer Bildschirm, aber immer dabei.</p>
+                <ul>
+                    <li>iPhone (ab iPhone 8)</li>
+                    <li>Android Smartphones</li>
+                </ul>
+                <span class="tag budget" data-i18n="tag_reader">Gut für Reader</span>
+            </div>
+            <div class="card">
+                <h4>Laptop / Desktop</h4>
+                <p data-i18n="device_laptop_text">Gut für Reader oder größeren Bildschirm. Chrome, Firefox, Safari, Edge.</p>
+                <ul>
+                    <li>macOS, Windows, Linux</li>
+                    <li>Alle modernen Browser</li>
+                </ul>
+                <span class="tag budget" data-i18n="tag_versatile">Vielseitig</span>
+            </div>
+            <div class="card">
+                <h4>Smart TV</h4>
+                <p data-i18n="device_tv_text">Perfekt als großer Reader-Bildschirm für die Familie im Wohnzimmer.</p>
+                <ul>
+                    <li>Android TV / Google TV</li>
+                    <li>Samsung Smart TV (Tizen)</li>
+                    <li>LG Smart TV (webOS)</li>
+                </ul>
+                <span class="tag advanced" data-i18n="tag_groups">Für Gruppen</span>
+            </div>
+        </div>
+
+        <div class="tip">
+            <h4 data-i18n="tip_starter_title">Empfehlung für Einsteiger</h4>
+            <p data-i18n="tip_starter_text">iPad + Bluetooth-Taster ist die zuverlässigste Kombination. Familie kann mit Smartphones mitlesen.</p>
+        </div>
+    </div>
+</section>
+
+<section id="switches">
+    <div class="container">
+        <div class="section-label">Eingabegeräte</div>
+        <h2 data-i18n="switches_title">Taster &amp; Schalter</h2>
+        <p data-i18n="switches_intro">One-Key reagiert auf <strong>jede beliebige Taste, jeden Maus-Klick und Touch</strong>. Du kannst die normale Tastatur oder Maus verwenden — oder spezielle Eingabegeräte für Menschen mit motorischen Einschränkungen.</p>
+
+        <h3 data-i18n="switches_simple_title">Einfachste Option: Tastatur oder Maus</h3>
+        <div class="card-grid">
+            <div class="card">
+                <h4 data-i18n="switch_keyboard_title">Normale Tastatur</h4>
+                <p data-i18n="switch_keyboard_text">Jede Taste funktioniert — Leertaste, Enter, oder eine beliebige andere. Wähle die Taste, die am bequemsten erreichbar ist.</p>
+                <span class="tag recommended" data-i18n="tag_simplest">Einfachste Option</span>
+            </div>
+            <div class="card">
+                <h4 data-i18n="switch_mouse_title">Maus / Trackpad</h4>
+                <p data-i18n="switch_mouse_text">Jeder Maus-Klick funktioniert. Praktisch wenn eine Hand noch kontrolliert werden kann.</p>
+                <span class="tag recommended" data-i18n="tag_simplest">Einfachste Option</span>
+            </div>
+            <div class="card">
+                <h4 data-i18n="switch_numpad_title">Mini-Tastatur / Num-Pad</h4>
+                <p data-i18n="switch_numpad_text">Kompakte Tastaturen oder separate Nummernblöcke sind leichter zu positionieren.</p>
+                <span class="tag budget">20–40€</span>
+            </div>
+        </div>
+
+        <h3 data-i18n="switches_bt_title">Bluetooth-Taster (kabellos)</h3>
+        <div class="card-grid">
+            <div class="card">
+                <h4 data-i18n="switch_bt_shutter_title">Bluetooth Kamera-Auslöser</h4>
+                <p data-i18n="switch_bt_shutter_text">Für Smartphone-Selfies gedacht, aber perfekt als Taster nutzbar. Klein, günstig, einfach zu koppeln.</p>
+                <ul>
+                    <li>AB Shutter 3</li>
+                    <li>Mpow Selfie Stick Remote</li>
+                    <li>Generic "Bluetooth Shutter" (5–10€)</li>
+                </ul>
+                <span class="tag recommended" data-i18n="tag_best_value">Beste Preis-Leistung</span>
+            </div>
+            <div class="card">
+                <h4 data-i18n="switch_bt_foot_title">Bluetooth Fußschalter</h4>
+                <p data-i18n="switch_bt_foot_text">Wenn Hände nicht verwendet werden können, aber Fußbewegung möglich ist.</p>
+                <ul>
+                    <li>PageFlip Firefly / Cicada</li>
+                    <li>Donner Wireless Page Turner</li>
+                    <li>AirTurn PEDpro</li>
+                </ul>
+                <span class="tag advanced">50–100€</span>
+            </div>
+        </div>
+
+        <h3 data-i18n="switches_at_title">Spezialtaster für Assistive Technologie</h3>
+        <div class="card-grid">
+            <div class="card">
+                <h4 data-i18n="switch_bigbtn_title">Big Button / Buzzer</h4>
+                <p data-i18n="switch_bigbtn_text">Große Tasten (5–15 cm), leicht zu treffen, wenig Kraftaufwand.</p>
+                <ul>
+                    <li>AbleNet Big Red</li>
+                    <li>Enablemart Switch</li>
+                    <li>Pretorian SimplyWorks</li>
+                </ul>
+                <span class="tag advanced">50–150€</span>
+            </div>
+            <div class="card">
+                <h4 data-i18n="switch_touch_title">Touch-Sensor / Proximity</h4>
+                <p data-i18n="switch_touch_text">Aktivierung durch leichte Berührung oder Annäherung.</p>
+                <ul>
+                    <li>AbleNet Candy Corn</li>
+                    <li>Smoothie Switch</li>
+                    <li>Proximity Sensor (DIY)</li>
+                </ul>
+                <span class="tag advanced">30–100€</span>
+            </div>
+            <div class="card">
+                <h4 data-i18n="switch_sippuff_title">Sip-Puff / Saug-Blas</h4>
+                <p data-i18n="switch_sippuff_text">Steuerung durch Atemluft-Druck — für minimale Aktivierung.</p>
+                <ul>
+                    <li>Jouse3</li>
+                    <li>Origin Instruments Sip/Puff</li>
+                </ul>
+                <span class="tag advanced">200–500€</span>
+            </div>
+        </div>
+
+        <div class="notice">
+            <h4 data-i18n="notice_keys_title">Hinweis zur Tastenbelegung</h4>
+            <p data-i18n="notice_keys_text">Manche Bluetooth-Geräte senden bestimmte Tasten (Lautstärke, Enter, etc.). Alles funktioniert mit OKC — jede Taste wird erkannt.</p>
+        </div>
+    </div>
+</section>
+
+<section id="connection">
+    <div class="container">
+        <div class="section-label">Einrichtung</div>
+        <h2 data-i18n="connection_title">Verbindung herstellen</h2>
+
+        <h3 data-i18n="conn_ipad_title">Bluetooth mit iPad / iPhone verbinden</h3>
+        <div class="steps">
+            <div class="step">
+                <h4 data-i18n="conn_step1_title">Taster in Pairing-Modus versetzen</h4>
+                <p data-i18n="conn_step1_text">Meist durch langes Drücken (3–5 Sek.) bis eine LED blinkt. Anleitung des Tasters beachten.</p>
+            </div>
+            <div class="step">
+                <h4 data-i18n="conn_step2_title">Bluetooth-Einstellungen öffnen</h4>
+                <p data-i18n="conn_step2_text">Auf dem iPad: <code>Einstellungen → Bluetooth</code>. Sicherstellen, dass Bluetooth aktiviert ist.</p>
+            </div>
+            <div class="step">
+                <h4 data-i18n="conn_step3_title">Gerät auswählen</h4>
+                <p data-i18n="conn_step3_text">Der Taster erscheint in der Geräteliste. Antippen zum Verbinden.</p>
+            </div>
+            <div class="step">
+                <h4 data-i18n="conn_step4_title">Testen</h4>
+                <p data-i18n="conn_step4_text">Notizen-App öffnen, Taste drücken — es sollte ein Zeichen erscheinen.</p>
+            </div>
+        </div>
+
+        <div class="tip">
+            <h4 data-i18n="tip_bt_title">Verbindungsprobleme?</h4>
+            <p data-i18n="tip_bt_text">Taster aus bekannten Geräten entfernen und neu koppeln. Sicherstellen, dass keine andere App die Taste blockiert.</p>
+        </div>
+    </div>
+</section>
+
+<section id="config">
+    <div class="container">
+        <div class="section-label">Konfiguration</div>
+        <h2 data-i18n="config_title">Konfiguration in One-Key</h2>
+        <div class="steps">
+            <div class="step">
+                <h4 data-i18n="cfg_step1_title">App öffnen</h4>
+                <p data-i18n="cfg_step1_text">Gehe zu <a href="/app">/app</a>. Ein Raum wird automatisch erstellt.</p>
+            </div>
+            <div class="step">
+                <h4 data-i18n="cfg_step2_title">Timing anpassen</h4>
+                <p data-i18n="cfg_step2_text">Einstellungen öffnen. Scan-Geschwindigkeit einstellen — langsamer ist einfacher für den Anfang.</p>
+            </div>
+            <div class="step">
+                <h4 data-i18n="cfg_step3_title">QR-Code teilen</h4>
+                <p data-i18n="cfg_step3_text">Teilen-Button drücken und QR-Code zeigen. Familie kann dann mitlesen.</p>
+            </div>
+        </div>
+
+        <div class="card-grid">
+            <div class="card">
+                <h4 data-i18n="cfg_speed_title">Scan-Geschwindigkeit</h4>
+                <p data-i18n="cfg_speed_text">Wie schnell die Buchstaben wechseln. Starte langsam (1,5–2 Sek.) und erhöhe schrittweise.</p>
+            </div>
+            <div class="card">
+                <h4 data-i18n="cfg_tts_title">Vorlesen</h4>
+                <p data-i18n="cfg_tts_text">Geschriebener Text wird vorgelesen — praktisch wenn keine Angehörigen im Raum sind.</p>
+            </div>
+            <div class="card">
+                <h4 data-i18n="cfg_phrases_title">Schnell-Sätze</h4>
+                <p data-i18n="cfg_phrases_text">Vordefinierte Sätze für häufige Situationen: Schmerz, Durst, Hilfe rufen, Ja/Nein.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="tips">
+    <div class="container">
+        <div class="section-label">Tipps</div>
+        <h2 data-i18n="tips_title">Tipps &amp; Tricks</h2>
+        <div class="card-grid">
+            <div class="card">
+                <h4 data-i18n="tip_battery_title">Akku sparen</h4>
+                <p data-i18n="tip_battery_text">Auto-Sperre deaktivieren während der Nutzung. Ladekabel bereithalten.</p>
+            </div>
+            <div class="card">
+                <h4 data-i18n="tip_offline_title">Offline-Tipp</h4>
+                <p data-i18n="tip_offline_text">App braucht Internet für die Verbindung. Im Krankenhaus: mobiles Internet als Hotspot.</p>
+            </div>
+            <div class="card">
+                <h4 data-i18n="tip_position_title">Position der Taste</h4>
+                <p data-i18n="tip_position_text">Verschiedene Positionen ausprobieren. Die Taste sollte bequem erreichbar sein ohne dass die Hand ermüdet.</p>
+            </div>
+            <div class="card">
+                <h4 data-i18n="tip_practice_title">Zu zweit üben</h4>
+                <p data-i18n="tip_practice_text">Mit Angehörigen üben bis das Timing sitzt. Je mehr Routine, desto schneller geht das Schreiben.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div class="contribute-cta">
+        <h3 data-i18n="contribute_title">Diese Seite verbessern</h3>
+        <p data-i18n="contribute_text">Einen Taster erfolgreich verbunden? Teile deine Erfahrung, damit andere davon profitieren.</p>
+        <a href="https://github.com/httrp/one-key-communicator/issues/new?title=Hardware-Tipp:&body=Mein%20Setup:%0A-%20Gerät:%0A-%20Taster:%0A-%20Tipps:" target="_blank" class="btn btn-secondary" data-i18n="contribute_btn">Hardware-Tipp einreichen →</a>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="/" data-i18n="nav_home">Home</a>
+                <a href="/app" data-i18n="nav_start">App starten</a>
+                <a href="https://github.com/httrp/one-key-communicator" target="_blank">GitHub</a>
+                <a href="/impressum" data-i18n="nav_impressum">Impressum</a>
+            </div>
+            <div class="footer-copy">One-Key Communicator · Open Source (GPLv3)</div>
+        </div>
+    </div>
+</footer>
+
+<script>
+const translations = {
+    de: {
+        nav_home: "Home", nav_start: "App starten →", nav_impressum: "Impressum",
+        hw_page_title: "Hardware & Taster",
+        hw_page_subtitle: "Alles was du wissen musst, um One-Key mit deinem Gerät und Taster zu verwenden.",
+        toc_devices: "Kompatible Geräte", toc_switches: "Taster & Schalter",
+        toc_connection: "Verbindung herstellen", toc_config: "Konfiguration", toc_tips: "Tipps & Tricks",
+        devices_title: "Kompatible Geräte",
+        devices_intro: "One-Key Communicator läuft auf jedem Gerät mit einem modernen Webbrowser. Tablets bieten die beste Erfahrung als Schreib-Gerät.",
+        device_tablet_text: "Ideal als Schreib-Gerät. Der große Bildschirm zeigt die Buchstaben gut lesbar an.",
+        device_phone_text: "Gut als Reader-Gerät oder unterwegs. Kleinerer Bildschirm, aber immer dabei.",
+        device_laptop_text: "Gut für Reader oder größeren Bildschirm. Chrome, Firefox, Safari, Edge.",
+        device_tv_text: "Perfekt als großer Reader-Bildschirm für die Familie im Wohnzimmer.",
+        tag_recommended: "Empfohlen", tag_reader: "Gut für Reader", tag_versatile: "Vielseitig",
+        tag_groups: "Für Gruppen", tag_simplest: "Einfachste Option", tag_best_value: "Beste Preis-Leistung",
+        tip_starter_title: "Empfehlung für Einsteiger",
+        tip_starter_text: "iPad + Bluetooth-Taster ist die zuverlässigste Kombination. Familie kann mit Smartphones mitlesen.",
+        switches_title: "Taster & Schalter",
+        switches_intro: "One-Key reagiert auf jede beliebige Taste, jeden Maus-Klick und Touch.",
+        switches_simple_title: "Einfachste Option: Tastatur oder Maus",
+        switch_keyboard_title: "Normale Tastatur", switch_keyboard_text: "Jede Taste funktioniert — Leertaste, Enter, oder eine beliebige andere.",
+        switch_mouse_title: "Maus / Trackpad", switch_mouse_text: "Jeder Maus-Klick funktioniert. Praktisch wenn eine Hand noch kontrolliert werden kann.",
+        switch_numpad_title: "Mini-Tastatur / Num-Pad", switch_numpad_text: "Kompakte Tastaturen oder separate Nummernblöcke sind leichter zu positionieren.",
+        switches_bt_title: "Bluetooth-Taster (kabellos)",
+        switch_bt_shutter_title: "Bluetooth Kamera-Auslöser", switch_bt_shutter_text: "Klein, günstig, einfach zu koppeln.",
+        switch_bt_foot_title: "Bluetooth Fußschalter", switch_bt_foot_text: "Wenn Hände nicht verwendet werden können, aber Fußbewegung möglich ist.",
+        switches_at_title: "Spezialtaster für Assistive Technologie",
+        switch_bigbtn_title: "Big Button / Buzzer", switch_bigbtn_text: "Große Tasten (5–15 cm), leicht zu treffen, wenig Kraftaufwand.",
+        switch_touch_title: "Touch-Sensor / Proximity", switch_touch_text: "Aktivierung durch leichte Berührung oder Annäherung.",
+        switch_sippuff_title: "Sip-Puff / Saug-Blas", switch_sippuff_text: "Steuerung durch Atemluft-Druck — für minimale Aktivierung.",
+        notice_keys_title: "Hinweis zur Tastenbelegung", notice_keys_text: "Manche Bluetooth-Geräte senden bestimmte Tasten. Alles funktioniert mit OKC.",
+        connection_title: "Verbindung herstellen",
+        conn_ipad_title: "Bluetooth mit iPad / iPhone verbinden",
+        conn_step1_title: "Taster in Pairing-Modus versetzen", conn_step1_text: "Langes Drücken (3–5 Sek.) bis eine LED blinkt.",
+        conn_step2_title: "Bluetooth-Einstellungen öffnen", conn_step2_text: "Auf dem iPad: Einstellungen → Bluetooth.",
+        conn_step3_title: "Gerät auswählen", conn_step3_text: "Der Taster erscheint in der Geräteliste. Antippen zum Verbinden.",
+        conn_step4_title: "Testen", conn_step4_text: "Notizen-App öffnen, Taste drücken — es sollte ein Zeichen erscheinen.",
+        tip_bt_title: "Verbindungsprobleme?", tip_bt_text: "Taster aus bekannten Geräten entfernen und neu koppeln.",
+        config_title: "Konfiguration in One-Key",
+        cfg_step1_title: "App öffnen", cfg_step1_text: "Gehe zu /app. Ein Raum wird automatisch erstellt.",
+        cfg_step2_title: "Timing anpassen", cfg_step2_text: "Einstellungen öffnen. Scan-Geschwindigkeit einstellen.",
+        cfg_step3_title: "QR-Code teilen", cfg_step3_text: "Teilen-Button drücken und QR-Code zeigen.",
+        cfg_speed_title: "Scan-Geschwindigkeit", cfg_speed_text: "Wie schnell die Buchstaben wechseln.",
+        cfg_tts_title: "Vorlesen", cfg_tts_text: "Geschriebener Text wird vorgelesen.",
+        cfg_phrases_title: "Schnell-Sätze", cfg_phrases_text: "Vordefinierte Sätze für häufige Situationen.",
+        tips_title: "Tipps & Tricks",
+        tip_battery_title: "Akku sparen", tip_battery_text: "Auto-Sperre deaktivieren während der Nutzung.",
+        tip_offline_title: "Offline-Tipp", tip_offline_text: "App braucht Internet. Im Krankenhaus: mobiles Internet als Hotspot.",
+        tip_position_title: "Position der Taste", tip_position_text: "Verschiedene Positionen ausprobieren bis es bequem ist.",
+        tip_practice_title: "Zu zweit üben", tip_practice_text: "Mit Angehörigen üben bis das Timing sitzt.",
+        contribute_title: "Diese Seite verbessern",
+        contribute_text: "Einen Taster erfolgreich verbunden? Teile deine Erfahrung.",
+        contribute_btn: "Hardware-Tipp einreichen →",
+    },
+    en: {
+        nav_home: "Home", nav_start: "Launch App →", nav_impressum: "Imprint",
+        hw_page_title: "Hardware & Switches",
+        hw_page_subtitle: "Everything you need to know to use One-Key with your device and switch.",
+        toc_devices: "Compatible Devices", toc_switches: "Switches", toc_connection: "Connect", toc_config: "Configuration", toc_tips: "Tips",
+        devices_title: "Compatible Devices",
+        devices_intro: "One-Key Communicator runs on any device with a modern browser. Tablets offer the best writing experience.",
+        device_tablet_text: "Ideal as a writing device. The large screen shows letters clearly.",
+        device_phone_text: "Good as a reader device or on the go.",
+        device_laptop_text: "Good for reading or a larger screen.",
+        device_tv_text: "Perfect as a large reader screen for the family.",
+        tag_recommended: "Recommended", tag_reader: "Good for Reader", tag_versatile: "Versatile",
+        tag_groups: "For Groups", tag_simplest: "Simplest Option", tag_best_value: "Best Value",
+        tip_starter_title: "Recommendation for Beginners",
+        tip_starter_text: "iPad + Bluetooth button is the most reliable combination. Family can follow along with smartphones.",
+        switches_title: "Switches", switches_intro: "One-Key responds to any key press, mouse click, or touch.",
+        switches_simple_title: "Simplest Option: Keyboard or Mouse",
+        switch_keyboard_title: "Regular Keyboard", switch_keyboard_text: "Any key works — spacebar, enter, or any other. Choose the most comfortable key.",
+        switch_mouse_title: "Mouse / Trackpad", switch_mouse_text: "Any mouse click works. Useful if one hand can still be controlled.",
+        switch_numpad_title: "Mini Keyboard / Numpad", switch_numpad_text: "Compact keyboards or separate numpads are easier to position.",
+        switches_bt_title: "Bluetooth Switches (wireless)",
+        switch_bt_shutter_title: "Bluetooth Camera Shutter", switch_bt_shutter_text: "Designed for smartphone selfies, perfect as a switch. Small, cheap, easy to pair.",
+        switch_bt_foot_title: "Bluetooth Foot Switch", switch_bt_foot_text: "When hands cannot be used but foot movement is possible.",
+        switches_at_title: "Assistive Technology Switches",
+        switch_bigbtn_title: "Big Button / Buzzer", switch_bigbtn_text: "Large buttons (5–15 cm), easy to hit, low force required.",
+        switch_touch_title: "Touch Sensor / Proximity", switch_touch_text: "Activated by light touch or proximity.",
+        switch_sippuff_title: "Sip-Puff Switch", switch_sippuff_text: "Controlled by breath pressure — for minimal movement.",
+        notice_keys_title: "Note on Key Mapping", notice_keys_text: "Some Bluetooth devices send specific keys. Everything works with OKC.",
+        connection_title: "Connect Switch",
+        conn_ipad_title: "Connect Bluetooth to iPad / iPhone",
+        conn_step1_title: "Put switch in pairing mode", conn_step1_text: "Usually long press (3–5 sec) until LED blinks.",
+        conn_step2_title: "Open Bluetooth settings", conn_step2_text: "On iPad: Settings → Bluetooth.",
+        conn_step3_title: "Select device", conn_step3_text: "The switch appears in the device list. Tap to connect.",
+        conn_step4_title: "Test", conn_step4_text: "Open Notes app, press button — a character should appear.",
+        tip_bt_title: "Connection issues?", tip_bt_text: "Remove the switch from known devices and re-pair.",
+        config_title: "Configuration in One-Key",
+        cfg_step1_title: "Open app", cfg_step1_text: "Go to /app. A room is created automatically.",
+        cfg_step2_title: "Adjust timing", cfg_step2_text: "Open settings. Set scan speed — slower is easier at first.",
+        cfg_step3_title: "Share QR code", cfg_step3_text: "Press share and show QR code. Family can then follow along.",
+        cfg_speed_title: "Scan Speed", cfg_speed_text: "How fast the letters cycle. Start slow and increase gradually.",
+        cfg_tts_title: "Text-to-Speech", cfg_tts_text: "Written text is read aloud.",
+        cfg_phrases_title: "Quick Phrases", cfg_phrases_text: "Predefined phrases for common situations.",
+        tips_title: "Tips & Tricks",
+        tip_battery_title: "Save Battery", tip_battery_text: "Disable auto-lock during use. Keep a charging cable ready.",
+        tip_offline_title: "Offline Tip", tip_offline_text: "App needs internet. In hospital: use mobile hotspot.",
+        tip_position_title: "Switch Position", tip_position_text: "Experiment with different positions until comfortable.",
+        tip_practice_title: "Practice Together", tip_practice_text: "Practice with family until the timing feels natural.",
+        contribute_title: "Improve This Page",
+        contribute_text: "Connected a switch successfully? Share your experience.",
+        contribute_btn: "Submit Hardware Tip →",
+    },
+    fr: {
+        nav_home: "Accueil", nav_start: "Lancer l'app →", nav_impressum: "Mentions légales",
+        hw_page_title: "Matériel & Boutons",
+        hw_page_subtitle: "Tout ce qu'il faut savoir pour utiliser One-Key avec votre appareil et bouton.",
+        devices_title: "Appareils compatibles", switches_title: "Boutons & commutateurs",
+        connection_title: "Établir la connexion", config_title: "Configuration", tips_title: "Conseils",
+    },
+    es: {
+        nav_home: "Inicio", nav_start: "Iniciar App →", nav_impressum: "Aviso legal",
+        hw_page_title: "Hardware & Pulsadores",
+        hw_page_subtitle: "Todo lo que necesitas saber para usar One-Key con tu dispositivo y pulsador.",
+        devices_title: "Dispositivos compatibles", switches_title: "Pulsadores & conmutadores",
+        connection_title: "Establecer conexión", config_title: "Configuración", tips_title: "Consejos",
+    }
+};
+
+function switchLang(lang) {
+    const dict = translations[lang] || {};
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+    document.documentElement.lang = lang;
+    localStorage.setItem('okc-lang', lang);
+}
+
+const savedLang = localStorage.getItem('okc-lang');
+if (savedLang && savedLang !== 'de') {
+    document.getElementById('langSwitch').value = savedLang;
+    switchLang(savedLang);
+}
+</script>
+</body>
+</html>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {

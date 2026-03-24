@@ -9,16 +9,14 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
+            --primary: #1a56b0;
             --text: #1e293b;
             --text-light: #64748b;
             --bg: #ffffff;
             --bg-soft: #f8fafc;
             --border: #e2e8f0;
-            --radius: 16px;
-            --success: #10b981;
-            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --radius: 4px;
+            --success: #16a34a;
         }
 
         body {
@@ -47,35 +45,68 @@
             align-items: center;
         }
         .logo {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
-            color: var(--primary);
+            color: var(--text);
             text-decoration: none;
+            letter-spacing: -0.01em;
         }
-        .logo span { color: var(--text); }
+        .logo strong { color: var(--primary); }
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
         nav a {
             color: var(--text-light);
             text-decoration: none;
-            margin-left: 24px;
-            font-size: 0.95rem;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            border-radius: var(--radius);
         }
         nav a:hover { color: var(--primary); }
+        .nav-cta {
+            background: var(--primary);
+            color: white !important;
+            font-weight: 600;
+        }
+        .nav-cta:hover { background: #1447a0; }
+        .lang-select select {
+            appearance: none;
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 5px 24px 5px 8px;
+            border-radius: var(--radius);
+            font-size: 0.8rem;
+            color: var(--text);
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 6px center;
+        }
 
-        /* Hero */
+        /* Page hero — no gradient */
         .hero {
-            background: var(--gradient);
-            color: white;
-            padding: 60px 0;
-            text-align: center;
+            padding: 48px 0 40px;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 8px;
         }
         .hero h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 12px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
         }
         .hero p {
-            font-size: 1.2rem;
-            opacity: 0.9;
+            font-size: 0.9375rem;
+            color: var(--text-light);
         }
 
         /* Stats Grid */
@@ -101,7 +132,7 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.12);
         }
         .stat-card.highlight {
-            background: var(--gradient);
+            background: var(--primary);
             color: white;
         }
         .stat-value {
@@ -164,16 +195,18 @@
         }
 
         /* Footer */
-        footer {
-            padding: 32px 0;
-            text-align: center;
-            color: var(--text-light);
-            font-size: 0.9rem;
+        footer { padding: 36px 0; border-top: 1px solid var(--border); }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
-        footer a {
-            color: var(--primary);
-            text-decoration: none;
-        }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+        .footer-links a { color: var(--text-light); text-decoration: none; font-size: 0.8rem; }
+        .footer-links a:hover { color: var(--primary); }
+        .footer-copy { color: var(--text-light); font-size: 0.75rem; }
 
         /* Loading */
         .loading {
@@ -185,8 +218,8 @@
             .hero p { font-size: 0.95rem; }
             .stat-value { font-size: 2rem; }
             .stat-label { font-size: 0.85rem; }
-            nav a { display: none; }
-            nav select { margin-left: 0; }
+            nav a:not(.nav-cta) { display: none; }
+            .lang-select { display: none; }
             .stats-grid { grid-template-columns: 1fr; gap: 16px; }
             .stat-card { padding: 20px; }
             .country-grid { grid-template-columns: repeat(2, 1fr); }
@@ -200,27 +233,30 @@
 
 <header>
     <div class="container">
-        <a href="/" class="logo">One-Key</a>
+        <a href="/" class="logo"><strong>One-Key</strong> Communicator</a>
         <nav>
             <a href="/" data-i18n="nav_home">Home</a>
             <a href="/hardware" data-i18n="nav_hardware">Hardware</a>
-            <select id="langSwitch" onchange="switchLang(this.value)" style="margin-left: 16px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;">
-                <option value="de">🇩🇪 DE</option>
-                <option value="en">🇬🇧 EN</option>
-                <option value="fr">🇫🇷 FR</option>
-                <option value="es">🇪🇸 ES</option>
-            </select>
-            <a href="/app" data-i18n="nav_start">App starten</a>
+            <div class="lang-select">
+                <select id="langSwitch" onchange="switchLang(this.value)">
+                    <option value="de" selected>DE</option>
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                    <option value="es">ES</option>
+                </select>
+            </div>
+            <a href="/app" class="nav-cta" data-i18n="nav_start">App starten →</a>
         </nav>
     </div>
 </header>
 
-<section class="hero">
+<div class="hero">
     <div class="container">
-        <h1 data-i18n="stats_title">📊 Live Statistiken</h1>
+        <div class="hero-eyebrow">Live-Daten</div>
+        <h1 data-i18n="stats_title">Statistiken</h1>
         <p data-i18n="stats_subtitle">Aktuelle Nutzung von One-Key Communicator</p>
     </div>
-</section>
+</div>
 
 <section class="stats-section">
     <div class="container">
@@ -270,7 +306,15 @@
 
 <footer>
     <div class="container">
-        <p><a href="/" data-i18n="nav_back">← Zurück zur Startseite</a> · <a href="/impressum" data-i18n="nav_impressum">Impressum</a></p>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="/" data-i18n="nav_home">Home</a>
+                <a href="/hardware" data-i18n="nav_hardware">Hardware</a>
+                <a href="https://github.com/httrp/one-key-communicator" target="_blank">GitHub</a>
+                <a href="/impressum" data-i18n="nav_impressum">Impressum</a>
+            </div>
+            <div class="footer-copy">One-Key Communicator · Open Source (GPLv3)</div>
+        </div>
     </div>
 </footer>
 
@@ -320,7 +364,23 @@ setInterval(loadStats, 10000);
 
 // i18n translations
 const translations = {
-    de: {},
+    de: {
+        nav_home: "Home", nav_hardware: "Hardware", nav_start: "App starten →", nav_back: "← Zurück", nav_impressum: "Impressum",
+        stats_title: "Statistiken",
+        stats_subtitle: "Aktuelle Nutzung von One-Key Communicator",
+        stats_live: "Live \u2014 Aktualisiert alle 10 Sekunden",
+        stats_connections: "Aktive Verbindungen",
+        stats_alltime: "Nutzer insgesamt",
+        stats_rooms: "Aktive R\u00e4ume",
+        stats_total: "R\u00e4ume insgesamt",
+        stats_countries: "L\u00e4nder",
+        stats_about: "\u00dcber diese Statistiken",
+        stats_conn_label: "Aktive Verbindungen:", stats_conn_desc: "Anzahl der derzeit offenen WebSocket-Verbindungen.",
+        stats_alltime_label: "Nutzer insgesamt:", stats_alltime_desc: "Alle jemals hergestellten Verbindungen.",
+        stats_rooms_label: "Aktive R\u00e4ume:", stats_rooms_desc: "R\u00e4ume, die noch nicht automatisch gel\u00f6scht wurden.",
+        stats_total_label: "R\u00e4ume insgesamt:", stats_total_desc: "Gesamtzahl aller jemals erstellten R\u00e4ume.",
+        stats_privacy: "One-Key speichert keine pers\u00f6nlichen Daten. R\u00e4ume werden nach 24 Stunden Inaktivit\u00e4t automatisch gel\u00f6scht.",
+    },
     en: {
         nav_home: "Home", nav_hardware: "Hardware", nav_start: "Launch App", nav_back: "← Back to Home", nav_impressum: "Imprint",
         stats_title: "📊 Live Statistics",
