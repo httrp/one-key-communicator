@@ -541,12 +541,14 @@ button {
 
 /* Keypress flash — brief highlight when a letter/key is selected */
 @keyframes keypressFlash {
-    0%   { background: var(--accent); color: white; box-shadow: 0 0 0 4px var(--accent-glow), 0 0 18px 4px var(--accent-glow); transform: scale(1.35); }
-    60%  { background: var(--accent); color: white; transform: scale(1.2); }
+    0%   { background: white; color: var(--accent); border-color: var(--accent);
+           box-shadow: 0 0 0 5px var(--accent-glow), 0 0 24px 8px var(--accent-glow);
+           transform: scale(1.5); }
+    40%  { background: var(--accent); color: white; transform: scale(1.3); }
     100% { background: ''; color: ''; box-shadow: none; transform: scale(1); }
 }
 .key.key-flash {
-    animation: keypressFlash 0.22s ease-out forwards;
+    animation: keypressFlash 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
     z-index: 10;
     position: relative;
 }
