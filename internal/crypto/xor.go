@@ -8,6 +8,7 @@ import (
 
 // Encrypt obfuscates text using XOR with the given key.
 // Returns base64-encoded result.
+// Deprecated: Use EncryptText with room ID instead.
 func Encrypt(text, key string) string {
 	if text == "" || key == "" {
 		return text
@@ -25,6 +26,7 @@ func Encrypt(text, key string) string {
 
 // Decrypt reverses XOR obfuscation using the given key.
 // Expects base64-encoded input.
+// Deprecated: Use DecryptText with room ID instead.
 func Decrypt(encoded, key string) string {
 	if encoded == "" || key == "" {
 		return encoded
@@ -44,4 +46,23 @@ func Decrypt(encoded, key string) string {
 	}
 
 	return string(result)
+}
+
+// EncryptText encrypts text using the server secret and room ID.
+// Uses XOR with a derived key (32 bytes from HMAC).
+func EncryptText(text, roomID string) string {
+	if text == "" {
+		return text
+	}
+	key := DeriveKey(roomID)
+	return Encrypt(text, string(key))
+}
+
+// DecryptText decrypts text that was encrypted with EncryptText.
+func DecryptText(encoded, roomID string) string {
+	if encoded == "" {
+		return encoded
+	}
+	key := DeriveKey(roomID)
+	return Decrypt(encoded, string(key))
 }

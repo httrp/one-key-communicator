@@ -588,6 +588,9 @@
             case 'HELP':
                 showHelpScan();
                 return;
+            case 'EXIT':
+                showExitConfirm();
+                return;
             case 'BACK':
                 inputMode = 'keyboard';
                 renderAndStart();
@@ -599,10 +602,39 @@
     // MODAL SCAN MODES (Settings, Share, Help)
     // =========================================================================
 
+    function updateSettingsIndicators() {
+        // Update speed indicator
+        const speedFill = $('speedFill');
+        const speedValue = $('speedValue');
+        if (speedFill && speedValue) {
+            // Speed range: 200ms (fast) to 2000ms (slow)
+            // Fill percentage: 100% at 200ms (fastest), 0% at 2000ms (slowest)
+            const percentage = Math.round(((2000 - baseSpeed) / 1800) * 100);
+            speedFill.style.width = percentage + '%';
+            speedValue.textContent = (baseSpeed / 1000).toFixed(1) + 's';
+        }
+
+        // Update dark mode button state
+        const darkIcon = $('darkIcon');
+        const darkStatus = $('darkStatus');
+        const isDark = document.documentElement.dataset.theme === 'dark';
+        if (darkIcon) darkIcon.textContent = isDark ? '☀️' : '🌙';
+        if (darkStatus) darkStatus.textContent = isDark ? I18N.t('mode_light') : I18N.t('mode_dark');
+
+        // Update numbers button state
+        const numbersIcon = $('numbersIcon');
+        const numbersStatus = $('numbersStatus');
+        const showNums = $('numbersToggle').checked;
+        if (numbersIcon) numbersIcon.textContent = showNums ? '🔢' : '🔠';
+        if (numbersStatus) numbersStatus.textContent = showNums ? I18N.t('numbers_on') : I18N.t('numbers_off');
+    }
+
     function showSettingsScan() {
         Runner.stop();
         settingsPanel.classList.remove('hidden');
         inputMode = 'settings';
+
+        updateSettingsIndicators();
 
         const scanArea = $('settingsScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
@@ -703,6 +735,38 @@
         $('helpModal').classList.add('hidden');
         inputMode = 'keyboard';
         renderAndStart();
+    }
+
+    // =========================================================================
+    // EXIT CONFIRMATION
+    // =========================================================================
+    function showExitConfirm() {
+        Runner.stop();
+        $('exitModal').classList.remove('hidden');
+        inputMode = 'exit';
+
+        const scanArea = $('exitScanArea');
+        const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
+        const speed = getAdaptiveSpeed();
+
+        Runner.start(scanBtns, speed, onExitScanSelected);
+    }
+
+    function onExitScanSelected(value) {
+        $('exitModal').classList.add('hidden');
+        if (value === 'CONFIRM_EXIT') {
+            // Same logic as btnEndSession click
+            if (roomId) {
+                fetch('/api/rooms/' + roomId, { method: 'DELETE' }).catch(() => {});
+            }
+            WS.disconnect();
+            localStorage.removeItem('okc-room-id');
+            localStorage.removeItem('okc-pin');
+            window.location.reload();
+        } else {
+            inputMode = 'keyboard';
+            renderAndStart();
+        }
     }
 
     // =========================================================================
@@ -1192,6 +1256,23 @@
         }
     });
 
+    // End session - delete room and start fresh
+    $('btnEndSession').addEventListener('click', function() {
+        if (!roomId) return;
+        if (!confirm(I18N.t('end_session_confirm'))) return;
+        
+        // Delete room on server
+        fetch('/api/rooms/' + roomId, { method: 'DELETE' })
+            .catch(() => {});  // Ignore errors
+        
+        // Clear local state
+        localStorage.removeItem('okc-room');
+        WS.disconnect();
+        
+        settingsPanel.classList.add('hidden');
+        location.hash = '/';
+    });
+
     // TTS button
     $('btnTTS').addEventListener('click', speak);
 
@@ -1329,6 +1410,20 @@
 
     document.addEventListener('keydown', function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+        
+        // Exclude system/navigation keys that shouldn't trigger the Runner
+        const excludedKeys = [
+            'Escape', 'Tab',
+            'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+            'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+            'Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock',
+            'Home', 'End', 'PageUp', 'PageDown', 'Insert', 'Delete',
+            'ContextMenu', 'PrintScreen', 'Pause'
+        ];
+        if (excludedKeys.includes(e.key)) return;
+        // Ignore keys with Ctrl/Alt/Meta modifiers (browser shortcuts)
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        
         handleGlobalInput(e);
     });
 

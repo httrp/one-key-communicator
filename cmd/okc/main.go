@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/dominikhattrup/one-key-communicator/internal/config"
+	"github.com/dominikhattrup/one-key-communicator/internal/crypto"
 	"github.com/dominikhattrup/one-key-communicator/internal/server"
 	"github.com/dominikhattrup/one-key-communicator/internal/storage"
 	"github.com/dominikhattrup/one-key-communicator/web"
@@ -11,6 +12,11 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	// Initialize crypto with server secret
+	if err := crypto.Init(cfg.DataDir); err != nil {
+		log.Fatalf("Failed to initialize crypto: %v", err)
+	}
 
 	db, err := storage.Open(cfg.DataDir)
 	if err != nil {

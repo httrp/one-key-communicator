@@ -97,6 +97,26 @@ func (m *Manager) Get(id string) *Room {
 	return r
 }
 
+// Delete removes a room immediately, disconnecting all clients.
+func (m *Manager) Delete(id string) {
+	m.mu.Lock()
+	r, ok := m.rooms[id]
+	if ok {
+		r.mu.Lock()
+		for c := range r.readers {
+			close(c.Send)
+		}
+		r.readers = nil
+		r.mu.Unlock()
+		delete(m.rooms, id)
+	}
+	m.mu.Unlock()
+
+	if m.db != nil {
+		_ = m.db.DeleteRoom(id)
+	}
+}
+
 // Cleanup removes rooms that have been inactive.
 func (m *Manager) Cleanup(maxAge time.Duration) {
 	m.mu.Lock()

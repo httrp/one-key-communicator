@@ -90,7 +90,7 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 
 		if strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/ws/") {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusNoContent)
@@ -128,6 +128,13 @@ func (s *Server) handleRoomInfo(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/rooms/")
 	if id == "" {
 		http.Error(w, "Room ID required", http.StatusBadRequest)
+		return
+	}
+
+	// DELETE - delete room
+	if r.Method == http.MethodDelete {
+		s.rooms.Delete(id)
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 

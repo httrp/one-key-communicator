@@ -87,34 +87,52 @@ func (db *DB) migrate() error {
 }
 
 // SaveRoom creates or updates a room record.
-// Text is encrypted with PIN before storage.
+// PIN is encrypted with server secret, text is encrypted with room-derived key.
 func (db *DB) SaveRoom(r *RoomRecord) error {
-	encryptedText := crypto.Encrypt(r.TextState, r.PIN)
-	_, err := db.conn.Exec(`
+	// Encrypt PIN with server secret (reversible for writer display)
+	encryptedPIN, err := crypto.EncryptPIN(r.PIN)
+	if err != nil {
+		encryptedPIN = r.PIN // Fallback to plain if encryption fails
+	}
+	// Encrypt text with room-derived key
+	encryptedText := crypto.EncryptText(r.TextState, r.ID)
+	_, err = db.conn.Exec(`
 		INSERT INTO rooms (id, pin, created_at, last_active, text_state, language)
 		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			last_active = excluded.last_active,
 			text_state  = excluded.text_state
-	`, r.ID, r.PIN, r.CreatedAt, r.LastActive, encryptedText, r.Language)
+	`, r.ID, encryptedPIN, r.CreatedAt, r.LastActive, encryptedText, r.Language)
 	return err
 }
 
 // GetRoom retrieves a room by ID.
-// Text is decrypted with PIN after loading.
+// PIN and text are decrypted after loading.
 func (db *DB) GetRoom(id string) (*RoomRecord, error) {
 	row := db.conn.QueryRow(`SELECT id, pin, created_at, last_active, text_state, language FROM rooms WHERE id = ?`, id)
 	r := &RoomRecord{}
 	if err := row.Scan(&r.ID, &r.PIN, &r.CreatedAt, &r.LastActive, &r.TextState, &r.Language); err != nil {
 		return nil, err
 	}
-	r.TextState = crypto.Decrypt(r.TextState, r.PIN)
+	// Decrypt PIN
+	decryptedPIN, err := crypto.DecryptPIN(r.PIN)
+	if err == nil {
+		r.PIN = decryptedPIN
+	}
+	// Decrypt text with room-derived key
+	r.TextState = crypto.DecryptText(r.TextState, r.ID)
 	return r, nil
 }
 
 // TouchRoom updates the last_active timestamp.
 func (db *DB) TouchRoom(id string) error {
 	_, err := db.conn.Exec(`UPDATE rooms SET last_active = datetime('now') WHERE id = ?`, id)
+	return err
+}
+
+// DeleteRoom removes a single room by ID.
+func (db *DB) DeleteRoom(id string) error {
+	_, err := db.conn.Exec(`DELETE FROM rooms WHERE id = ?`, id)
 	return err
 }
 

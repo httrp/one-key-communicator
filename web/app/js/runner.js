@@ -19,6 +19,8 @@ const Runner = {
     _hoverPaused: false,
     _firstKeyDelay: 2.0,  // Multiplier for first key delay (restart pause)
     _resetAfterSelect: true,  // Reset to first key after selection
+    _inputEnabled: false,  // Prevents accidental input on page load
+    _inputDelayMs: 600,  // Grace period before accepting input
 
     /**
      * Start the runner.
@@ -34,9 +36,12 @@ const Runner = {
         this._index = 0;
         this._active = true;
         this._hoverPaused = false;
+        this._inputEnabled = false;  // Start with input disabled
         this._highlight();
         this._timer = setInterval(() => this._advance(), this._speed);
         this._attachInteraction();
+        // Enable input after grace period to prevent accidental selection
+        setTimeout(() => { this._inputEnabled = true; }, this._inputDelayMs);
     },
 
     /** Stop the runner and clean up */
@@ -65,6 +70,7 @@ const Runner = {
     /** Called when the user presses their single key (auto-scan mode) */
     select() {
         if (!this._active || this._keys.length === 0) return;
+        if (!this._inputEnabled) return;  // Ignore input during grace period
         const key = this._keys[this._index];
         const value = key.dataset.value;
 

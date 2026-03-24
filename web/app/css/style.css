@@ -93,6 +93,8 @@ button {
 .btn-primary:active { transform: scale(0.97); }
 .btn-outline { background: transparent; border: 2px solid var(--border-strong); color: var(--text); }
 .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { border-color: var(--red); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: white; border-color: var(--red); }
 .btn-ghost { color: var(--text-secondary); padding: 8px 16px; }
 .btn-ghost:hover { color: var(--text); }
 .btn-block { width: 100%; }
@@ -750,11 +752,45 @@ button {
 .settings-header h2 { font-size: 1rem; font-weight: 700; }
 .settings-close { font-size: 1.4rem; width: 34px; height: 34px; color: var(--text-secondary); }
 .settings-body {
-    padding: 18px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     overflow-y: auto;
+}
+.settings-section {
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.settings-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+}
+.settings-section-icon {
+    font-size: 1rem;
+}
+.settings-section-danger {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+.setting-row-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.setting-row-toggle .setting-label {
+    margin-top: 0;
 }
 .setting-label {
     font-size: 0.72rem;
@@ -762,7 +798,11 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
-    margin-top: 4px;
+    margin-top: 0;
+}
+.btn-sm {
+    padding: 8px 12px;
+    font-size: 0.82rem;
 }
 .setting-select, .setting-input {
     padding: 9px 12px;
@@ -972,7 +1012,7 @@ button {
         --key-h: 54px;
         --key-font: 1.1rem;
         --key-wide-min: 76px;
-        --keys-per-row: 12;
+        --keys-per-row: 10;
     }
     .writer-sidebar {
         display: flex;
@@ -989,10 +1029,10 @@ button {
 /* === Large desktop === */
 @media (min-width: 1400px) {
     :root {
-        --key-min: 54px;
-        --key-h: 58px;
-        --key-font: 1.15rem;
-        --keys-per-row: 14;
+        --key-min: 56px;
+        --key-h: 60px;
+        --key-font: 1.2rem;
+        --keys-per-row: 10;
     }
     .writer-sidebar { width: 280px; }
 }
@@ -1002,14 +1042,27 @@ button {
 .app-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
+    justify-content: space-between;
     padding: 6px 12px;
     background: var(--bg-soft);
     border-top: 1px solid var(--border);
     font-size: 0.72rem;
     color: var(--text-secondary);
     flex-shrink: 0;
+}
+.footer-left, .footer-center, .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.footer-left {
+    justify-content: flex-start;
+}
+.footer-center {
+    justify-content: center;
+}
+.footer-right {
+    justify-content: flex-end;
 }
 .footer-github {
     display: flex;
@@ -1186,7 +1239,16 @@ button {
    SCANNABLE MODAL/SETTINGS BUTTONS
    ========================================================================= */
 
-.settings-scan-area,
+.settings-scan-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+}
+
 .modal-scan-area {
     display: flex;
     flex-wrap: wrap;
@@ -1197,6 +1259,60 @@ button {
     margin-top: 16px;
 }
 
+.scan-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scan-section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    padding: 0 4px;
+}
+
+.scan-row {
+    display: flex;
+    gap: 12px;
+}
+
+.scan-speed-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.speed-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.speed-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green) 0%, var(--warning) 50%, var(--red) 100%);
+    transition: width 0.2s ease;
+    border-radius: 4px;
+}
+
+.speed-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 40px;
+    text-align: right;
+    color: var(--text);
+}
+
 .scan-btn {
     display: flex;
     flex-direction: column;
@@ -1204,8 +1320,7 @@ button {
     justify-content: center;
     min-width: 80px;
     min-height: 70px;
-    flex: 1 1 80px;
-    max-width: 120px;
+    flex: 1;
     background: var(--bg-elevated);
     border: 2px solid var(--border);
     border-radius: 12px;
@@ -1213,6 +1328,11 @@ button {
     cursor: pointer;
     transition: all 0.1s ease;
     user-select: none;
+}
+
+.modal-scan-area .scan-btn {
+    flex: 1 1 80px;
+    max-width: 120px;
 }
 
 .scan-btn:hover {
@@ -1237,6 +1357,18 @@ button {
     border-color: var(--warning);
 }
 
+.scan-btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--red);
+    color: var(--red);
+}
+
+.scan-btn-danger.active {
+    background: var(--red);
+    border-color: var(--red);
+    color: white;
+}
+
 .scan-icon {
     font-size: 24px;
     margin-bottom: 4px;
@@ -1249,22 +1381,117 @@ button {
 }
 
 /* Toolbar scan buttons (when in toolbar mode) */
+.toolbar-section {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: var(--bg-subtle);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.toolbar-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
+.toolbar-row {
+    gap: 8px !important;
+}
+
 .toolbar-scan-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    min-height: 60px;
+    gap: 6px;
+    min-height: 70px;
+    border-radius: 12px !important;
+    background: var(--bg-elevated) !important;
+    border: 2px solid var(--border) !important;
+    transition: all 0.15s ease;
+}
+
+.toolbar-scan-btn:hover {
+    background: var(--bg-subtle) !important;
+    border-color: var(--primary) !important;
+}
+
+.toolbar-scan-btn.active {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .toolbar-scan-icon {
-    font-size: 20px;
+    font-size: 26px;
+    line-height: 1;
 }
 
 .toolbar-scan-label {
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Exit button styling */
+.toolbar-exit-section {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.toolbar-exit-btn {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: var(--red) !important;
+    color: var(--red);
+    width: 100%;
+    max-width: 160px;
+    margin: 0 auto;
+}
+
+.toolbar-exit-btn.active {
+    background: var(--red) !important;
+    color: white;
+}
+
+/* Back button styling */
+.toolbar-back-btn {
+    background: var(--bg-subtle) !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 12px !important;
+    min-height: 60px;
+    flex-direction: row !important;
+    gap: 8px !important;
+}
+
+.toolbar-back-btn .toolbar-scan-icon {
+    font-size: 20px;
+}
+
+.toolbar-back-btn.active {
+    background: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: white;
+}
+
+/* Dark mode for toolbar sections */
+[data-theme="dark"] .toolbar-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .toolbar-scan-btn {
+    background: var(--bg-elevated) !important;
+    border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .toolbar-exit-section {
+    background: rgba(239, 68, 68, 0.1) !important;
 }
 
 /* Dark mode for scan buttons */

@@ -154,75 +154,115 @@
             <button class="icon-btn settings-close" id="btnCloseSettings">&times;</button>
         </div>
         <div class="settings-body">
-            <label class="setting-label" data-i18n="language">Sprache</label>
-            <select id="appLang" class="setting-select">
-                <option value="de">Deutsch</option>
-                <option value="en">English</option>
-                <option value="fr">Fran&#231;ais</option>
-                <option value="es">Espa&#241;ol</option>
-                <option value="it">Italiano</option>
-                <option value="nl">Nederlands</option>
-                <option value="pl">Polski</option>
-                <option value="tr">T&#252;rk&#231;e</option>
-            </select>
-
-            <label class="setting-label" data-i18n="speed">Geschwindigkeit</label>
-            <input type="range" id="speedSlider" class="setting-range" min="200" max="2000" value="1000" step="100">
-            <div class="speed-labels">
-                <span data-i18n="fast">Schnell</span>
-                <span data-i18n="slow">Langsam</span>
+            <!-- Section: Display -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <span class="settings-section-icon">🌐</span>
+                    <span data-i18n="settings_display">Anzeige</span>
+                </div>
+                <label class="setting-label" data-i18n="language">Sprache</label>
+                <select id="appLang" class="setting-select">
+                    <option value="de">Deutsch</option>
+                    <option value="en">English</option>
+                    <option value="fr">Fran&#231;ais</option>
+                    <option value="es">Espa&#241;ol</option>
+                    <option value="it">Italiano</option>
+                    <option value="nl">Nederlands</option>
+                    <option value="pl">Polski</option>
+                    <option value="tr">T&#252;rk&#231;e</option>
+                </select>
+                <div class="setting-row-toggle">
+                    <label class="setting-label" data-i18n="dark_mode">Dark Mode</label>
+                    <div class="setting-toggle">
+                        <input type="checkbox" id="darkModeToggle" class="toggle-input">
+                        <label for="darkModeToggle" class="toggle-label"></label>
+                    </div>
+                </div>
+                <div class="setting-row-toggle">
+                    <label class="setting-label" data-i18n="show_numbers">Zahlen zeigen</label>
+                    <div class="setting-toggle">
+                        <input type="checkbox" id="numbersToggle" class="toggle-input">
+                        <label for="numbersToggle" class="toggle-label"></label>
+                    </div>
+                </div>
             </div>
 
-            <label class="setting-label" data-i18n="show_numbers">Zahlen anzeigen</label>
-            <div class="setting-toggle">
-                <input type="checkbox" id="numbersToggle" class="toggle-input">
-                <label for="numbersToggle" class="toggle-label"></label>
+            <!-- Section: Scanner -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <span class="settings-section-icon">⏱️</span>
+                    <span data-i18n="settings_scanner">Scanner</span>
+                </div>
+                <label class="setting-label" data-i18n="speed">Geschwindigkeit</label>
+                <input type="range" id="speedSlider" class="setting-range" min="200" max="2000" value="1000" step="100">
+                <div class="speed-labels">
+                    <span data-i18n="fast">Schnell</span>
+                    <span data-i18n="slow">Langsam</span>
+                </div>
             </div>
 
-            <label class="setting-label" data-i18n="dark_mode">Dark Mode</label>
-            <div class="setting-toggle">
-                <input type="checkbox" id="darkModeToggle" class="toggle-input">
-                <label for="darkModeToggle" class="toggle-label"></label>
+            <!-- Section: Room -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <span class="settings-section-icon">📡</span>
+                    <span data-i18n="settings_room">Raum</span>
+                </div>
+                <label class="setting-label" data-i18n="room_duration">Raum speichern</label>
+                <select id="roomDuration" class="setting-select">
+                    <option value="0" data-i18n="duration_session">Diese Sitzung</option>
+                    <option value="1" data-i18n="duration_1h">1 Stunde</option>
+                    <option value="12" data-i18n="duration_12h" selected>12 Stunden</option>
+                    <option value="24" data-i18n="duration_24h">24 Stunden</option>
+                </select>
+                <button class="btn btn-outline btn-block btn-sm" id="btnNewRoom" data-i18n="new_room_btn">+ Neuen Raum erstellen</button>
+                <div class="setting-row">
+                    <input type="text" id="joinRoomInput" class="setting-input" placeholder="abc123">
+                    <button class="btn btn-primary btn-small" id="btnJoinRoom" data-i18n="join">OK</button>
+                </div>
             </div>
 
-            <label class="setting-label" data-i18n="room_duration">Raum speichern</label>
-            <select id="roomDuration" class="setting-select">
-                <option value="0" data-i18n="duration_session">Diese Sitzung</option>
-                <option value="1" data-i18n="duration_1h">1 Stunde</option>
-                <option value="12" data-i18n="duration_12h" selected>12 Stunden</option>
-                <option value="24" data-i18n="duration_24h">24 Stunden</option>
-            </select>
-
-            <label class="setting-label" data-i18n="new_room">Neuen Raum</label>
-            <button class="btn btn-outline btn-block" id="btnNewRoom" data-i18n="new_room_btn">Neuen Raum erstellen</button>
-
-            <label class="setting-label" data-i18n="join_room">Raum beitreten</label>
-            <div class="setting-row">
-                <input type="text" id="joinRoomInput" class="setting-input" placeholder="abc123">
-                <button class="btn btn-primary btn-small" id="btnJoinRoom" data-i18n="join">OK</button>
+            <!-- Section: Danger Zone -->
+            <div class="settings-section settings-section-danger">
+                <button class="btn btn-outline btn-block btn-danger" id="btnEndSession" data-i18n="end_session_btn">Raum löschen</button>
             </div>
         </div>
         <!-- Scannable settings buttons for runner users -->
         <div class="settings-scan-area" id="settingsScanArea">
-            <div class="scan-btn" data-value="SPEED_UP">
-                <span class="scan-icon">▲</span>
-                <span class="scan-label" data-i18n="speed_faster">Schneller</span>
+            <div class="scan-section">
+                <div class="scan-section-label" data-i18n="speed">⏱️ Tempo</div>
+                <div class="scan-speed-indicator" id="scanSpeedIndicator">
+                    <div class="speed-bar"><div class="speed-fill" id="speedFill"></div></div>
+                    <span class="speed-value" id="speedValue">1.0s</span>
+                </div>
+                <div class="scan-row">
+                    <div class="scan-btn" data-value="SPEED_UP">
+                        <span class="scan-icon">🐰</span>
+                        <span class="scan-label" data-i18n="speed_faster">Schneller</span>
+                    </div>
+                    <div class="scan-btn" data-value="SPEED_DOWN">
+                        <span class="scan-icon">🐢</span>
+                        <span class="scan-label" data-i18n="speed_slower">Langsamer</span>
+                    </div>
+                </div>
             </div>
-            <div class="scan-btn" data-value="SPEED_DOWN">
-                <span class="scan-icon">▼</span>
-                <span class="scan-label" data-i18n="speed_slower">Langsamer</span>
+            <div class="scan-section">
+                <div class="scan-section-label">🎨 Anzeige</div>
+                <div class="scan-row">
+                    <div class="scan-btn" data-value="TOGGLE_DARK" id="scanDarkBtn">
+                        <span class="scan-icon" id="darkIcon">🌙</span>
+                        <span class="scan-label"><span id="darkStatus">Dark Mode</span></span>
+                    </div>
+                    <div class="scan-btn" data-value="TOGGLE_NUMBERS" id="scanNumbersBtn">
+                        <span class="scan-icon" id="numbersIcon">123</span>
+                        <span class="scan-label"><span id="numbersStatus">Zahlen</span></span>
+                    </div>
+                </div>
             </div>
-            <div class="scan-btn" data-value="TOGGLE_DARK">
-                <span class="scan-icon">◐</span>
-                <span class="scan-label" data-i18n="dark_mode">Dark Mode</span>
-            </div>
-            <div class="scan-btn" data-value="TOGGLE_NUMBERS">
-                <span class="scan-icon">123</span>
-                <span class="scan-label" data-i18n="show_numbers">Zahlen</span>
-            </div>
-            <div class="scan-btn scan-btn-back" data-value="BACK">
-                <span class="scan-icon">←</span>
-                <span class="scan-label" data-i18n="back">Zurück</span>
+            <div class="scan-section">
+                <div class="scan-btn scan-btn-back" data-value="BACK">
+                    <span class="scan-icon">⬅</span>
+                    <span class="scan-label" data-i18n="back">Zurück</span>
+                </div>
             </div>
         </div>
     </div>
@@ -278,12 +318,40 @@
     </div>
 </div>
 
+<!-- ===== Exit Confirm Modal ===== -->
+<div id="exitModal" class="modal-overlay hidden">
+    <div class="modal exit-modal">
+        <h2 data-i18n="exit_title">🚪 Session beenden?</h2>
+        <div class="help-content">
+            <p data-i18n="exit_text">Der Raum wird gelöscht und alle Verbindungen getrennt. Der Text ist dann unwiderruflich weg.</p>
+        </div>
+        <div class="modal-scan-area" id="exitScanArea">
+            <div class="scan-btn scan-btn-danger" data-value="CONFIRM_EXIT">
+                <span class="scan-icon">✗</span>
+                <span class="scan-label" data-i18n="exit_confirm">Ja, beenden</span>
+            </div>
+            <div class="scan-btn scan-btn-back" data-value="BACK">
+                <span class="scan-icon">←</span>
+                <span class="scan-label" data-i18n="back">Zurück</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Footer ===== -->
 <footer class="app-footer">
-    <span>One-Key v0.1-beta</span>
-    <a href="https://github.com/httrp/one-key-communicator" target="_blank" rel="noopener noreferrer" class="footer-github" title="GitHub">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-    </a>
+    <div class="footer-left">
+        <a href="https://github.com/httrp/one-key-communicator" target="_blank" rel="noopener noreferrer" class="footer-github" title="GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </a>
+        <span>One-Key v0.9</span>
+    </div>
+    <div class="footer-center">
+        <span title="Hosted in Germany (Hetzner Cloud)">Hosted in 🇩🇪</span>
+    </div>
+    <div class="footer-right">
+        <span>Made with <span style="color: #e25555;">❤</span> by Dominik Hattrup</span>
+    </div>
 </footer>
 
 <script src="js/i18n.js"></script>

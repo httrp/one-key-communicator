@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One-Key Communicator — Kommunizieren mit einer Taste</title>
+    <title>One-Key — Kommunizieren mit einer Taste</title>
     <meta name="description" content="Kostenloses, quelloffenes Kommunikationstool für Menschen, die nur eine einzige Taste drücken können. Keine Installation, kein Account — einfach öffnen und kommunizieren.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
     <style>
@@ -399,29 +399,6 @@
             font-size: 2.5rem;
         }
 
-        /* Stats CTA */
-        .stats-cta {
-            padding: 60px 0;
-            background: var(--bg-soft);
-            text-align: center;
-        }
-        .stats-cta h3 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-        .stats-cta p {
-            color: var(--text-light);
-            margin-bottom: 20px;
-        }
-        .stats-cta a {
-            color: var(--primary);
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .stats-cta a:hover {
-            text-decoration: underline;
-        }
-
         /* Footer */
         footer {
             padding: 60px 0;
@@ -544,13 +521,12 @@
     <div class="container">
         <a href="/" class="logo">
             <span class="logo-icon">⌨️</span>
-            One-Key <span>Communicator</span>
+            One-Key
         </a>
         <nav>
             <a href="#how">So funktioniert's</a>
             <a href="#features">Features</a>
             <a href="/hardware">Hardware</a>
-            <a href="/stats">Stats</a>
             <div class="lang-select">
                 <select id="langSwitch" onchange="switchLang(this.value)">
                     <option value="de" selected>🇩🇪 DE</option>
@@ -754,14 +730,6 @@
     </div>
 </section>
 
-<section class="stats-cta">
-    <div class="container">
-        <h3 data-i18n="stats_title">📊 Live-Statistiken</h3>
-        <p data-i18n="stats_text">Sieh in Echtzeit, wie viele Menschen gerade kommunizieren.</p>
-        <a href="/stats" data-i18n="stats_cta">Statistiken ansehen →</a>
-    </div>
-</section>
-
 <section class="opensource-promise" style="padding: 80px 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center;">
     <div class="container">
         <h2 style="font-size: 2rem; margin-bottom: 16px;">💚 Open Source</h2>
@@ -786,7 +754,7 @@
                 <a href="/impressum">Impressum</a>
             </div>
             <div class="footer-copy">
-                <span id="version-footer">One-Key v0.1-beta</span> — Open Source (GPLv3)
+                <span id="version-footer">One-Key v0.9</span> · Made with <span style="color: #e25555;">❤</span> by Dominik Hattrup · Hosted in 🇩🇪 · Open Source (GPLv3)
             </div>
         </div>
     </div>
@@ -897,26 +865,70 @@ const translations = {
     fr: {
         hero_badge: "Gratuit & Open Source",
         hero_title: "Communiquer avec une seule touche",
-        hero_subtitle: "Un outil simple pour les personnes à mobilité réduite. Gratuit, open source, sans installation.",
+        hero_subtitle: "Pour les personnes qui ne peuvent plus parler — mais ont encore tout à dire. Radicalement simple, complètement gratuit.",
         hero_cta: "→ Commencer",
         hero_hardware: "🎛️ Guide matériel",
+        how_title: "Communiquer en 4 étapes",
+        how_subtitle: "Pas d'installation, pas de compte, pas de configuration. Ouvrir et commencer.",
+        step1_title: "Ouvrir", step1_text: "Ouvrez One-Key dans n'importe quel navigateur sur tablette ou téléphone.",
+        step2_title: "Créer une salle", step2_text: "Une salle est créée automatiquement. Vous obtenez un QR code.",
+        step3_title: "Partager le QR code", step3_text: "La famille scanne le code — elle voit instantanément ce que vous tapez.",
+        step4_title: "Communiquer", step4_text: "Appuyez sur votre touche pour sélectionner les lettres. Terminé!",
+        features_title: "Tout ce dont vous avez besoin",
+        features_subtitle: "Développé avec et pour les personnes à mobilité réduite.",
+        f1_title: "Une touche suffit", f1_text: "Tout fonctionne avec une seule entrée — touche, clic, touch ou capteur.",
+        f2_title: "Fonctionne partout", f2_text: "Téléphone, tablette, ordinateur, Smart TV — tout appareil avec navigateur.",
+        f3_title: "Privé & Sécurisé", f3_text: "Pas de compte, pas de tracking. Les salles ont un PIN et s'effacent après 24h.",
+        f4_title: "8 Langues", f4_text: "Allemand, anglais, français, espagnol, italien, polonais et plus.",
+        f5_title: "Phrases rapides", f5_text: "Phrases prédéfinies pour situations courantes: douleur, soif, appeler à l'aide.",
+        f6_title: "Synthèse vocale", f6_text: "Le texte écrit peut être lu à haute voix.",
         flow_title: "Comment ça marche en pratique",
+        flow_subtitle: "Une pression sur la tablette — et le message apparaît sur tous les appareils connectés.",
         flow_button: "Bouton",
         flow_tablet: "Tablette (Écrivain)",
         flow_tv: "TV (Famille)",
-        beta_warning: "One-Key est encore en développement. Utilisez avec précaution et signalez les problèmes."
+        flow_desc: "La famille voit en temps réel ce qui est écrit — sur tout appareil avec navigateur.",
+        hw_title: "🎛️ Quel matériel fonctionne?",
+        hw_text: "Boutons Bluetooth à partir de 5€, pédales, gros boutons, capteurs tactiles.",
+        hw_cta: "Ouvrir le guide matériel →",
+        stats_title: "📊 Statistiques en direct",
+        stats_text: "Voyez en temps réel combien de personnes communiquent.",
+        stats_cta: "Voir statistiques →",
+        beta_warning: "One-Key est en développement. Usage avec précaution."
     },
     es: {
         hero_badge: "Gratis & Open Source",
         hero_title: "Comunicarse con una sola tecla",
-        hero_subtitle: "Una herramienta simple para personas con movilidad reducida. Gratis, código abierto, sin instalación.",
+        hero_subtitle: "Para personas que ya no pueden hablar — pero aún tienen todo por decir. Radicalmente simple, completamente gratis.",
         hero_cta: "→ Empezar",
         hero_hardware: "🎛️ Guía de hardware",
+        how_title: "Comunicar en 4 pasos",
+        how_subtitle: "Sin instalación, sin cuenta, sin configuración. Abrir y empezar.",
+        step1_title: "Abrir", step1_text: "Abre One-Key en cualquier navegador en tableta o teléfono.",
+        step2_title: "Crear sala", step2_text: "Se crea una sala automáticamente. Obtienes un código QR.",
+        step3_title: "Compartir QR", step3_text: "La familia escanea el código — ve instantáneamente lo que escribes.",
+        step4_title: "Comunicar", step4_text: "Pulsa tu tecla para seleccionar letras. ¡Listo!",
+        features_title: "Todo lo que necesitas",
+        features_subtitle: "Desarrollado con y para personas con movilidad reducida.",
+        f1_title: "Una tecla basta", f1_text: "Todo funciona con una sola entrada — tecla, clic, touch o sensor.",
+        f2_title: "Funciona en todas partes", f2_text: "Teléfono, tableta, portátil, Smart TV — cualquier dispositivo con navegador.",
+        f3_title: "Privado & Seguro", f3_text: "Sin cuenta, sin tracking. Las salas tienen PIN y se eliminan tras 24h.",
+        f4_title: "8 Idiomas", f4_text: "Alemán, inglés, francés, español, italiano, polaco y más.",
+        f5_title: "Frases rápidas", f5_text: "Frases predefinidas para situaciones comunes: dolor, sed, pedir ayuda.",
+        f6_title: "Texto a voz", f6_text: "El texto escrito puede leerse en voz alta.",
         flow_title: "Cómo se ve en la práctica",
+        flow_subtitle: "Una pulsación en la tableta — y el mensaje aparece en todos los dispositivos conectados.",
         flow_button: "Botón",
-        flow_tablet: "Tablet (Escritor)",
+        flow_tablet: "Tableta (Escritor)",
         flow_tv: "TV (Familia)",
-        beta_warning: "One-Key aún está en desarrollo. Úsalo con precaución y reporta problemas."
+        flow_desc: "La familia ve en tiempo real lo que se escribe — en cualquier dispositivo con navegador.",
+        hw_title: "🎛️ ¿Qué hardware funciona?",
+        hw_text: "Botones Bluetooth desde 5€, pedales, botones grandes, sensores táctiles.",
+        hw_cta: "Abrir guía de hardware →",
+        stats_title: "📊 Estadísticas en vivo",
+        stats_text: "Ve en tiempo real cuántas personas se están comunicando.",
+        stats_cta: "Ver estadísticas →",
+        beta_warning: "One-Key está en desarrollo. Usar con precaución."
     }
 };
 

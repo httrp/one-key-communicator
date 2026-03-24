@@ -167,23 +167,47 @@ const Keyboard = {
         container.innerHTML = '';
         const allKeys = [];
 
-        const toolbarBtns = [
-            { icon: '🔠', label: 'Mode', value: 'KB_MODE' },
-            { icon: '💬', label: 'Sätze', value: 'PHRASES' },
-            { icon: '#?!', label: '', value: 'PUNCT' },
-            { icon: '🔊', label: 'Vorlesen', value: 'SPEAK' },
-            { icon: '🗑', label: 'Löschen', value: 'CLEAR' },
-            { icon: '⏸', label: 'Pause', value: 'PAUSE' },
-            { icon: '🔗', label: 'Teilen', value: 'SHARE' },
-            { icon: '⚙', label: 'Tempo', value: 'SETTINGS' },
-            { icon: '?', label: 'Hilfe', value: 'HELP' },
+        // Grouped sections for better visual organization
+        const toolbarSections = [
+            {
+                label: '✏️ Eingabe',
+                buttons: [
+                    { icon: '🔠', label: 'Mode', value: 'KB_MODE' },
+                    { icon: '💬', label: 'Sätze', value: 'PHRASES' },
+                    { icon: '#?!', label: 'Zeichen', value: 'PUNCT' },
+                ]
+            },
+            {
+                label: '📤 Aktionen',
+                buttons: [
+                    { icon: '🔊', label: 'Vorlesen', value: 'SPEAK' },
+                    { icon: '🗑️', label: 'Löschen', value: 'CLEAR' },
+                    { icon: '⏸️', label: 'Pause', value: 'PAUSE' },
+                ]
+            },
+            {
+                label: '⚙️ Mehr',
+                buttons: [
+                    { icon: '🔗', label: 'Teilen', value: 'SHARE' },
+                    { icon: '⏱️', label: 'Tempo', value: 'SETTINGS' },
+                    { icon: '❓', label: 'Hilfe', value: 'HELP' },
+                ]
+            }
         ];
 
-        // Create rows of 3 buttons each
-        for (let i = 0; i < toolbarBtns.length; i += 3) {
+        // Create sections with visual grouping
+        for (const section of toolbarSections) {
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'toolbar-section';
+            
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'toolbar-section-label';
+            labelDiv.textContent = section.label;
+            sectionDiv.appendChild(labelDiv);
+
             const row = document.createElement('div');
-            row.className = 'keyboard-row';
-            for (const btn of toolbarBtns.slice(i, i + 3)) {
+            row.className = 'keyboard-row toolbar-row';
+            for (const btn of section.buttons) {
                 const el = document.createElement('div');
                 el.className = 'key action-key wide toolbar-scan-btn';
                 el.innerHTML = `<span class="toolbar-scan-icon">${btn.icon}</span>` +
@@ -192,13 +216,31 @@ const Keyboard = {
                 row.appendChild(el);
                 allKeys.push(el);
             }
-            container.appendChild(row);
+            sectionDiv.appendChild(row);
+            container.appendChild(sectionDiv);
         }
+
+        // Exit button (separate, styled as danger)
+        const exitSection = document.createElement('div');
+        exitSection.className = 'toolbar-section toolbar-exit-section';
+        const exitRow = document.createElement('div');
+        exitRow.className = 'keyboard-row';
+        const exitEl = document.createElement('div');
+        exitEl.className = 'key action-key toolbar-scan-btn toolbar-exit-btn';
+        exitEl.innerHTML = '<span class="toolbar-scan-icon">🚪</span><span class="toolbar-scan-label">Beenden</span>';
+        exitEl.dataset.value = 'EXIT';
+        exitRow.appendChild(exitEl);
+        allKeys.push(exitEl);
+        exitSection.appendChild(exitRow);
+        container.appendChild(exitSection);
 
         // Back button
         const backRow = document.createElement('div');
         backRow.className = 'keyboard-row';
-        const backEl = this._createKey('\u2b05 Zurück', 'BACK', 'key action-key extra-wide');
+        const backEl = document.createElement('div');
+        backEl.className = 'key action-key extra-wide toolbar-back-btn';
+        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
+        backEl.dataset.value = 'BACK';
         backRow.appendChild(backEl);
         allKeys.push(backEl);
         container.appendChild(backRow);
