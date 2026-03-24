@@ -1,0 +1,45 @@
+# One-Key Communicator
+
+> A free, open-source, single-switch communication aid for people with motor impairments (ALS, locked-in syndrome, severe cerebral palsy, etc.). Runs entirely in a web browser — no installation, no account, no app store.
+
+## What it does
+
+One-Key Communicator allows people who can operate only a single button, switch, or sensor to compose and share text in real time. A scanning keyboard cycles through letters automatically; one keypress selects the highlighted letter. The composed text is instantly visible on any other device (TV, tablet, phone, laptop) that has the room open via QR code.
+
+## Key features
+
+- **Single-switch input**: Any taster, button, click, touch, or external sensor works. No special hardware required.
+- **Real-time sharing**: Composed text is broadcast via WebSocket to everyone in the room — no refresh needed.
+- **QR-code rooms**: PIN-protected rooms are created instantly. No login, no user accounts.
+- **Auto-cleanup**: Text is deleted after 24 hours of inactivity. Rooms are fully deleted after 24 hours.
+- **No tracking**: No cookies, no analytics, no data sold to third parties.
+- **8 languages**: German, English, French, Spanish, Italian, Polish, and more.
+- **Quick-phrases**: Pre-set messages for common situations (pain, thirst, yes/no, call for help).
+- **Text-to-speech**: Browser TTS reads out composed text on demand.
+- **Works everywhere**: Any modern browser on phone, tablet, laptop, or smart TV. No app required.
+- **Open source**: GPLv3. Self-hostable. Fully auditable.
+
+## Use case
+
+Designed primarily for people with ALS (amyotrophic lateral sclerosis), locked-in syndrome, or other conditions that limit motor control to a single voluntary movement. Caregivers, family members, and medical staff can follow the person's typed text live on their own devices in the same room.
+
+## Technical details
+
+- Backend: Go (net/http, WebSockets, in-memory storage)
+- Frontend: Vanilla HTML/CSS/JavaScript — no framework, no dependencies
+- Deployment: Single binary, Caddy reverse proxy recommended
+- License: GNU General Public License v3.0 (GPLv3)
+- Non-commercial, community project
+
+## Pages
+
+- [Home](https://one-key-communicator.com/): Overview, animation demo, feature table
+- [App](https://one-key-communicator.com/app/): The communication app itself
+- [Hardware](https://one-key-communicator.com/hardware): Compatible switches, tablets, connection guides, setup tips
+- [Stats](https://one-key-communicator.com/stats): Live usage statistics (active rooms, messages sent)
+- [Impressum](https://one-key-communicator.com/impressum): Legal notice, privacy information, open source declaration
+
+## Source
+
+- GitHub: https://github.com/httrp/one-key-communicator
+- Live: https://one-key-communicator.com
