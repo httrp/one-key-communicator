@@ -6,8 +6,8 @@
  *   "smart" — Frequency-reordered
  *   "wild"  — Letters + word suggestions
  *
- * The keyboard renders in one compact flow:
- *   word suggestions (wild) → letters/numbers → space → backspace → ☰ More
+ * The keyboard renders as one wrapping flow:
+ *   words (wild) → letters/numbers → space/backspace/menu
  *
  * Action buttons (clear, mode, phrases, speak, punct, pause) live in
  * the toolbar above the keyboard. The Runner scans them separately
@@ -60,9 +60,6 @@ const Keyboard = {
         let letters;
         const currentWord = SmartKeyboard.getCurrentWord(currentText || '');
         const lastChar = currentWord ? currentWord[currentWord.length - 1] : '';
-        const flowRow = document.createElement('div');
-        flowRow.className = 'keyboard-row keyboard-flow';
-
         // --- Determine letter order ---
         if (this._mode === 'smart' || this._mode === 'mix') {
             const ordered = SmartKeyboard.getOrderedLetters(lang, lastChar);
@@ -79,48 +76,51 @@ const Keyboard = {
             letters = [...(this.layouts[lang] || this.layouts.en)];
         }
 
+        // --- All keys in one wrapping flow ---
+        const letterRow = document.createElement('div');
+        letterRow.className = 'keyboard-row letters-row';
+
         // --- Word suggestions (mix mode) ---
         if (this._mode === 'mix') {
             const words = SmartKeyboard.getWordSuggestions(lang, currentWord);
             if (words.length > 0) {
                 for (const w of words) {
                     const el = this._createKey(w, w, 'key word-key');
-                    flowRow.appendChild(el);
+                    letterRow.appendChild(el);
                     allKeys.push(el);
                 }
             }
         }
 
-        // --- Letters ---
+        // --- Letters / numbers (auto-wrap by available width) ---
         for (const ch of letters) {
             const el = this._createKey(ch, ch, 'key');
-            flowRow.appendChild(el);
+            letterRow.appendChild(el);
             allKeys.push(el);
         }
 
-        // --- Numbers (optional) ---
+        // --- Numbers (optional, after letters) ---
         if (this._showNumbers) {
             for (const n of this.numbers) {
                 const el = this._createKey(n, n, 'key number-key');
-                flowRow.appendChild(el);
+                letterRow.appendChild(el);
                 allKeys.push(el);
             }
         }
 
-        // --- Space + Backspace + Menu ---
         const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
-        flowRow.appendChild(spaceEl);
+        letterRow.appendChild(spaceEl);
         allKeys.push(spaceEl);
 
         const bsEl = this._createKey('\u232b', 'BACKSPACE', 'key action-key wide');
-        flowRow.appendChild(bsEl);
+        letterRow.appendChild(bsEl);
         allKeys.push(bsEl);
 
         const menuEl = this._createKey('\u2630 Menü', 'MENU', 'key action-key wide');
-        flowRow.appendChild(menuEl);
+        letterRow.appendChild(menuEl);
         allKeys.push(menuEl);
 
-        container.appendChild(flowRow);
+        container.appendChild(letterRow);
 
         return allKeys;
     },
