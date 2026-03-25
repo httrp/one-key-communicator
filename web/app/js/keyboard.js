@@ -2,12 +2,12 @@
  * Keyboard — renders the on-screen keyboard.
  *
  * Three keyboard modes:
- *   "abc"   — Alphabetical, space first
- *   "smart" — Frequency-reordered, space promoted when word is long enough
- *   "wild"  — Letters + word suggestions, space promoted
+ *   "abc"   — Alphabetical
+ *   "smart" — Frequency-reordered
+ *   "wild"  — Letters + word suggestions
  *
  * The keyboard renders ONLY letter/word keys:
- *   word suggestions (wild) → space → letters → backspace → ☰ More
+ *   word suggestions (wild) → letters → space/backspace → ☰ More
  *
  * Action buttons (clear, mode, phrases, speak, punct, pause) live in
  * the toolbar above the keyboard. The Runner scans them separately
@@ -104,24 +104,6 @@ const Keyboard = {
             container.appendChild(numRow);
         }
 
-        // --- Space positioning ---
-        const promoteSpace = (this._mode !== 'abc')
-            ? SmartKeyboard.shouldPromoteSpace(lang, currentWord)
-            : true;  // ABC mode: space always first
-
-        // If promoting space, add it before letters
-        if (promoteSpace) {
-            const spaceRow = document.createElement('div');
-            spaceRow.className = 'keyboard-row';
-            const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
-            spaceRow.appendChild(spaceEl);
-            allKeys.push(spaceEl);
-            const bsPromoted = this._createKey('\u232b', 'BACKSPACE', 'key action-key wide');
-            spaceRow.appendChild(bsPromoted);
-            allKeys.push(bsPromoted);
-            container.appendChild(spaceRow);
-        }
-
         // --- Letter rows ---
         const perRow = this._getKeysPerRow();
         for (let i = 0; i < letters.length; i += perRow) {
@@ -135,23 +117,23 @@ const Keyboard = {
             container.appendChild(row);
         }
 
-        // If not promoting space, add it after letters
-        if (!promoteSpace) {
-            const spaceRow = document.createElement('div');
-            spaceRow.className = 'keyboard-row';
-            const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
-            spaceRow.appendChild(spaceEl);
-            allKeys.push(spaceEl);
-            container.appendChild(spaceRow);
-        }
+        // --- Row after letters: Space + Backspace ---
+        const spaceRow = document.createElement('div');
+        spaceRow.className = 'keyboard-row';
 
-        // --- Bottom row: Backspace + Menu ---
-        const bottomRow = document.createElement('div');
-        bottomRow.className = 'keyboard-row';
+        const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
+        spaceRow.appendChild(spaceEl);
+        allKeys.push(spaceEl);
 
         const bsEl = this._createKey('\u232b', 'BACKSPACE', 'key action-key wide');
-        bottomRow.appendChild(bsEl);
+        spaceRow.appendChild(bsEl);
         allKeys.push(bsEl);
+
+        container.appendChild(spaceRow);
+
+        // --- Bottom row: Menu ---
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'keyboard-row';
 
         const menuEl = this._createKey('\u2630 Menü', 'MENU', 'key action-key wide');
         bottomRow.appendChild(menuEl);

@@ -706,89 +706,13 @@
     // MODAL SCAN MODES (Settings, Share, Help)
     // =========================================================================
 
-    function updateSettingsIndicators() {
-        // Update speed indicator
-        const speedFill = $('speedFill');
-        const speedValue = $('speedValue');
-        if (speedFill && speedValue) {
-            // Speed range: 200ms (fast) to 2000ms (slow)
-            // Fill percentage: 100% at 200ms (fastest), 0% at 2000ms (slowest)
-            const percentage = Math.round(((2000 - baseSpeed) / 1800) * 100);
-            speedFill.style.width = percentage + '%';
-            speedValue.textContent = (baseSpeed / 1000).toFixed(1) + 's';
-        }
-
-        // Update dark mode button state
-        const darkIcon = $('darkIcon');
-        const darkStatus = $('darkStatus');
-        const isDark = document.documentElement.dataset.theme === 'dark';
-        if (darkIcon) darkIcon.textContent = isDark ? '☀️' : '🌙';
-        if (darkStatus) darkStatus.textContent = isDark ? I18N.t('mode_light') : I18N.t('mode_dark');
-
-        // Update numbers button state
-        const numbersIcon = $('numbersIcon');
-        const numbersStatus = $('numbersStatus');
-        const showNums = $('numbersToggle').checked;
-        if (numbersIcon) numbersIcon.textContent = showNums ? '🔢' : '🔠';
-        if (numbersStatus) numbersStatus.textContent = showNums ? I18N.t('numbers_on') : I18N.t('numbers_off');
-    }
-
     function showSettingsScan() {
         Runner.stop();
         settingsPanel.classList.remove('hidden');
-        inputMode = 'settings';
+        inputMode = 'keyboard';
         showContextBanner('\u2699\ufe0f Einstellungen');
-
-        updateSettingsIndicators();
-
-        const scanArea = $('settingsScanArea');
-        const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
-        const speed = getAdaptiveSpeed();
-
-        // Grace delay prevents immediately acting on the first scan-btn
-        // (BACK) when the user accidentally opened settings.
-        Runner.start(scanBtns, speed, onSettingsScanSelected, speed * 1.5);
-    }
-
-    function onSettingsScanSelected(value) {
-        switch (value) {
-            case 'SPEED_UP':
-                // Decrease interval = faster
-                baseSpeed = Math.max(200, baseSpeed - 100);
-                localStorage.setItem('okc-speed', baseSpeed);
-                speedSlider.value = baseSpeed;
-                Runner.setSpeed(baseSpeed);
-                // Stay in settings mode, restart scan
-                showSettingsScan();
-                return;
-            case 'SPEED_DOWN':
-                // Increase interval = slower
-                baseSpeed = Math.min(2000, baseSpeed + 100);
-                localStorage.setItem('okc-speed', baseSpeed);
-                speedSlider.value = baseSpeed;
-                Runner.setSpeed(baseSpeed);
-                showSettingsScan();
-                return;
-            case 'TOGGLE_DARK':
-                const darkToggle = $('darkModeToggle');
-                darkToggle.checked = !darkToggle.checked;
-                document.documentElement.dataset.theme = darkToggle.checked ? 'dark' : 'light';
-                localStorage.setItem('okc-dark-mode', darkToggle.checked);
-                showSettingsScan();
-                return;
-            case 'TOGGLE_NUMBERS':
-                const numToggle = $('numbersToggle');
-                numToggle.checked = !numToggle.checked;
-                Keyboard.setShowNumbers(numToggle.checked);
-                localStorage.setItem('okc-show-numbers', numToggle.checked);
-                showSettingsScan();
-                return;
-            case 'BACK':
-                break;
-        }
-        // Return to toolbar-more submenu (settings is only accessible from there)
-        settingsPanel.classList.add('hidden');
-        showToolbarMoreScan();
+        // Settings are helper-focused and adjusted via direct controls (slider/toggles).
+        // Keep scanning paused while the panel is open.
     }
 
     function showShareScan() {

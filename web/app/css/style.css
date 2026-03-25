@@ -1101,18 +1101,35 @@ button {
 @media (max-width: 700px) {
     .app-footer {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        padding: 8px 12px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        padding: 6px 10px;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
     .footer-left,
     .footer-center,
     .footer-right {
-        width: 100%;
-        justify-content: flex-start;
-        text-align: left;
+        width: auto;
+        justify-content: center;
+        text-align: center;
+        min-width: 0;
+        flex-shrink: 1;
+    }
+
+    .footer-right {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .footer-center::before,
+    .footer-right::before {
+        content: '·';
+        margin: 0 6px;
+        color: var(--text-secondary);
     }
 }
 
@@ -1278,18 +1295,8 @@ button {
 }
 
 /* =========================================================================
-   SCANNABLE MODAL/SETTINGS BUTTONS
-   ========================================================================= */
-
-.settings-scan-area {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    background: var(--bg-subtle);
-    border-top: 1px solid var(--border);
-    margin-top: 16px;
-}
+    SCANNABLE MODAL BUTTONS
+    ========================================================================= */
 
 .modal-scan-area {
     display: flex;
@@ -1299,60 +1306,6 @@ button {
     background: var(--bg-subtle);
     border-top: 1px solid var(--border);
     margin-top: 16px;
-}
-
-.scan-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.scan-section-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
-    padding: 0 4px;
-}
-
-.scan-row {
-    display: flex;
-    gap: 12px;
-}
-
-.scan-speed-indicator {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: var(--bg);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-}
-
-.speed-bar {
-    flex: 1;
-    height: 8px;
-    background: var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.speed-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green) 0%, var(--warning) 50%, var(--red) 100%);
-    transition: width 0.2s ease;
-    border-radius: 4px;
-}
-
-.speed-value {
-    font-size: 0.85rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    min-width: 40px;
-    text-align: right;
-    color: var(--text);
 }
 
 .scan-btn {
