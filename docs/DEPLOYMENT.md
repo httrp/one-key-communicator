@@ -164,3 +164,16 @@ journalctl -u caddy | grep -i error
 # DNS prüfen (muss auf Server-IP zeigen)
 dig YOUR_DOMAIN.de
 ```
+
+## Zukünftige Sicherheitsmaßnahmen (Roadmap)
+
+### Stateless Security für den Server-Schlüssel
+Aktuell wird der kryptografische Schlüssel (Server Secret) zur Verschlüsselung von PINs und Inhalten in der SQLite-Datenbank bei der ersten Ausführung dynamisch generiert und sicher als `.secret` Datei im `data/`-Verzeichnis abgelegt (mit strikten Unix-Rechten `0600`). Dieses Setup ist pragmatisch und sicher gedacht.
+
+**Der "Königsweg" (geplante Optimierung):**
+Perspektivisch sollte das Setup die Möglichkeit bieten, das `serverSecret` alternativ als Umgebungsvariable (z.B. `OKC_SERVER_SECRET`) entgegenzunehmen. 
+
+Vorteile dieses Ansatzes:
+1. **Stateless Security**: Secrets liegen nicht mehr physisch auf dem Dateisystem, getrennt von der eigentlichen Datenbank.
+2. **Robustheit**: Gehen bei Container-Migrationen, Updates oder Crash-Recovery Volumes kurzzeitig verloren, bleibt die Entschlüsselung bestehender Backups funktionsfähig, solange das Secret im Environment gleich bleibt.
+3. **Secret Manager**: Erlaubt die sichere Injektion des Schlüssels direkt in den Arbeitsspeicher über moderne Cloud-Architekturen (z.B. GitHub Actions Secrets, Docker Secrets, AWS/Google Secret Manager).
