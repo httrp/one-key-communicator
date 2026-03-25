@@ -408,6 +408,11 @@ button {
     flex-wrap: wrap;
 }
 
+.letters-row .key:not(.word-key):not(.wide):not(.extra-wide) {
+    width: var(--key-h);
+    min-width: var(--key-h);
+}
+
 /* --- Key base --- */
 .key {
     min-width: var(--key-min);
@@ -477,7 +482,7 @@ button {
     margin-bottom: 3px;
 }
 .key.word-key {
-    min-width: 56px;
+    min-width: calc(var(--key-h) * 1.6);
     max-width: 110px;
     padding: 0 8px;
     font-size: 0.75rem;
@@ -1242,49 +1247,6 @@ button {
 [data-theme="dark"] .key.number-key.active {
     background: #f59e0b;
     color: #451a03;
-}
-
-/* ==========================================================================
-   Auto-sizing Keyboard Keys
-   ========================================================================== */
-.keyboard {
-    display: flex;
-    flex-direction: column;
-    padding: 6px;
-    background: var(--bg-soft);
-    flex-shrink: 0;
-    flex-grow: 1;
-    max-height: 55dvh;
-}
-.keyboard-row {
-    display: flex;
-    gap: 3px;
-    justify-content: center;
-    margin-bottom: 3px;
-    flex: 1;
-    min-height: 0;
-}
-.key {
-    min-width: var(--key-min);
-    height: auto;
-    min-height: var(--key-h);
-    flex: 1 1 var(--key-min);
-    max-width: calc(var(--key-min) * 2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    font-size: var(--key-font);
-    font-weight: 600;
-    background: var(--bg-elevated);
-    border: 1.5px solid var(--border);
-    color: var(--text);
-    transition: all 0.06s ease;
-    user-select: none;
-    -webkit-user-select: none;
-    box-shadow: var(--shadow-sm);
-    cursor: pointer;
-    padding: 4px 8px;
 }
 
 /* Dark mode adjustments */
