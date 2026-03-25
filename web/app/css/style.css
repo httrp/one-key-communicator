@@ -404,6 +404,10 @@ button {
     margin-bottom: 3px;
 }
 
+.keyboard-flow {
+    flex-wrap: wrap;
+}
+
 /* --- Key base --- */
 .key {
     min-width: var(--key-min);

@@ -6,8 +6,8 @@
  *   "smart" — Frequency-reordered
  *   "wild"  — Letters + word suggestions
  *
- * The keyboard renders ONLY letter/word keys:
- *   word suggestions (wild) → letters → space/backspace → ☰ More
+ * The keyboard renders in one compact flow:
+ *   word suggestions (wild) → letters/numbers → space → backspace → ☰ More
  *
  * Action buttons (clear, mode, phrases, speak, punct, pause) live in
  * the toolbar above the keyboard. The Runner scans them separately
@@ -60,6 +60,8 @@ const Keyboard = {
         let letters;
         const currentWord = SmartKeyboard.getCurrentWord(currentText || '');
         const lastChar = currentWord ? currentWord[currentWord.length - 1] : '';
+        const flowRow = document.createElement('div');
+        flowRow.className = 'keyboard-row keyboard-flow';
 
         // --- Determine letter order ---
         if (this._mode === 'smart' || this._mode === 'mix') {
@@ -77,69 +79,48 @@ const Keyboard = {
             letters = [...(this.layouts[lang] || this.layouts.en)];
         }
 
-        // --- Word suggestions row (mix mode) ---
+        // --- Word suggestions (mix mode) ---
         if (this._mode === 'mix') {
             const words = SmartKeyboard.getWordSuggestions(lang, currentWord);
             if (words.length > 0) {
-                const row = document.createElement('div');
-                row.className = 'keyboard-row word-row';
                 for (const w of words) {
                     const el = this._createKey(w, w, 'key word-key');
-                    row.appendChild(el);
+                    flowRow.appendChild(el);
                     allKeys.push(el);
                 }
-                container.appendChild(row);
             }
         }
 
-        // --- Numbers row (if enabled) ---
+        // --- Letters ---
+        for (const ch of letters) {
+            const el = this._createKey(ch, ch, 'key');
+            flowRow.appendChild(el);
+            allKeys.push(el);
+        }
+
+        // --- Numbers (optional) ---
         if (this._showNumbers) {
-            const numRow = document.createElement('div');
-            numRow.className = 'keyboard-row';
             for (const n of this.numbers) {
                 const el = this._createKey(n, n, 'key number-key');
-                numRow.appendChild(el);
+                flowRow.appendChild(el);
                 allKeys.push(el);
             }
-            container.appendChild(numRow);
         }
 
-        // --- Letter rows ---
-        const perRow = this._getKeysPerRow();
-        for (let i = 0; i < letters.length; i += perRow) {
-            const row = document.createElement('div');
-            row.className = 'keyboard-row';
-            for (const ch of letters.slice(i, i + perRow)) {
-                const el = this._createKey(ch, ch, 'key');
-                row.appendChild(el);
-                allKeys.push(el);
-            }
-            container.appendChild(row);
-        }
-
-        // --- Row after letters: Space + Backspace ---
-        const spaceRow = document.createElement('div');
-        spaceRow.className = 'keyboard-row';
-
+        // --- Space + Backspace + Menu ---
         const spaceEl = this._createKey('\u2423', ' ', 'key space-key extra-wide');
-        spaceRow.appendChild(spaceEl);
+        flowRow.appendChild(spaceEl);
         allKeys.push(spaceEl);
 
         const bsEl = this._createKey('\u232b', 'BACKSPACE', 'key action-key wide');
-        spaceRow.appendChild(bsEl);
+        flowRow.appendChild(bsEl);
         allKeys.push(bsEl);
 
-        container.appendChild(spaceRow);
-
-        // --- Bottom row: Menu ---
-        const bottomRow = document.createElement('div');
-        bottomRow.className = 'keyboard-row';
-
         const menuEl = this._createKey('\u2630 Menü', 'MENU', 'key action-key wide');
-        bottomRow.appendChild(menuEl);
+        flowRow.appendChild(menuEl);
         allKeys.push(menuEl);
 
-        container.appendChild(bottomRow);
+        container.appendChild(flowRow);
 
         return allKeys;
     },
