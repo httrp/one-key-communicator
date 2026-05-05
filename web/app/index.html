@@ -73,12 +73,12 @@
                 <canvas id="sidebarQR" width="180" height="180"></canvas>
             </div>
             <div class="sidebar-section">
-                <div class="sidebar-label">Link</div>
+                <div class="sidebar-label" data-i18n="sidebar_link">Link</div>
                 <div class="sidebar-url" id="sidebarURL"></div>
                 <button class="btn btn-outline btn-block btn-small" id="btnSidebarCopy" data-i18n="copy_link">Link kopieren</button>
             </div>
             <div class="sidebar-section sidebar-room-info">
-                <div class="sidebar-label">Room</div>
+                <div class="sidebar-label" data-i18n="sidebar_room">Raum</div>
                 <div class="sidebar-room-id" id="sidebarRoomId"></div>
                 <div class="sidebar-room-time" id="sidebarRoomTime"></div>
             </div>
@@ -143,13 +143,13 @@
 <!-- ===== Reader PIN Modal ===== -->
 <div id="readerPinModal" class="modal-overlay hidden">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="readerPinTitle">
-        <h2 id="readerPinTitle">PIN eingeben</h2>
-        <p>Bitte gib die Raum-PIN ein, um mitzulesen.</p>
+        <h2 id="readerPinTitle" data-i18n="pin_title">PIN eingeben</h2>
+        <p data-i18n="pin_description">Bitte gib die Raum-PIN ein, um mitzulesen.</p>
         <input id="readerPinInput" class="setting-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" placeholder="PIN">
         <p id="readerPinError" style="color:#ef4444; min-height:1.2em;"></p>
         <div class="modal-actions">
-            <button class="btn btn-primary" id="btnReaderPinJoin">Verbinden</button>
-            <button class="btn btn-ghost" id="btnReaderPinClose">Abbrechen</button>
+            <button class="btn btn-primary" id="btnReaderPinJoin" data-i18n="pin_join_btn">Verbinden</button>
+            <button class="btn btn-ghost" id="btnReaderPinClose" data-i18n="cancel">Abbrechen</button>
         </div>
     </div>
 </div>
@@ -281,7 +281,7 @@
             <ol>
                 <li data-i18n="help_step1">Der Marker wandert automatisch über die Buchstaben</li>
                 <li data-i18n="help_step2">Drücke eine beliebige Taste (oder tippe/klicke), um den markierten Buchstaben auszuwählen</li>
-                <li data-i18n="help_step3">Der Runner scannt auch die Toolbar-Buttons (Sätze, Vorlesen, Teilen, etc.)</li>
+                <li data-i18n="help_step3">Wähle "&#x2630; Menü" um zu Vorlesen, Teilen, Tempo und weiteren Optionen zu gelangen</li>
                 <li data-i18n="help_step4">Teile den QR-Code, damit andere mitlesen können</li>
             </ol>
             <p class="help-tip" data-i18n="help_tip">Tipp: Die Geschwindigkeit kann in den Einstellungen angepasst werden.</p>

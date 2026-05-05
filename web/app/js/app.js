@@ -610,7 +610,7 @@
     function showToolbarScan() {
         Runner.stop();
         inputMode = 'toolbar';
-        showContextBanner('\u2630 Men\u00fc');
+        showContextBanner('\u2630 ' + I18N.t('menu'));
 
         // Render toolbar buttons in keyboard container
         keys = Keyboard.renderToolbar(keyboardContainer);
@@ -637,6 +637,10 @@
             case 'CLEAR':
                 showDeleteOptions();
                 return;
+            case 'PUNCT':
+                inputMode = 'punctuation';
+                renderAndStart();
+                return;
             case 'MORE':
                 showToolbarMoreScan();
                 return;
@@ -650,7 +654,7 @@
     function showKbModeScan() {
         Runner.stop();
         inputMode = 'kb-mode';
-        showContextBanner('🔠 Tastatur-Modus');
+        showContextBanner('🔠 ' + I18N.t('mode_keyboard'));
         keys = Keyboard.renderKbMode(keyboardContainer, Keyboard.getMode());
         const speed = getAdaptiveSpeed();
         Runner.start(keys, speed, onKbModeScanSelected, speed * 1.5);
@@ -669,7 +673,7 @@
     function showToolbarMoreScan() {
         Runner.stop();
         inputMode = 'toolbar-more';
-        showContextBanner('\u2630 Mehr');
+        showContextBanner('\u2630 ' + I18N.t('more'));
         keys = Keyboard.renderToolbarMore(keyboardContainer);
         const speed = getAdaptiveSpeed();
         Runner.start(keys, speed, onToolbarMoreSelected, speed * 1.5);
@@ -677,10 +681,6 @@
 
     function onToolbarMoreSelected(value) {
         switch (value) {
-            case 'PUNCT':
-                inputMode = 'punctuation';
-                renderAndStart();
-                return;
             case 'PAUSE':
                 enterPause();
                 return;
@@ -710,7 +710,7 @@
         Runner.stop();
         settingsPanel.classList.remove('hidden');
         inputMode = 'keyboard';
-        showContextBanner('\u2699\ufe0f Einstellungen');
+        showContextBanner('\u2699\ufe0f ' + I18N.t('settings'));
         // Settings are helper-focused and adjusted via direct controls (slider/toggles).
         // Keep scanning paused while the panel is open.
     }
@@ -719,7 +719,7 @@
         Runner.stop();
         openShareModal();
         inputMode = 'share';
-        showContextBanner('\U0001f517 Teilen');
+        showContextBanner('\ud83d\udd17 ' + I18N.t('share'));
 
         const scanArea = $('shareScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
@@ -752,7 +752,7 @@
         Runner.stop();
         $('helpModal').classList.remove('hidden');
         inputMode = 'help';
-        showContextBanner('\u2753 Hilfe');
+        showContextBanner('\u2753 ' + I18N.t('help'));
 
         const scanArea = $('helpScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));
@@ -774,7 +774,7 @@
         Runner.stop();
         $('exitModal').classList.remove('hidden');
         inputMode = 'exit';
-        showContextBanner('\u26a0\ufe0f Beenden?');
+        showContextBanner('\u26a0\ufe0f ' + I18N.t('toolbar_exit') + '?');
 
         const scanArea = $('exitScanArea');
         const scanBtns = Array.from(scanArea.querySelectorAll('.scan-btn'));

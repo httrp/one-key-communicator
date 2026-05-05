@@ -127,6 +127,21 @@ const I18N = {
             created_minutes_ago: "Vor {n} Min. erstellt",
             created_hours_ago: "Vor {n} Std. erstellt",
             created_at: "Erstellt am",
+            // Tastatur & Toolbar
+            punct: "Zeichen",
+            kb_mode_abc: "Alphabetisch",
+            kb_mode_smart: "Smart (h\u00e4ufig)",
+            kb_mode_mix: "Mix-Modus",
+            // TTS-Fehler
+            tts_unsupported: "Sprachausgabe nicht verf\u00fcgbar",
+            tts_error: "Sprachausgabe fehlgeschlagen",
+            // Reader-PIN-Modal
+            pin_title: "PIN eingeben",
+            pin_description: "Bitte gib die Raum-PIN ein, um mitzulesen.",
+            pin_join_btn: "Verbinden",
+            // Sidebar
+            sidebar_room: "Raum",
+            sidebar_link: "Link",
         },
         en: {
             app_title: "What would you like to say?",
@@ -232,6 +247,21 @@ const I18N = {
             created_minutes_ago: "Created {n} min ago",
             created_hours_ago: "Created {n}h ago",
             created_at: "Created on",
+            // Keyboard & toolbar
+            punct: "Characters",
+            kb_mode_abc: "Alphabetical",
+            kb_mode_smart: "Smart (frequent)",
+            kb_mode_mix: "Mix mode",
+            // TTS errors
+            tts_unsupported: "Text-to-speech not available",
+            tts_error: "Text-to-speech failed",
+            // Reader PIN modal
+            pin_title: "Enter PIN",
+            pin_description: "Please enter the room PIN to read along.",
+            pin_join_btn: "Connect",
+            // Sidebar
+            sidebar_room: "Room",
+            sidebar_link: "Link",
         },
         fr: {
             app_title: "Que voulez-vous dire ?",
@@ -308,6 +338,52 @@ const I18N = {
             created_minutes_ago: "Cr\u00e9\u00e9 il y a {n} min",
             created_hours_ago: "Cr\u00e9\u00e9 il y a {n}h",
             created_at: "Cr\u00e9\u00e9 le",
+            // Affichage
+            dark_mode: "Mode sombre",
+            mode_dark: "Sombre",
+            mode_light: "Clair",
+            show_numbers: "Afficher les chiffres",
+            numbers_on: "Chiffres \u2713",
+            numbers_off: "Chiffres",
+            // Suppression
+            delete_word: "Mot",
+            delete_sentence: "Phrase",
+            delete_paragraph: "Paragraphe",
+            delete_all: "Tout",
+            // Barre d'outils
+            share: "Partager",
+            help: "Aide",
+            menu: "Menu",
+            speed_faster: "Plus vite",
+            speed_slower: "Plus lent",
+            // Aide
+            help_title: "Comment fonctionne One-Key\u00a0?",
+            help_intro: "One-Key permet de communiquer avec une seule touche\u00a0:",
+            help_step1: "Le marqueur se d\u00e9place automatiquement sur les lettres",
+            help_step2: "Appuyez sur une touche (ou tapez/cliquez) pour s\u00e9lectionner la lettre marqu\u00e9e",
+            help_step3: "S\u00e9lectionnez \"\u2630 Menu\" pour acc\u00e9der \u00e0 Lire, Partager, Vitesse et autres options",
+            help_step4: "Partagez le QR code pour que d'autres puissent lire",
+            help_tip: "Conseil\u00a0: La vitesse peut \u00eatre ajust\u00e9e dans les param\u00e8tres.",
+            // Erreurs
+            error_room_not_found: "Salle introuvable",
+            error_room_not_found_desc: "Cette salle n'existe pas ou a \u00e9t\u00e9 termin\u00e9e.",
+            error_invalid_pin: "PIN invalide",
+            error_invalid_pin_desc: "Le PIN entr\u00e9 est incorrect.",
+            // Clavier & barre d'outils
+            punct: "Caract\u00e8res",
+            kb_mode_abc: "Alphab\u00e9tique",
+            kb_mode_smart: "Intelligent (fr\u00e9quent)",
+            kb_mode_mix: "Mode mixte",
+            // TTS
+            tts_unsupported: "Synth\u00e8se vocale non disponible",
+            tts_error: "\u00c9chec de la synth\u00e8se vocale",
+            // Modal PIN
+            pin_title: "Entrer le PIN",
+            pin_description: "Veuillez entrer le PIN de la salle pour lire.",
+            pin_join_btn: "Se connecter",
+            // Barre lat\u00e9rale
+            sidebar_room: "Salle",
+            sidebar_link: "Lien",
         },
         es: {
             app_title: "\u00bfQu\u00e9 quieres decir?",
@@ -384,6 +460,52 @@ const I18N = {
             created_minutes_ago: "Creado hace {n} min",
             created_hours_ago: "Creado hace {n}h",
             created_at: "Creado el",
+            // Visualizaci\u00f3n
+            dark_mode: "Modo oscuro",
+            mode_dark: "Oscuro",
+            mode_light: "Claro",
+            show_numbers: "Mostrar n\u00fameros",
+            numbers_on: "N\u00fameros \u2713",
+            numbers_off: "N\u00fameros",
+            // Eliminaci\u00f3n
+            delete_word: "Palabra",
+            delete_sentence: "Frase",
+            delete_paragraph: "P\u00e1rrafo",
+            delete_all: "Todo",
+            // Barra de herramientas
+            share: "Compartir",
+            help: "Ayuda",
+            menu: "Men\u00fa",
+            speed_faster: "M\u00e1s r\u00e1pido",
+            speed_slower: "M\u00e1s lento",
+            // Ayuda
+            help_title: "\u00bfC\u00f3mo funciona One-Key?",
+            help_intro: "One-Key permite comunicarse con una sola tecla:",
+            help_step1: "El marcador se mueve autom\u00e1ticamente sobre las letras",
+            help_step2: "Pulsa una tecla (o toca/haz clic) para seleccionar la letra marcada",
+            help_step3: "Selecciona \"\u2630 Men\u00fa\" para acceder a Leer, Compartir, Velocidad y m\u00e1s",
+            help_step4: "Comparte el QR code para que otros puedan leer",
+            help_tip: "Consejo: La velocidad se puede ajustar en los ajustes.",
+            // Errores
+            error_room_not_found: "Sala no encontrada",
+            error_room_not_found_desc: "Esta sala no existe o ha terminado.",
+            error_invalid_pin: "PIN incorrecto",
+            error_invalid_pin_desc: "El PIN introducido no es correcto.",
+            // Teclado & barra de herramientas
+            punct: "Caracteres",
+            kb_mode_abc: "Alfab\u00e9tico",
+            kb_mode_smart: "Inteligente (frecuente)",
+            kb_mode_mix: "Modo mixto",
+            // TTS
+            tts_unsupported: "S\u00edntesis de voz no disponible",
+            tts_error: "Error en s\u00edntesis de voz",
+            // Modal PIN
+            pin_title: "Introducir PIN",
+            pin_description: "Introduce el PIN de la sala para leer.",
+            pin_join_btn: "Conectar",
+            // Barra lateral
+            sidebar_room: "Sala",
+            sidebar_link: "Enlace",
         },
         it: {
             app_title: "Cosa vuoi dire?",
@@ -460,6 +582,52 @@ const I18N = {
             created_minutes_ago: "Creato {n} min fa",
             created_hours_ago: "Creato {n}h fa",
             created_at: "Creato il",
+            // Schermo
+            dark_mode: "Modalit\u00e0 scura",
+            mode_dark: "Scuro",
+            mode_light: "Chiaro",
+            show_numbers: "Mostra numeri",
+            numbers_on: "Numeri \u2713",
+            numbers_off: "Numeri",
+            // Eliminazione
+            delete_word: "Parola",
+            delete_sentence: "Frase",
+            delete_paragraph: "Paragrafo",
+            delete_all: "Tutto",
+            // Barra degli strumenti
+            share: "Condividi",
+            help: "Aiuto",
+            menu: "Menu",
+            speed_faster: "Pi\u00f9 veloce",
+            speed_slower: "Pi\u00f9 lento",
+            // Guida
+            help_title: "Come funziona One-Key?",
+            help_intro: "One-Key consente la comunicazione con un solo tasto:",
+            help_step1: "Il marcatore si sposta automaticamente sulle lettere",
+            help_step2: "Premi un tasto (o tocca/clicca) per selezionare la lettera evidenziata",
+            help_step3: "Seleziona \"\u2630 Menu\" per accedere a Leggi, Condividi, Velocit\u00e0 e altre opzioni",
+            help_step4: "Condividi il QR code in modo che altri possano leggere",
+            help_tip: "Suggerimento: La velocit\u00e0 pu\u00f2 essere regolata nelle impostazioni.",
+            // Errori
+            error_room_not_found: "Stanza non trovata",
+            error_room_not_found_desc: "Questa stanza non esiste o \u00e8 terminata.",
+            error_invalid_pin: "PIN non valido",
+            error_invalid_pin_desc: "Il PIN inserito non \u00e8 corretto.",
+            // Tastiera & barra degli strumenti
+            punct: "Caratteri",
+            kb_mode_abc: "Alfabetico",
+            kb_mode_smart: "Intelligente (frequente)",
+            kb_mode_mix: "Modalit\u00e0 mista",
+            // TTS
+            tts_unsupported: "Sintesi vocale non disponibile",
+            tts_error: "Errore sintesi vocale",
+            // Modal PIN
+            pin_title: "Inserire PIN",
+            pin_description: "Inserisci il PIN della stanza per leggere.",
+            pin_join_btn: "Connetti",
+            // Barra laterale
+            sidebar_room: "Stanza",
+            sidebar_link: "Link",
         },
         nl: {
             app_title: "Wat wil je zeggen?",
@@ -536,6 +704,52 @@ const I18N = {
             created_minutes_ago: "{n} min geleden aangemaakt",
             created_hours_ago: "{n}u geleden aangemaakt",
             created_at: "Aangemaakt op",
+            // Weergave
+            dark_mode: "Donkere modus",
+            mode_dark: "Donker",
+            mode_light: "Licht",
+            show_numbers: "Cijfers tonen",
+            numbers_on: "Cijfers \u2713",
+            numbers_off: "Cijfers",
+            // Verwijderen
+            delete_word: "Woord",
+            delete_sentence: "Zin",
+            delete_paragraph: "Alinea",
+            delete_all: "Alles",
+            // Werkbalk
+            share: "Delen",
+            help: "Help",
+            menu: "Menu",
+            speed_faster: "Sneller",
+            speed_slower: "Langzamer",
+            // Help
+            help_title: "Hoe werkt One-Key?",
+            help_intro: "One-Key maakt communicatie mogelijk met slechts \u00e9\u00e9n toets:",
+            help_step1: "De markering beweegt automatisch over de letters",
+            help_step2: "Druk op een toets (of tik/klik) om de gemarkeerde letter te selecteren",
+            help_step3: "Selecteer \"\u2630 Menu\" voor Voorlezen, Delen, Tempo en andere opties",
+            help_step4: "Deel de QR-code zodat anderen kunnen meelezen",
+            help_tip: "Tip: De snelheid kan worden aangepast in de instellingen.",
+            // Fouten
+            error_room_not_found: "Kamer niet gevonden",
+            error_room_not_found_desc: "Deze kamer bestaat niet of is be\u00ebindigd.",
+            error_invalid_pin: "Onjuiste PIN",
+            error_invalid_pin_desc: "De ingevoerde PIN is niet correct.",
+            // Toetsenbord & werkbalk
+            punct: "Tekens",
+            kb_mode_abc: "Alfabetisch",
+            kb_mode_smart: "Slim (frequent)",
+            kb_mode_mix: "Mix modus",
+            // TTS
+            tts_unsupported: "Tekst-naar-spraak niet beschikbaar",
+            tts_error: "Tekst-naar-spraak mislukt",
+            // PIN modal
+            pin_title: "PIN invoeren",
+            pin_description: "Voer de kamer-PIN in om mee te lezen.",
+            pin_join_btn: "Verbinden",
+            // Zijbalk
+            sidebar_room: "Kamer",
+            sidebar_link: "Link",
         },
         pl: {
             app_title: "Co chcesz powiedzie\u0107?",
@@ -612,6 +826,52 @@ const I18N = {
             created_minutes_ago: "Utworzono {n} min temu",
             created_hours_ago: "Utworzono {n}h temu",
             created_at: "Utworzono",
+            // Wy\u015bwietlanie
+            dark_mode: "Tryb ciemny",
+            mode_dark: "Ciemny",
+            mode_light: "Jasny",
+            show_numbers: "Poka\u017c cyfry",
+            numbers_on: "Cyfry \u2713",
+            numbers_off: "Cyfry",
+            // Usuwanie
+            delete_word: "S\u0142owo",
+            delete_sentence: "Zdanie",
+            delete_paragraph: "Akapit",
+            delete_all: "Wszystko",
+            // Pasek narz\u0119dzi
+            share: "Udost\u0119pnij",
+            help: "Pomoc",
+            menu: "Menu",
+            speed_faster: "Szybciej",
+            speed_slower: "Wolniej",
+            // Pomoc
+            help_title: "Jak dzia\u0142a One-Key?",
+            help_intro: "One-Key umo\u017cliwia komunikacj\u0119 za pomoc\u0105 jednego klawisza:",
+            help_step1: "Znacznik automatycznie przesuwa si\u0119 po literach",
+            help_step2: "Naci\u015bnij dowolny klawisz (lub dotkn\u0105\u0107/klikni\u0105\u0107), aby wybra\u0107 zaznaczon\u0105 liter\u0119",
+            help_step3: "Wybierz \"\u2630 Menu\", aby uzyska\u0107 dost\u0119p do Czytania, Udost\u0119pniania, Tempa i innych opcji",
+            help_step4: "Udost\u0119pnij kod QR, aby inni mogli \u015bledzi\u0107 tekst",
+            help_tip: "Wskaz\u00f3wka: Pr\u0119dko\u015b\u0107 mo\u017cna dostosowa\u0107 w ustawieniach.",
+            // B\u0142\u0119dy
+            error_room_not_found: "Pok\u00f3j nie znaleziony",
+            error_room_not_found_desc: "Ten pok\u00f3j nie istnieje lub zosta\u0142 zako\u0144czony.",
+            error_invalid_pin: "Nieprawid\u0142owy PIN",
+            error_invalid_pin_desc: "Wprowadzony PIN jest nieprawid\u0142owy.",
+            // Klawiatura & pasek narz\u0119dzi
+            punct: "Znaki",
+            kb_mode_abc: "Alfabetycznie",
+            kb_mode_smart: "Inteligentny (cz\u0119sty)",
+            kb_mode_mix: "Tryb mieszany",
+            // TTS
+            tts_unsupported: "Synteza mowy niedost\u0119pna",
+            tts_error: "B\u0142\u0105d syntezy mowy",
+            // Modal PIN
+            pin_title: "Wprowad\u017a PIN",
+            pin_description: "Wprowad\u017a PIN pokoju, aby \u015bledzi\u0107 tekst.",
+            pin_join_btn: "Po\u0142\u0105cz",
+            // Pasek boczny
+            sidebar_room: "Pok\u00f3j",
+            sidebar_link: "Link",
         },
         tr: {
             app_title: "Ne s\u00f6ylemek istiyorsun?",
@@ -688,6 +948,52 @@ const I18N = {
             created_minutes_ago: "{n} dk \u00f6nce olu\u015fturuldu",
             created_hours_ago: "{n}s \u00f6nce olu\u015fturuldu",
             created_at: "Olu\u015fturulma",
+            // G\u00f6r\u00fcn\u00fcm
+            dark_mode: "Karanl\u0131k mod",
+            mode_dark: "Karanl\u0131k",
+            mode_light: "Ayd\u0131nl\u0131k",
+            show_numbers: "Say\u0131lar\u0131 g\u00f6ster",
+            numbers_on: "Say\u0131lar \u2713",
+            numbers_off: "Say\u0131lar",
+            // Silme
+            delete_word: "Kelime",
+            delete_sentence: "C\u00fcmle",
+            delete_paragraph: "Paragraf",
+            delete_all: "Hepsi",
+            // Ara\u00e7 \u00e7ubu\u011fu
+            share: "Payla\u015f",
+            help: "Yard\u0131m",
+            menu: "Men\u00fc",
+            speed_faster: "Daha h\u0131zl\u0131",
+            speed_slower: "Daha yava\u015f",
+            // Yard\u0131m
+            help_title: "One-Key nas\u0131l \u00e7al\u0131\u015f\u0131r?",
+            help_intro: "One-Key, tek bir tu\u015fla ileti\u015fim kurman\u0131z\u0131 sa\u011flar:",
+            help_step1: "\u0130\u015faretleyici harfler \u00fczerinde otomatik olarak hareket eder",
+            help_step2: "\u0130\u015faretli harfi se\u00e7mek i\u00e7in herhangi bir tu\u015fa bas\u0131n (veya dokunun/t\u0131klay\u0131n)",
+            help_step3: "Okuma, Payla\u015fma, H\u0131z ve di\u011fer se\u00e7enekler i\u00e7in \"\u2630 Men\u00fc\" \u00f6\u011fesini se\u00e7in",
+            help_step4: "Ba\u015fkalar\u0131n\u0131n okuyabilmesi i\u00e7in QR kodu payla\u015f\u0131n",
+            help_tip: "\u0130pucu: H\u0131z, ayarlarda d\u00fczenlenebilir.",
+            // Hatalar
+            error_room_not_found: "Oda bulunamad\u0131",
+            error_room_not_found_desc: "Bu oda mevcut de\u011fil veya sonland\u0131r\u0131ld\u0131.",
+            error_invalid_pin: "Ge\u00e7ersiz PIN",
+            error_invalid_pin_desc: "Girilen PIN do\u011fru de\u011fil.",
+            // Klavye & ara\u00e7 \u00e7ubu\u011fu
+            punct: "Karakterler",
+            kb_mode_abc: "Alfabetik",
+            kb_mode_smart: "Ak\u0131ll\u0131 (s\u0131k kullan\u0131lan)",
+            kb_mode_mix: "Kar\u0131\u015f\u0131k mod",
+            // TTS
+            tts_unsupported: "Metin okuma kullan\u0131lam\u0131yor",
+            tts_error: "Metin okuma ba\u015far\u0131s\u0131z",
+            // PIN modal
+            pin_title: "PIN gir",
+            pin_description: "Okumak i\u00e7in oda PIN'ini gir.",
+            pin_join_btn: "Ba\u011flan",
+            // Yan panel
+            sidebar_room: "Oda",
+            sidebar_link: "Ba\u011flant\u0131",
         },
     },
 

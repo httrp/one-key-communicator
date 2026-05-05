@@ -116,7 +116,7 @@ const Keyboard = {
         letterRow.appendChild(bsEl);
         allKeys.push(bsEl);
 
-        const menuEl = this._createKey('\u2630 Menü', 'MENU', 'key action-key wide');
+        const menuEl = this._createKey('\u2630 ' + I18N.t('menu'), 'MENU', 'key action-key wide');
         letterRow.appendChild(menuEl);
         allKeys.push(menuEl);
 
@@ -137,12 +137,12 @@ const Keyboard = {
         // Primary toolbar: only the 5 most-used actions + MORE for the rest.
         // Kept intentionally flat (no section headers) to reduce visual noise.
         const primaryButtons = [
-            { icon: '🔊', label: 'Vorlesen',   value: 'SPEAK'   },
-            { icon: '🗑️', label: 'Löschen',    value: 'CLEAR'   },
-            { icon: '🔠', label: 'Tastatur',   value: 'KB_MODE' },
-            { icon: '💬', label: 'Sätze',      value: 'PHRASES' },
-            { icon: '#?!', label: 'Zeichen',   value: 'PUNCT'   },
-            { icon: '⚙️', label: 'Mehr …',     value: 'MORE'    },
+            { icon: '🔊', label: I18N.t('speak'),        value: 'SPEAK'   },
+            { icon: '🗑️', label: I18N.t('clear'),        value: 'CLEAR'   },
+            { icon: '🔠', label: I18N.t('mode_keyboard'), value: 'KB_MODE' },
+            { icon: '💬', label: I18N.t('mode_phrases'), value: 'PHRASES' },
+            { icon: '#?!', label: I18N.t('punct'),       value: 'PUNCT'   },
+            { icon: '⚙️', label: I18N.t('more'),         value: 'MORE'    },
         ];
 
         const row = document.createElement('div');
@@ -163,7 +163,7 @@ const Keyboard = {
         backRow.className = 'keyboard-row';
         const backEl = document.createElement('div');
         backEl.className = 'key action-key extra-wide toolbar-back-btn';
-        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
+        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">' + I18N.t('back') + '</span>';
         backEl.dataset.value = 'BACK';
         backRow.appendChild(backEl);
         allKeys.unshift(backEl);  // position 0: one press exits the menu immediately
@@ -181,9 +181,9 @@ const Keyboard = {
         const allKeys = [];
 
         const modes = [
-            { value: 'abc',   icon: 'A–Z',  label: 'Alphabetisch' },
-            { value: 'smart', icon: '★',    label: 'Smart (häufig)' },
-            { value: 'mix',   icon: 'A★',   label: 'Mix-Modus'    },
+            { value: 'abc',   icon: 'A–Z',  label: I18N.t('kb_mode_abc')   },
+            { value: 'smart', icon: '★',    label: I18N.t('kb_mode_smart') },
+            { value: 'mix',   icon: 'A★',   label: I18N.t('kb_mode_mix')   },
         ];
 
         const row = document.createElement('div');
@@ -205,7 +205,7 @@ const Keyboard = {
         backRow.className = 'keyboard-row';
         const backEl = document.createElement('div');
         backEl.className = 'key action-key extra-wide toolbar-back-btn';
-        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
+        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">' + I18N.t('back') + '</span>';
         backEl.dataset.value = 'BACK';
         backRow.appendChild(backEl);
         allKeys.unshift(backEl);
@@ -224,11 +224,11 @@ const Keyboard = {
         const allKeys = [];
 
         const moreButtons = [
-            { icon: '⏸️', label: 'Pause',     value: 'PAUSE'    },
-            { icon: '⏱️', label: 'Tempo',     value: 'SETTINGS' },
-            { icon: '🔗', label: 'Teilen',    value: 'SHARE'    },
-            { icon: '❓', label: 'Hilfe',     value: 'HELP'     },
-            { icon: '🚪', label: 'Beenden',   value: 'EXIT'     },
+            { icon: '⏸️', label: I18N.t('pause'),        value: 'PAUSE'    },
+            { icon: '⏱️', label: I18N.t('settings'),     value: 'SETTINGS' },
+            { icon: '🔗', label: I18N.t('share'),        value: 'SHARE'    },
+            { icon: '❓', label: I18N.t('help'),         value: 'HELP'     },
+            { icon: '🚪', label: I18N.t('toolbar_exit'), value: 'EXIT'     },
         ];
 
         const row = document.createElement('div');
@@ -250,7 +250,7 @@ const Keyboard = {
         backRow.className = 'keyboard-row';
         const backEl = document.createElement('div');
         backEl.className = 'key action-key extra-wide toolbar-back-btn';
-        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">Zurück</span>';
+        backEl.innerHTML = '<span class="toolbar-scan-icon">⬅️</span><span class="toolbar-scan-label">' + I18N.t('back') + '</span>';
         backEl.dataset.value = 'BACK';
         backRow.appendChild(backEl);
         allKeys.unshift(backEl);
